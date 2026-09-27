@@ -44,7 +44,7 @@ pub struct VideoUi {
 	/// Keep the viewport's previous mode so leaving playback restores the window.
 	fullscreen: Option<(egui::Context, bool, egui::Id)>,
 	/// Native window transition for the desktop to apply after this UI frame.
-	fullscreen_request: Option<bool>,
+	pub(super) fullscreen_request: Option<bool>,
 }
 impl Default for VideoUi {
 	fn default() -> Self {
@@ -77,7 +77,7 @@ impl VideoUi {
 		self.seen = false;
 		self.command = Some(VideoCommand::Stop);
 	}
-	fn exit_fullscreen(&mut self) {
+	pub(super) fn exit_fullscreen(&mut self) {
 		if let Some((ctx, previous, focus)) = self.fullscreen.take() {
 			self.fullscreen_request = Some(previous);
 			ctx.memory_mut(|memory| memory.request_focus(focus));
@@ -562,17 +562,12 @@ impl VideoUi {
 									white,
 								);
 							} else {
-								for (x, y) in [(-1.0, -1.0), (1.0, -1.0), (-1.0, 1.0), (1.0, 1.0)] {
-									let corner = rect.center() + egui::vec2(x * 7.0, y * 7.0);
-									ui.painter().add(egui::Shape::line(
-										vec![
-											corner - egui::vec2(x * 5.0, 0.0),
-											corner,
-											corner - egui::vec2(0.0, y * 5.0),
-										],
-										egui::Stroke::new(1.5, white),
-									));
-								}
+								crate::icons::paint(
+									ui.painter(),
+									crate::icons::Icon::Fullscreen,
+									rect.shrink(1.0),
+									white,
+								);
 							}
 							controls_focused |= button.has_focus();
 							if button.has_focus() {

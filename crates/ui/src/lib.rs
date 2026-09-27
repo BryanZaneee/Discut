@@ -343,6 +343,10 @@ pub struct MessagingUi {
 	voice_stream_muted: bool,
 	/// Enlarged stage tile; cleared when it stops showing video or on Escape.
 	pub voice_focus: Option<voice::StageFocus>,
+	/// Screen share currently owning the client surface, its prior window mode and focus target.
+	voice_fullscreen: Option<(voice::StageFocus, egui::Context, bool, egui::Id)>,
+	/// Native window transition for the desktop to apply after this UI frame.
+	voice_fullscreen_request: Option<bool>,
 	/// Whether the other participants stay visible as a strip under the enlarged tile.
 	pub voice_focus_participants: bool,
 	/// Session-only visibility of the selected guild voice channel's chat.
@@ -843,6 +847,9 @@ impl MessagingUi {
 	pub fn video(&mut self) -> &mut VideoUi {
 		&mut self.timeline.video
 	}
+	pub fn take_voice_fullscreen_request(&mut self) -> Option<bool> {
+		self.voice_fullscreen_request.take()
+	}
 	pub fn clear_avatars(&mut self) {
 		self.avatars = avatars::Avatars::default();
 	}
@@ -861,9 +868,14 @@ impl MessagingUi {
 		self.avatars.accept(ctx, key, image);
 	}
 	pub fn clear(&mut self) {
+		// The native window must not stay in media fullscreen after the account is gone.
+		self.exit_voice_fullscreen();
+		self.timeline.video.exit_fullscreen();
+		let video_fullscreen_request = self.timeline.video.fullscreen_request.take();
 		// Window preferences belong to the application, not the account being cleared.
 		*self = Self {
 			build: self.build,
+			voice_fullscreen_request: self.voice_fullscreen_request.take(),
 			// The switcher roster belongs to the device, not to the account being cleared.
 			accounts: std::mem::take(&mut self.accounts),
 			updates: std::mem::take(&mut self.updates),
@@ -878,6 +890,7 @@ impl MessagingUi {
 			startup_disable_requested: self.startup_disable_requested,
 			..Self::default()
 		};
+		self.timeline.video.fullscreen_request = video_fullscreen_request;
 	}
 	pub fn restore_channel_preferences(&mut self, preferences: model::ChannelPreferences) {
 		if !self.channel_preferences_changed && preferences.is_valid() {
@@ -1136,7 +1149,10 @@ impl MessagingUi {
 			});
 	}
 	fn navigate_history(&mut self, state: &mut State, commands: &mut Vec<Command>, back: bool) {
-		if self.timeline.video.is_fullscreen() || self.channel_menu.is_open() {
+		if self.timeline.video.is_fullscreen()
+			|| self.is_voice_fullscreen()
+			|| self.channel_menu.is_open()
+		{
 			return;
 		}
 		if self.settings.open {
@@ -3340,7 +3356,12 @@ impl MessagingUi {
 		if side.back || side.forward {
 			self.navigate_history(state, &mut commands, side.back);
 		}
-		// Fullscreen playback owns the whole client surface, including during native resizing.
+		// Fullscreen media owns the whole client surface, including during native resizing.
+		if self.show_fullscreen_voice(ui.ctx(), state) {
+			ui.painter()
+				.rect_filled(ui.max_rect(), 0, egui::Color32::BLACK);
+			return commands;
+		}
 		if self.timeline.show_fullscreen_video(ui.ctx(), state) {
 			ui.painter()
 				.rect_filled(ui.max_rect(), 0, egui::Color32::BLACK);

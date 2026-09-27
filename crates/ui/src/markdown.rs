@@ -373,34 +373,46 @@ pub(super) fn confirm_external_link(
 	}
 	let mut confirm = false;
 	let mut cancel = false;
-	let response = crate::dialog::Dialog::new("confirm-external-link", "Open external link?")
-		.subtitle("This destination opens in your default browser.")
-		.width(460.0)
-		.show(ctx, |d| {
-			d.content(|ui| {
-				let colors = crate::design::palette(ui);
-				egui::Frame::new()
-					.fill(colors.base)
-					.stroke(egui::Stroke::new(1.0, colors.border))
-					.corner_radius(8)
-					.inner_margin(egui::Margin::symmetric(12, 10))
-					.show(ui, |ui| {
-						ui.set_width(ui.available_width());
-						ui.add(
-							egui::Label::new(egui::RichText::new(&target).monospace().size(13.0))
-								.wrap()
-								.selectable(true),
-						);
-					});
-			});
-			d.footer(|ui| {
-				confirm =
-					crate::dialog::action(ui, "Open in Browser", crate::dialog::Action::Primary)
-						.clicked();
-				cancel =
-					crate::dialog::action(ui, "Cancel", crate::dialog::Action::Neutral).clicked();
-			});
+	let response = crate::dialog::Dialog::new(
+		"confirm-external-link",
+		crate::i18n::translate("markdown-confirm-external-link-open-external-link"),
+	)
+	.subtitle(crate::i18n::translate(
+		"markdown-confirm-external-link-this-destination-opens-in-your-default-browser",
+	))
+	.width(460.0)
+	.show(ctx, |d| {
+		d.content(|ui| {
+			let colors = crate::design::palette(ui);
+			egui::Frame::new()
+				.fill(colors.base)
+				.stroke(egui::Stroke::new(1.0, colors.border))
+				.corner_radius(8)
+				.inner_margin(egui::Margin::symmetric(12, 10))
+				.show(ui, |ui| {
+					ui.set_width(ui.available_width());
+					ui.add(
+						egui::Label::new(egui::RichText::new(&target).monospace().size(13.0))
+							.wrap()
+							.selectable(true),
+					);
+				});
 		});
+		d.footer(|ui| {
+			confirm = crate::dialog::action(
+				ui,
+				"markdown-confirm-external-link-open-in-browser",
+				crate::dialog::Action::Primary,
+			)
+			.clicked();
+			cancel = crate::dialog::action(
+				ui,
+				"markdown-confirm-external-link-cancel",
+				crate::dialog::Action::Neutral,
+			)
+			.clicked();
+		});
+	});
 	cancel |= response.close;
 	if confirm && !cancel {
 		// Revalidate the exact normalized destination shown above before emitting an OS action.
@@ -1202,7 +1214,11 @@ impl Formatted {
 							.take_while(|(_, style)| style.spoiler == spoiler)
 							.count();
 						let response = ui
-							.push_id(("spoiler", region), |ui| ui.button("Reveal spoiler"))
+							.push_id(("spoiler", region), |ui| {
+								ui.button(crate::i18n::translate(
+									"markdown-show-run-reveal-spoiler",
+								))
+							})
 							.inner;
 						render.surface.keep(&response);
 						if response.clicked() {
@@ -1231,7 +1247,9 @@ impl Formatted {
 										.color(colors.mention_text)
 										.background_color(colors.mention_bg),
 								))
-								.on_hover_text("Open channel");
+								.on_hover_text(crate::i18n::translate(
+									"markdown-show-run-open-channel",
+								));
 							render.surface.keep(&response);
 							response.widget_info(|| {
 								egui::WidgetInfo::labeled(
@@ -1252,13 +1270,17 @@ impl Formatted {
 										.color(colors.mention_text)
 										.background_color(colors.mention_bg),
 								))
-								.on_hover_text("Load channel");
+								.on_hover_text(crate::i18n::translate(
+									"markdown-show-run-load-channel",
+								));
 							render.surface.keep(&response);
 							response.widget_info(|| {
 								egui::WidgetInfo::labeled(
 									egui::Role::Link,
 									ui.is_enabled(),
-									"Unknown channel, load channel",
+									crate::i18n::translate(
+										"markdown-show-run-unknown-channel-load-channel",
+									),
 								)
 							});
 							if response.clicked() {
@@ -1270,9 +1292,9 @@ impl Formatted {
 							let (galley_pos, galley, response) = egui::Label::new(&spans[start].0)
 								.selectable(true)
 								.layout_in_ui(ui);
-							let response = response.on_hover_text(
-								"Channel unavailable or unsupported in this session",
-							);
+							let response = response.on_hover_text(crate::i18n::translate(
+								"markdown-show-run-channel-unavailable-or-unsupported-in-this-session",
+							));
 							render.surface.keep(&response);
 							render.surface.embed(&response, galley_pos, galley);
 						}
@@ -1291,7 +1313,9 @@ impl Formatted {
 									.color(colors.mention_text)
 									.background_color(colors.mention_bg),
 							))
-							.on_hover_text("Open user profile");
+							.on_hover_text(crate::i18n::translate(
+								"markdown-show-run-open-user-profile",
+							));
 						render.surface.keep(&response);
 						response.widget_info(|| {
 							egui::WidgetInfo::labeled(
@@ -1850,7 +1874,10 @@ impl Formatted {
 		}
 		if let Some(text) = ui.data(|data| data.get_temp::<Option<String>>(menu).flatten()) {
 			egui::Popup::context_menu(&response).id(menu).show(|ui| {
-				if ui.button("Copy emoji").clicked() {
+				if ui
+					.button(crate::i18n::translate("markdown-show-emoji-copy-emoji"))
+					.clicked()
+				{
 					ui.ctx().copy_text(text);
 					ui.close();
 				}

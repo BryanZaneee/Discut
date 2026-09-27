@@ -79,7 +79,7 @@ pub fn rail_name(response: &egui::Response, name: impl AsRef<str>) {
 #[derive(Clone, Copy, PartialEq, Eq, Debug, Default)]
 #[repr(u8)]
 pub enum Variant {
-	/// The house palette: cool blue-grey surfaces, following the light/dark preference.
+	/// The house palette: neutral grey surfaces, following the light/dark preference.
 	#[default]
 	Standard = 0,
 	/// Deep black surfaces for OLED displays.
@@ -281,9 +281,9 @@ fn dark_common(
 		hover,
 		selected,
 		border,
-		text_strong: rgb(0xeef1f6),
-		text: rgb(0xc9cfdb),
-		muted: rgb(0x8b93a5),
+		text_strong: rgb(0xededef),
+		text: rgb(0xcfcfd4),
+		muted: rgb(0x94949c),
 		link: rgb(0x54abff),
 		accent: PRIMARY,
 		accent_text: Color32::WHITE,
@@ -315,25 +315,25 @@ fn gradient(stops: [u32; 2]) -> Palette {
 pub fn builtin_colors(dark: bool, variant: Variant) -> Palette {
 	let palette = match variant {
 		Variant::Standard if dark => dark_common(
-			rgb(0x0d1016),
-			rgb(0x12161f),
-			rgb(0x161b25),
-			rgb(0x1d2431),
-			rgb(0x222a39),
-			rgb(0x2b3547),
-			rgb(0x212836),
+			rgb(0x0e0e10),
+			rgb(0x141416),
+			rgb(0x18181b),
+			rgb(0x202023),
+			rgb(0x242427),
+			rgb(0x2e2e32),
+			rgb(0x27272a),
 		),
 		Variant::Standard => Palette {
-			base: rgb(0xdde3ec),
-			sidebar: rgb(0xeef1f7),
+			base: rgb(0xe4e4e7),
+			sidebar: rgb(0xf2f2f4),
 			chat: Color32::WHITE,
-			raised: rgb(0xe6ebf3),
-			hover: rgb(0xe3e9f2),
-			selected: rgb(0xd1d9e6),
-			border: rgb(0xd9e0ea),
-			text_strong: rgb(0x0b0f16),
-			text: rgb(0x2c3340),
-			muted: rgb(0x5b6473),
+			raised: rgb(0xebebee),
+			hover: rgb(0xe8e8eb),
+			selected: rgb(0xdadade),
+			border: rgb(0xe0e0e4),
+			text_strong: rgb(0x0f0f11),
+			text: rgb(0x2f2f34),
+			muted: rgb(0x62626a),
 			link: rgb(0x0b63d6),
 			accent: PRIMARY,
 			accent_text: Color32::WHITE,
@@ -344,7 +344,7 @@ pub fn builtin_colors(dark: bool, variant: Variant) -> Palette {
 			mention_text: rgb(0x14508f),
 			backdrop: None,
 			canvas: Color32::WHITE,
-			surface: rgb(0xeef1f7),
+			surface: rgb(0xf2f2f4),
 		},
 		Variant::Eclipse => dark_common(
 			Color32::BLACK,
@@ -1650,7 +1650,7 @@ pub fn role_name_color(rgb: u32, background: Color32, fallback: Color32) -> Colo
 	}
 	fallback
 }
-fn luminance(c: Color32) -> f32 {
+pub(crate) fn luminance(c: Color32) -> f32 {
 	let channel = |v: u8| {
 		let v = v as f32 / 255.0;
 		if v <= 0.03928 {

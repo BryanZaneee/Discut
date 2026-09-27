@@ -1349,16 +1349,13 @@ fn preset_swatch(
 		painter.rect_filled(rect, 6, colors.hover);
 	}
 	let center = egui::pos2(rect.center().x, rect.top() + 24.0);
-	match swatch.backdrop {
-		Some([top, bottom]) => {
-			painter.circle_filled(center, 20.0, bottom);
-			painter.circle_filled(center - egui::vec2(5.0, 5.0), 11.0, top);
-		}
-		None => {
-			painter.circle_filled(center, 20.0, swatch.chat);
-			painter.circle_filled(center + egui::vec2(5.0, 5.0), 9.0, swatch.base);
-		}
-	}
+	let [top, bottom] = swatch.backdrop.unwrap_or_else(|| {
+		// Opaque presets run from their lightest surface to their darkest one.
+		let mut surfaces = [swatch.chat, swatch.selected, swatch.base];
+		surfaces.sort_by(|a, b| design::luminance(*b).total_cmp(&design::luminance(*a)));
+		[surfaces[0], surfaces[2]]
+	});
+	gradient_circle(painter, center, 20.0, top, bottom);
 	painter.circle_stroke(
 		center,
 		20.0,
@@ -1392,6 +1389,30 @@ fn preset_swatch(
 		},
 	);
 	response
+}
+
+/// Diagonal gradient from `top` (top-left) to `bottom` (bottom-right), like the window backdrop.
+fn gradient_circle(
+	painter: &egui::Painter,
+	center: egui::Pos2,
+	radius: f32,
+	top: egui::Color32,
+	bottom: egui::Color32,
+) {
+	const SEGMENTS: u32 = 48;
+	let color_at = |offset: egui::Vec2| {
+		let t = (offset.x + offset.y) / (2.0 * std::f32::consts::SQRT_2 * radius) + 0.5;
+		top.lerp_to_gamma(bottom, t)
+	};
+	let mut mesh = egui::Mesh::default();
+	mesh.colored_vertex(center, color_at(egui::Vec2::ZERO));
+	for i in 0..SEGMENTS {
+		let offset =
+			egui::Vec2::angled(i as f32 * std::f32::consts::TAU / SEGMENTS as f32) * radius;
+		mesh.colored_vertex(center + offset, color_at(offset));
+		mesh.add_triangle(0, 1 + i, 1 + (i + 1) % SEGMENTS);
+	}
+	painter.add(egui::Shape::mesh(mesh));
 }
 
 fn theme_preference_cards(ui: &mut egui::Ui) {

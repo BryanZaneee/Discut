@@ -46,6 +46,8 @@ pub struct TimelineView {
 	pub(super) hide_media_links: bool,
 	pub(super) instant_scrolling: bool,
 	applied_hide_media_links: bool,
+	pub(super) compact_messages: bool,
+	applied_compact_messages: bool,
 	pub(super) gif_favorite: Option<model::Gif>,
 	pub(super) invite_requests: Vec<String>,
 	pub(super) invite_action: Option<crate::invites::Action>,
@@ -342,6 +344,11 @@ fn layout_key(message: &Message) -> u64 {
 pub(crate) const MESSAGE_LINE: f32 = 22.0;
 const GROUPED_ROW_SAVINGS: f32 = 52.0;
 
+/// Space above a new message group: cozy by default, tighter when compact spacing is on.
+pub(crate) fn group_gap(compact_messages: bool) -> i8 {
+	if compact_messages { 4 } else { 10 }
+}
+
 fn reserved_chrome(ui: &egui::Ui, message: &Message, width: f32) -> f32 {
 	let reactions = crate::reactions::estimated_height(
 		ui,
@@ -509,7 +516,7 @@ fn starter_row(
 		.inner_margin(egui::Margin {
 			left: 16,
 			right: 16,
-			top: 14,
+			top: group_gap(false),
 			bottom: 6,
 		})
 		.show(ui, |ui| {
@@ -1484,9 +1491,11 @@ impl TimelineView {
 		let content_dimensions_changed = self.text_size != text_size
 			|| self.font_revision != font_revision
 			|| self.scale != scale
-			|| self.hide_media_links != self.applied_hide_media_links;
+			|| self.hide_media_links != self.applied_hide_media_links
+			|| self.compact_messages != self.applied_compact_messages;
 		let dimensions_changed = width_changed || content_dimensions_changed;
 		self.applied_hide_media_links = self.hide_media_links;
+		self.applied_compact_messages = self.compact_messages;
 		// A thread's starter joins the rows only once the whole thread history is loaded.
 		let starter = state.thread_starter().filter(|_| {
 			state.freshness == model::Freshness::Fresh
@@ -2030,7 +2039,11 @@ impl TimelineView {
 						.inner_margin(egui::Margin {
 							left: 16,
 							right: 16,
-							top: if compact { 1 } else { 14 },
+							top: if compact {
+								1
+							} else {
+								group_gap(self.compact_messages)
+							},
 							bottom: 1,
 						})
 						.show(ui, |ui| {
@@ -3205,7 +3218,7 @@ impl TimelineView {
 					crate::pending::show(
 						ui,
 						pending,
-						compact,
+						(compact, group_gap(self.compact_messages)),
 						state,
 						(
 							avatars,

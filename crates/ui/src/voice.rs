@@ -426,10 +426,10 @@ impl MessagingUi {
 		});
 		response.on_hover_text_with(|| {
 			format!(
-				"{} Â· View voice channel{}{}",
+				"{} · View voice channel{}{}",
 				channel.name,
 				channel_marks::label(access),
-				if connected { " Â· Connected" } else { "" }
+				if connected { " · Connected" } else { "" }
 			)
 		})
 	}
@@ -841,7 +841,7 @@ impl MessagingUi {
 				self.screen_tile(ui, rect, compact);
 				self.screen
 					.capture_status
-					.unwrap_or("Your screen Â· local preview")
+					.unwrap_or("Your screen · local preview")
 			}
 			Tile::Stream(streamer) => {
 				self.stream_tile(ui, state, rect, channel, *streamer, compact);
@@ -866,7 +866,7 @@ impl MessagingUi {
 			let hover = if hint.is_empty() {
 				label.to_owned()
 			} else {
-				format!("{hint} Â· {label}")
+				format!("{hint} · {label}")
 			};
 			if response.clicked() {
 				return Some(tile.focus());
@@ -1226,7 +1226,7 @@ impl MessagingUi {
 		} else if !connected {
 			if state.demo {
 				notices.push((
-					"Synthetic participants Â· microphone and speakers are off.".into(),
+					"Synthetic participants · microphone and speakers are off.".into(),
 					false,
 				));
 			} else if let Some(reason) = self.call_unavailable(state, channel) {
@@ -2749,17 +2749,31 @@ impl MessagingUi {
 			.filter(|call| call.guild.is_none() && Some(call.channel) == selected)
 			.map(|call| call.channel)
 		{
-			let height = if self.stage_shows_video(state, channel) || state.is_group_dm(channel) {
+			let stage = self.stage_shows_video(state, channel) || state.is_group_dm(channel);
+			let height = if stage {
 				(ui.available_height() * 0.74).clamp(320.0, 900.0)
 			} else {
-				(ui.available_height() * 0.42).clamp(240.0, 340.0)
+				(ui.available_height() * 0.5).clamp(300.0, 440.0)
 			};
-			egui::Panel::top("dm-call")
-				.exact_size(height)
+			// Dragging the bottom edge resizes the call; video and voice-only keep separate sizes.
+			// The conversation and composer below always keep at least 160 points.
+			let maximum = (ui.available_height() - 160.0).max(180.0);
+			let id = if stage {
+				"dm-call-video"
+			} else {
+				"dm-call-voice"
+			};
+			egui::Panel::top(id)
+				.resizable(true)
+				.default_size(height)
+				.size_range(180.0..=maximum)
 				.show_separator_line(false)
 				.frame(egui::Frame::new().fill(STAGE_FILL))
 				.show(ui, |ui| {
 					let rect = ui.max_rect();
+					// The children below do not grow this Ui; claim the whole panel so its
+					// background follows a resize and egui keeps the dragged size.
+					ui.expand_to_include_rect(rect);
 					let notices = self.stage_notices(state, channel, true);
 					let mut notice_ui = ui.new_child(
 						egui::UiBuilder::new()
@@ -3406,7 +3420,7 @@ fn speaking_avatar(ui: &egui::Ui, avatar: &egui::Response, name: &str) {
 		avatar.rect.width() * 0.5 + 2.0,
 		egui::Stroke::new(2.0, colors.positive),
 	);
-	let label = format!("{name} Â· Speaking");
+	let label = format!("{name} · Speaking");
 	avatar.widget_info(|| egui::WidgetInfo::labeled(egui::Role::Image, true, &label));
 	avatar.clone().on_hover_text(label);
 }

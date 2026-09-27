@@ -477,6 +477,19 @@ impl LocalStore {
 		if !has_scroll_speed {
 			transaction.execute_batch("ALTER TABLE reading_preferences ADD COLUMN scroll_speed_percent INTEGER NOT NULL DEFAULT 100 CHECK(typeof(scroll_speed_percent)='integer' AND scroll_speed_percent BETWEEN 25 AND 300);")?;
 		}
+		let has_show_members_dms: bool = transaction.query_row(
+			"SELECT EXISTS(SELECT 1 FROM pragma_table_info('reading_preferences') WHERE name='show_members_dms')", [], |row| row.get(0),
+		)?;
+		if !has_show_members_dms {
+			// Direct messages start from the single member-list choice saved before the split.
+			transaction.execute_batch("ALTER TABLE reading_preferences ADD COLUMN show_members_dms INTEGER NOT NULL DEFAULT 1 CHECK(typeof(show_members_dms)='integer' AND show_members_dms IN (0,1)); UPDATE reading_preferences SET show_members_dms=show_members;")?;
+		}
+		let has_compact_messages: bool = transaction.query_row(
+			"SELECT EXISTS(SELECT 1 FROM pragma_table_info('reading_preferences') WHERE name='compact_messages')", [], |row| row.get(0),
+		)?;
+		if !has_compact_messages {
+			transaction.execute_batch("ALTER TABLE reading_preferences ADD COLUMN compact_messages INTEGER NOT NULL DEFAULT 0 CHECK(typeof(compact_messages)='integer' AND compact_messages IN (0,1));")?;
+		}
 		let has_author_roles: bool = transaction.query_row(
 			"SELECT EXISTS(SELECT 1 FROM pragma_table_info('messages') WHERE name='author_roles')",
 			[],
@@ -626,7 +639,7 @@ impl LocalStore {
 		let stored = self
 			.0
 			.query_row(
-				"SELECT zoom_percent,sidebar_width,show_members,animate_gifs,hide_media_links,confirm_external_links,smooth_scrolling,scroll_speed_percent FROM reading_preferences WHERE singleton=1",
+				"SELECT zoom_percent,sidebar_width,show_members,animate_gifs,hide_media_links,confirm_external_links,smooth_scrolling,scroll_speed_percent,show_members_dms,compact_messages FROM reading_preferences WHERE singleton=1",
 				[],
 				|row| {
 					Ok(match (
@@ -638,6 +651,8 @@ impl LocalStore {
 						row.get_ref(5)?,
 						row.get_ref(6)?,
 						row.get_ref(7)?,
+						row.get_ref(8)?,
+						row.get_ref(9)?,
 					) {
 						(
 							ValueRef::Integer(zoom @ 80..=150),
@@ -648,10 +663,14 @@ impl LocalStore {
 							ValueRef::Integer(confirm_external_links @ 0..=1),
 							ValueRef::Integer(smooth_scrolling @ 0..=1),
 							ValueRef::Integer(scroll_speed_percent @ 25..=300),
+							ValueRef::Integer(members_dms @ 0..=1),
+							ValueRef::Integer(compact_messages @ 0..=1),
 						) => Some(ReadingPreferences {
 							zoom_percent: zoom as u16,
 							sidebar_width: width as u16,
 							show_members: members == 1,
+							show_members_dms: members_dms == 1,
+							compact_messages: compact_messages == 1,
 							animate_gifs: animate_gifs == 1,
 							hide_media_links: hide_media_links == 1,
 							confirm_external_links: confirm_external_links == 1,
@@ -678,10 +697,10 @@ impl LocalStore {
 			self.0
 				.execute("DELETE FROM reading_preferences WHERE singleton=1", [])?;
 		} else {
-			self.0.execute("INSERT INTO reading_preferences(singleton,zoom_percent,sidebar_width,show_members,animate_gifs,hide_media_links,confirm_external_links,smooth_scrolling,scroll_speed_percent)
-				VALUES(1,?1,?2,?3,?4,?5,?6,?7,?8) ON CONFLICT(singleton) DO UPDATE SET
-				zoom_percent=excluded.zoom_percent,sidebar_width=excluded.sidebar_width,show_members=excluded.show_members,animate_gifs=excluded.animate_gifs,hide_media_links=excluded.hide_media_links,confirm_external_links=excluded.confirm_external_links,smooth_scrolling=excluded.smooth_scrolling,scroll_speed_percent=excluded.scroll_speed_percent",
-				params![preferences.zoom_percent, preferences.sidebar_width, preferences.show_members, preferences.animate_gifs, preferences.hide_media_links, preferences.confirm_external_links, preferences.smooth_scrolling, preferences.scroll_speed_percent])?;
+			self.0.execute("INSERT INTO reading_preferences(singleton,zoom_percent,sidebar_width,show_members,animate_gifs,hide_media_links,confirm_external_links,smooth_scrolling,scroll_speed_percent,show_members_dms,compact_messages)
+				VALUES(1,?1,?2,?3,?4,?5,?6,?7,?8,?9,?10) ON CONFLICT(singleton) DO UPDATE SET
+				zoom_percent=excluded.zoom_percent,sidebar_width=excluded.sidebar_width,show_members=excluded.show_members,animate_gifs=excluded.animate_gifs,hide_media_links=excluded.hide_media_links,confirm_external_links=excluded.confirm_external_links,smooth_scrolling=excluded.smooth_scrolling,scroll_speed_percent=excluded.scroll_speed_percent,show_members_dms=excluded.show_members_dms,compact_messages=excluded.compact_messages",
+				params![preferences.zoom_percent, preferences.sidebar_width, preferences.show_members, preferences.animate_gifs, preferences.hide_media_links, preferences.confirm_external_links, preferences.smooth_scrolling, preferences.scroll_speed_percent, preferences.show_members_dms, preferences.compact_messages])?;
 		}
 		Ok(())
 	}
@@ -2126,6 +2145,8 @@ mod tests {
 			zoom_percent: 125,
 			sidebar_width: 300,
 			show_members: false,
+			show_members_dms: false,
+			compact_messages: false,
 			animate_gifs: false,
 			smooth_scrolling: true,
 			scroll_speed_percent: 100,
@@ -2451,6 +2472,8 @@ mod tests {
 			zoom_percent: 125,
 			sidebar_width: 300,
 			show_members: false,
+			show_members_dms: false,
+			compact_messages: false,
 			animate_gifs: false,
 			smooth_scrolling: true,
 			scroll_speed_percent: 100,
@@ -2469,6 +2492,8 @@ mod tests {
 				zoom_percent: 150,
 				sidebar_width: 360,
 				show_members: true,
+				show_members_dms: true,
+				compact_messages: false,
 				animate_gifs: false,
 				smooth_scrolling: true,
 				scroll_speed_percent: 100,
@@ -2625,6 +2650,8 @@ mod tests {
 					zoom_percent,
 					sidebar_width,
 					show_members,
+					show_members_dms: show_members,
+					compact_messages: false,
 					animate_gifs: false,
 					smooth_scrolling: true,
 					scroll_speed_percent: 100,
@@ -2650,6 +2677,8 @@ mod tests {
 					zoom_percent,
 					sidebar_width,
 					show_members: false,
+					show_members_dms: false,
+					compact_messages: false,
 					animate_gifs: false,
 					smooth_scrolling: true,
 					scroll_speed_percent: 100,
@@ -2666,6 +2695,8 @@ mod tests {
 				zoom_percent: 90,
 				sidebar_width: 200,
 				show_members: false,
+				show_members_dms: false,
+				compact_messages: false,
 				animate_gifs: false,
 				smooth_scrolling: true,
 				scroll_speed_percent: 100,

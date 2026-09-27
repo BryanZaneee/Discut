@@ -2077,17 +2077,25 @@ reading-chat-reading-settings-scrolling-speed = Velocidad de desplazamiento
 # Context: chat_reading_settings
 reading-chat-reading-settings-smooth-scrolling = Desplazamiento suave
 # Context: chat_reading_settings
+reading-chat-reading-settings-compact-message-spacing = Espaciado compacto de mensajes
+# Context: chat_reading_settings
+reading-chat-reading-settings-tighter-gaps-between-message-groups = Espacios más reducidos entre grupos de mensajes muestran más mensajes en pantalla.
+# Context: chat_reading_settings
 reading-chat-reading-settings-visible-chat-gifs-play-automatically = Los GIF de chat visibles se reproducen automáticamente.
 # Context: layout_settings
 reading-layout-settings-channel-and-conversation-list-width-in-wide-windows = Ancho de lista de canales y conversaciones en ventanas amplias.
 # Context: layout_settings
-reading-layout-settings-keep-the-member-list-open-whenever-the-window-is-wide = Mantenga abierta la lista de miembros siempre que la ventana sea lo suficientemente amplia.
+reading-layout-settings-keep-the-server-member-list-open = Mantiene abierta la lista de miembros del servidor cuando la ventana es lo bastante amplia.
+# Context: layout_settings
+reading-layout-settings-keep-the-member-list-open-in-direct-messages = Mantiene abierta la lista de miembros en mensajes directos y de grupo cuando la ventana es lo bastante amplia.
 # Context: layout_settings
 reading-layout-settings-layout = Disposición
 # Context: layout_settings
 reading-layout-settings-reset-layout = Restablecer diseño
 # Context: layout_settings
-reading-layout-settings-show-people-in-wide-windows = Mostrar personas en ventanas amplias
+reading-layout-settings-show-people-in-servers = Mostrar personas en servidores
+# Context: layout_settings
+reading-layout-settings-show-people-in-direct-messages = Mostrar personas en mensajes directos
 # Context: layout_settings
 reading-layout-settings-sidebar-width = Ancho de la barra lateral
 # Context: reading_save_notice

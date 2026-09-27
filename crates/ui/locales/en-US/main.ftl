@@ -2077,17 +2077,25 @@ reading-chat-reading-settings-scrolling-speed = Scrolling speed
 # Context: chat_reading_settings
 reading-chat-reading-settings-smooth-scrolling = Smooth scrolling
 # Context: chat_reading_settings
+reading-chat-reading-settings-compact-message-spacing = Compact message spacing
+# Context: chat_reading_settings
+reading-chat-reading-settings-tighter-gaps-between-message-groups = Tighter gaps between message groups fit more messages on screen.
+# Context: chat_reading_settings
 reading-chat-reading-settings-visible-chat-gifs-play-automatically = Visible chat GIFs play automatically.
 # Context: layout_settings
 reading-layout-settings-channel-and-conversation-list-width-in-wide-windows = Channel and conversation list width in wide windows.
 # Context: layout_settings
-reading-layout-settings-keep-the-member-list-open-whenever-the-window-is-wide = Keep the member list open whenever the window is wide enough.
+reading-layout-settings-keep-the-server-member-list-open = Keep the server member list open when the window is wide enough.
+# Context: layout_settings
+reading-layout-settings-keep-the-member-list-open-in-direct-messages = Keep the member list open in direct and group messages when the window is wide enough.
 # Context: layout_settings
 reading-layout-settings-layout = Layout
 # Context: layout_settings
 reading-layout-settings-reset-layout = Reset layout
 # Context: layout_settings
-reading-layout-settings-show-people-in-wide-windows = Show People in wide windows
+reading-layout-settings-show-people-in-servers = Show People in servers
+# Context: layout_settings
+reading-layout-settings-show-people-in-direct-messages = Show People in direct messages
 # Context: layout_settings
 reading-layout-settings-sidebar-width = Sidebar width
 # Context: reading_save_notice
@@ -3858,7 +3866,7 @@ voice-stream-tile-stream-muted = Stream muted
 # Context: voice_audio_controls
 voice-voice-audio-controls-microphone = Microphone
 # Context: voice_audio_controls
-voice-voice-audio-controls-microphone-unavailable-a-choose-another-input-you-are-still-connected = Microphone unavailable Â· choose another input. You are still connected.
+voice-voice-audio-controls-microphone-unavailable-a-choose-another-input-you-are-still-connected = Microphone unavailable · choose another input. You are still connected.
 # Context: voice_audio_controls
 voice-voice-audio-controls-refresh-devices = Refresh devices
 # Context: voice_audio_controls
@@ -3872,13 +3880,13 @@ voice-voice-card-section-disconnect = Disconnect
 # Context: voice_card_section
 voice-voice-card-section-dismiss-call = Dismiss call
 # Context: voice_card_section
-voice-voice-card-section-microphone-unavailable-a-still-connected-choose-another-input-in-audio = Microphone unavailable Â· still connected. Choose another input in Audio settings.
+voice-voice-card-section-microphone-unavailable-a-still-connected-choose-another-input-in-audio = Microphone unavailable · still connected. Choose another input in Audio settings.
 # Context: voice_channel_button
 voice-voice-channel-button-connected = , connected
 # Context: voice_channel_button
 voice-voice-channel-button-voice-channel = voice channel
 # Context: voice_channel
-voice-voice-channel-last-known-participants-a-reconnect-to-refresh = Last known participants Â· reconnect to refresh
+voice-voice-channel-last-known-participants-a-reconnect-to-refresh = Last known participants · reconnect to refresh
 # Context: voice_channel
 voice-voice-channel-no-one-s-here-yet = No one's here yet
 # Context: voice_channel
@@ -3918,7 +3926,7 @@ voice-voice-popup-content-microphone = Microphone
 # Context: voice_popup_content
 voice-voice-popup-content-microphone-gain = Microphone gain
 # Context: voice_popup_content
-voice-voice-popup-content-microphone-unavailable-a-choose-another-input-you-are-still-connected = Microphone unavailable Â· choose another input. You are still connected.
+voice-voice-popup-content-microphone-unavailable-a-choose-another-input-you-are-still-connected = Microphone unavailable · choose another input. You are still connected.
 # Context: voice_popup_content
 voice-voice-popup-content-noise-suppression = Noise suppression
 # Context: voice_popup_content

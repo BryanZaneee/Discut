@@ -2077,17 +2077,25 @@ reading-chat-reading-settings-scrolling-speed = Szybkość przewijania
 # Context: chat_reading_settings
 reading-chat-reading-settings-smooth-scrolling = Płynne przewijanie
 # Context: chat_reading_settings
+reading-chat-reading-settings-compact-message-spacing = Kompaktowe odstępy wiadomości
+# Context: chat_reading_settings
+reading-chat-reading-settings-tighter-gaps-between-message-groups = Mniejsze odstępy między grupami wiadomości mieszczą więcej wiadomości na ekranie.
+# Context: chat_reading_settings
 reading-chat-reading-settings-visible-chat-gifs-play-automatically = Widoczne GIF-y czatu odtwarzają się automatycznie.
 # Context: layout_settings
 reading-layout-settings-channel-and-conversation-list-width-in-wide-windows = Szerokość listy kanałów i rozmów w szerokich oknach.
 # Context: layout_settings
-reading-layout-settings-keep-the-member-list-open-whenever-the-window-is-wide = Pozostaw listę członków otwartą, gdy okno jest wystarczająco szerokie.
+reading-layout-settings-keep-the-server-member-list-open = Lista członków serwera pozostaje otwarta, gdy okno jest wystarczająco szerokie.
+# Context: layout_settings
+reading-layout-settings-keep-the-member-list-open-in-direct-messages = Lista członków pozostaje otwarta w wiadomościach prywatnych i grupowych, gdy okno jest wystarczająco szerokie.
 # Context: layout_settings
 reading-layout-settings-layout = Układ
 # Context: layout_settings
 reading-layout-settings-reset-layout = Zresetuj układ
 # Context: layout_settings
-reading-layout-settings-show-people-in-wide-windows = Pokaż Ludzie w szerokich oknach
+reading-layout-settings-show-people-in-servers = Pokaż osoby na serwerach
+# Context: layout_settings
+reading-layout-settings-show-people-in-direct-messages = Pokaż osoby w wiadomościach prywatnych
 # Context: layout_settings
 reading-layout-settings-sidebar-width = Szerokość paska bocznego
 # Context: reading_save_notice
@@ -3858,7 +3866,7 @@ voice-stream-tile-stream-muted = Strumień wyciszony
 # Context: voice_audio_controls
 voice-voice-audio-controls-microphone = Mikrofon
 # Context: voice_audio_controls
-voice-voice-audio-controls-microphone-unavailable-a-choose-another-input-you-are-still-connected = Mikrofon niedostępny Â· wybierz inne wejście. Nadal masz połączenie.
+voice-voice-audio-controls-microphone-unavailable-a-choose-another-input-you-are-still-connected = Mikrofon niedostępny · wybierz inne wejście. Nadal masz połączenie.
 # Context: voice_audio_controls
 voice-voice-audio-controls-refresh-devices = Odśwież urządzenia
 # Context: voice_audio_controls
@@ -3918,7 +3926,7 @@ voice-voice-popup-content-microphone = Mikrofon
 # Context: voice_popup_content
 voice-voice-popup-content-microphone-gain = Wzmocnienie mikrofonu
 # Context: voice_popup_content
-voice-voice-popup-content-microphone-unavailable-a-choose-another-input-you-are-still-connected = Mikrofon niedostępny Â· wybierz inne wejście. Nadal masz połączenie.
+voice-voice-popup-content-microphone-unavailable-a-choose-another-input-you-are-still-connected = Mikrofon niedostępny · wybierz inne wejście. Nadal masz połączenie.
 # Context: voice_popup_content
 voice-voice-popup-content-noise-suppression = Tłumienie hałasu
 # Context: voice_popup_content

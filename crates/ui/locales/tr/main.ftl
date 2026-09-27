@@ -2077,17 +2077,25 @@ reading-chat-reading-settings-scrolling-speed = Kaydırma hızı
 # Context: chat_reading_settings
 reading-chat-reading-settings-smooth-scrolling = Düzgün kaydırma
 # Context: chat_reading_settings
+reading-chat-reading-settings-compact-message-spacing = Sıkı mesaj aralığı
+# Context: chat_reading_settings
+reading-chat-reading-settings-tighter-gaps-between-message-groups = Mesaj grupları arasındaki daha dar boşluklar ekrana daha fazla mesaj sığdırır.
+# Context: chat_reading_settings
 reading-chat-reading-settings-visible-chat-gifs-play-automatically = Görünür sohbet GIF'leri otomatik olarak oynatılır.
 # Context: layout_settings
 reading-layout-settings-channel-and-conversation-list-width-in-wide-windows = Geniş pencerelerde kanal ve konuşma listesi genişliği.
 # Context: layout_settings
-reading-layout-settings-keep-the-member-list-open-whenever-the-window-is-wide = Pencere yeterince geniş olduğunda üye listesini açık tutun.
+reading-layout-settings-keep-the-server-member-list-open = Pencere yeterince geniş olduğunda sunucu üye listesi açık kalır.
+# Context: layout_settings
+reading-layout-settings-keep-the-member-list-open-in-direct-messages = Pencere yeterince geniş olduğunda doğrudan ve grup mesajlarında üye listesi açık kalır.
 # Context: layout_settings
 reading-layout-settings-layout = Düzen
 # Context: layout_settings
 reading-layout-settings-reset-layout = Düzeni sıfırla
 # Context: layout_settings
-reading-layout-settings-show-people-in-wide-windows = Kişileri geniş pencerelerde göster
+reading-layout-settings-show-people-in-servers = Sunucularda kişileri göster
+# Context: layout_settings
+reading-layout-settings-show-people-in-direct-messages = Doğrudan mesajlarda kişileri göster
 # Context: layout_settings
 reading-layout-settings-sidebar-width = Kenar çubuğu genişliği
 # Context: reading_save_notice
@@ -3858,7 +3866,7 @@ voice-stream-tile-stream-muted = Akışın sesi kapatıldı
 # Context: voice_audio_controls
 voice-voice-audio-controls-microphone = Mikrofon
 # Context: voice_audio_controls
-voice-voice-audio-controls-microphone-unavailable-a-choose-another-input-you-are-still-connected = Mikrofon kullanılamıyor Â· başka bir giriş seçin. Hala bağlısınız.
+voice-voice-audio-controls-microphone-unavailable-a-choose-another-input-you-are-still-connected = Mikrofon kullanılamıyor · başka bir giriş seçin. Hala bağlısınız.
 # Context: voice_audio_controls
 voice-voice-audio-controls-refresh-devices = Cihazları yenile
 # Context: voice_audio_controls
@@ -3872,13 +3880,13 @@ voice-voice-card-section-disconnect = Bağlantıyı kes
 # Context: voice_card_section
 voice-voice-card-section-dismiss-call = Aramayı reddet
 # Context: voice_card_section
-voice-voice-card-section-microphone-unavailable-a-still-connected-choose-another-input-in-audio = Mikrofon kullanılamıyor Â· hala bağlı. Ses ayarlarında başka bir giriş seçin.
+voice-voice-card-section-microphone-unavailable-a-still-connected-choose-another-input-in-audio = Mikrofon kullanılamıyor · hala bağlı. Ses ayarlarında başka bir giriş seçin.
 # Context: voice_channel_button
 voice-voice-channel-button-connected = , bağlı
 # Context: voice_channel_button
 voice-voice-channel-button-voice-channel = ses kanalı
 # Context: voice_channel
-voice-voice-channel-last-known-participants-a-reconnect-to-refresh = Bilinen son katılımcılar Â· yenilemek için yeniden bağlanın
+voice-voice-channel-last-known-participants-a-reconnect-to-refresh = Bilinen son katılımcılar · yenilemek için yeniden bağlanın
 # Context: voice_channel
 voice-voice-channel-no-one-s-here-yet = Henüz kimse burada değil
 # Context: voice_channel
@@ -3918,7 +3926,7 @@ voice-voice-popup-content-microphone = Mikrofon
 # Context: voice_popup_content
 voice-voice-popup-content-microphone-gain = Mikrofon kazancı
 # Context: voice_popup_content
-voice-voice-popup-content-microphone-unavailable-a-choose-another-input-you-are-still-connected = Mikrofon kullanılamıyor Â· başka bir giriş seçin. Hala bağlısınız.
+voice-voice-popup-content-microphone-unavailable-a-choose-another-input-you-are-still-connected = Mikrofon kullanılamıyor · başka bir giriş seçin. Hala bağlısınız.
 # Context: voice_popup_content
 voice-voice-popup-content-noise-suppression = Gürültü bastırma
 # Context: voice_popup_content

@@ -29,7 +29,8 @@ const MAX_WIDTH: f32 = 432.0;
 pub fn show(
 	ui: &mut egui::Ui,
 	pending: &Pending,
-	compact: bool,
+	// Whether the row continues a group, and the gap above a new group.
+	(compact, gap): (bool, i8),
 	state: &State,
 	media: (
 		&mut crate::avatars::Avatars,
@@ -57,7 +58,7 @@ pub fn show(
 		.inner_margin(egui::Margin {
 			left: 16,
 			right: 16,
-			top: if compact { 1 } else { 14 },
+			top: if compact { 1 } else { gap },
 			bottom: 1,
 		})
 		.show(ui, |ui| {
@@ -475,7 +476,7 @@ mod tests {
 						show(
 							ui,
 							&pending,
-							true,
+							(true, 10),
 							&state,
 							(
 								&mut crate::avatars::Avatars::default(),

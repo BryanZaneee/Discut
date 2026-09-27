@@ -209,6 +209,9 @@ pub struct MessagingUi {
 	pub channel_preferences_reload: bool,
 	pub channel_preferences_save_pending: bool,
 	pub channel_preferences_status: &'static str,
+	/// Saved per-server channels still need to reach this session's navigation memory.
+	last_channels_seed: bool,
+	last_channel_recorded: Option<Id>,
 	join_server: join_server::JoinDialog,
 	folder_ui: guild_folders::FolderUi,
 	rail_cache: notifications::RailCache,
@@ -897,7 +900,43 @@ impl MessagingUi {
 			self.channel_preferences = preferences;
 			self.channel_preferences_loaded = true;
 			self.channel_preferences_status = "";
+			self.last_channels_seed = true;
+			self.last_channel_recorded = None;
 			self.channel_cache.invalidate();
+		}
+	}
+	/// Direct messages and servers each remember whether the wide member list is open.
+	fn members_preference(&mut self, state: &State) -> &mut bool {
+		if state
+			.selected
+			.and_then(|id| state.channel(id))
+			.is_some_and(|channel| channel.guild.is_none())
+		{
+			&mut self.reading_preferences.show_members_dms
+		} else {
+			&mut self.reading_preferences.show_members
+		}
+	}
+	/// Servers reopen to their last text channel across restarts, not only within a session.
+	fn sync_last_channels(&mut self, state: &mut State) {
+		if !self.channel_preferences_loaded {
+			return;
+		}
+		if std::mem::take(&mut self.last_channels_seed) {
+			state.seed_viewed_channels(&self.channel_preferences.last_channels);
+		}
+		if state.selected == self.last_channel_recorded {
+			return;
+		}
+		self.last_channel_recorded = state.selected;
+		if let Some(channel) = state
+			.selected
+			.and_then(|id| state.channel(id))
+			.filter(|channel| !matches!(channel.kind, 2 | 10..=13))
+			&& let Some(guild) = channel.guild
+		{
+			self.channel_preferences_changed |=
+				self.channel_preferences.remember_channel(guild, channel.id);
 		}
 	}
 	pub fn has_edit(&self) -> bool {
@@ -2054,8 +2093,8 @@ impl MessagingUi {
 							.clicked()
 							{
 								if wide_members {
-									self.reading_preferences.show_members =
-										!self.reading_preferences.show_members;
+									let shown = self.members_preference(state);
+									*shown = !*shown;
 								} else {
 									self.members_narrow_open = !self.members_narrow_open;
 								}
@@ -2533,7 +2572,19 @@ impl MessagingUi {
 		if editing_here {
 			self.edit_widget_id = Some(composer_id);
 		}
-		if focus_composer {
+		// Typing while nothing has keyboard focus starts writing in the composer, like Discord.
+		// Focus moves before the editor runs this frame, so it also receives the typed text.
+		let typed = keyboard_enabled
+			&& !egui::Popup::is_any_open(ctx)
+			&& ctx.memory(|m| m.focused().is_none())
+			&& ctx.input(|i| {
+				!i.modifiers.command
+					&& !i.modifiers.ctrl
+					&& i.events.iter().any(|event| {
+						matches!(event, egui::Event::Text(text) if text.chars().any(|c| !c.is_control() && !c.is_whitespace()))
+					})
+			});
+		if focus_composer || typed {
 			ctx.memory_mut(|m| m.request_focus(composer_id));
 		}
 		if focus_edit {
@@ -3614,6 +3665,8 @@ impl MessagingUi {
 		if self.channel_preferences_changed {
 			self.channel_cache.invalidate();
 		}
+		// After the sidebar check: remembering a visit does not change the channel list.
+		self.sync_last_channels(state);
 		self.channel_menu
 			.show(&ctx, state, self.guild, &mut self.avatars, &mut commands);
 		if let Some((guild, channel)) = self.channel_menu.invite_requested.take() {
@@ -3649,7 +3702,7 @@ impl MessagingUi {
 			&& !search_open
 			&& state.selected.is_some()
 			&& if wide_members {
-				self.reading_preferences.show_members
+				*self.members_preference(state)
 			} else {
 				self.members_narrow_open
 			};
@@ -3952,6 +4005,7 @@ impl MessagingUi {
 					.show(ui, |ui| {
 						design::paint_chat_background(ui, ui.available_rect_before_wrap());
 						self.timeline.hide_media_links = self.reading_preferences.hide_media_links;
+						self.timeline.compact_messages = self.reading_preferences.compact_messages;
 						self.timeline.instant_scrolling =
 							!self.reading_preferences.smooth_scrolling;
 						self.timeline.extension_actions = self.extensions.message_actions();

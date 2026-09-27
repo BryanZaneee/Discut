@@ -2077,17 +2077,25 @@ reading-chat-reading-settings-scrolling-speed = Vitesse de défilement
 # Context: chat_reading_settings
 reading-chat-reading-settings-smooth-scrolling = Défilement fluide
 # Context: chat_reading_settings
+reading-chat-reading-settings-compact-message-spacing = Espacement compact des messages
+# Context: chat_reading_settings
+reading-chat-reading-settings-tighter-gaps-between-message-groups = Des écarts réduits entre les groupes de messages affichent plus de messages à l'écran.
+# Context: chat_reading_settings
 reading-chat-reading-settings-visible-chat-gifs-play-automatically = Les GIF de chat visibles sont lus automatiquement.
 # Context: layout_settings
 reading-layout-settings-channel-and-conversation-list-width-in-wide-windows = Largeur de la liste des chaînes et des conversations dans de larges fenêtres.
 # Context: layout_settings
-reading-layout-settings-keep-the-member-list-open-whenever-the-window-is-wide = Gardez la liste des membres ouverte chaque fois que la fenêtre est suffisamment large.
+reading-layout-settings-keep-the-server-member-list-open = Garde la liste des membres du serveur ouverte lorsque la fenêtre est assez large.
+# Context: layout_settings
+reading-layout-settings-keep-the-member-list-open-in-direct-messages = Garde la liste des membres ouverte dans les messages privés et de groupe lorsque la fenêtre est assez large.
 # Context: layout_settings
 reading-layout-settings-layout = Mise en page
 # Context: layout_settings
 reading-layout-settings-reset-layout = Réinitialiser la mise en page
 # Context: layout_settings
-reading-layout-settings-show-people-in-wide-windows = Afficher les personnes dans de larges fenêtres
+reading-layout-settings-show-people-in-servers = Afficher les personnes sur les serveurs
+# Context: layout_settings
+reading-layout-settings-show-people-in-direct-messages = Afficher les personnes dans les messages privés
 # Context: layout_settings
 reading-layout-settings-sidebar-width = Largeur de la barre latérale
 # Context: reading_save_notice

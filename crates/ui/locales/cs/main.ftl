@@ -2077,17 +2077,25 @@ reading-chat-reading-settings-scrolling-speed = Rychlost rolování
 # Context: chat_reading_settings
 reading-chat-reading-settings-smooth-scrolling = Plynulé rolování
 # Context: chat_reading_settings
+reading-chat-reading-settings-compact-message-spacing = Kompaktní rozestupy zpráv
+# Context: chat_reading_settings
+reading-chat-reading-settings-tighter-gaps-between-message-groups = Menší mezery mezi skupinami zpráv zobrazí na obrazovce více zpráv.
+# Context: chat_reading_settings
 reading-chat-reading-settings-visible-chat-gifs-play-automatically = Viditelné GIFy chatu se přehrávají automaticky.
 # Context: layout_settings
 reading-layout-settings-channel-and-conversation-list-width-in-wide-windows = Šířka seznamu kanálů a konverzací v širokých oknech.
 # Context: layout_settings
-reading-layout-settings-keep-the-member-list-open-whenever-the-window-is-wide = Udržujte seznam členů otevřený, kdykoli je okno dostatečně široké.
+reading-layout-settings-keep-the-server-member-list-open = Seznam členů serveru zůstane otevřený, když je okno dostatečně široké.
+# Context: layout_settings
+reading-layout-settings-keep-the-member-list-open-in-direct-messages = Seznam členů zůstane otevřený v přímých a skupinových zprávách, když je okno dostatečně široké.
 # Context: layout_settings
 reading-layout-settings-layout = Rozložení
 # Context: layout_settings
 reading-layout-settings-reset-layout = Obnovit rozložení
 # Context: layout_settings
-reading-layout-settings-show-people-in-wide-windows = Zobrazit lidi v širokých oknech
+reading-layout-settings-show-people-in-servers = Zobrazit lidi na serverech
+# Context: layout_settings
+reading-layout-settings-show-people-in-direct-messages = Zobrazit lidi v přímých zprávách
 # Context: layout_settings
 reading-layout-settings-sidebar-width = Šířka boční lišty
 # Context: reading_save_notice
@@ -3872,13 +3880,13 @@ voice-voice-card-section-disconnect = Odpojit
 # Context: voice_card_section
 voice-voice-card-section-dismiss-call = Zrušit hovor
 # Context: voice_card_section
-voice-voice-card-section-microphone-unavailable-a-still-connected-choose-another-input-in-audio = Mikrofon není k dispozici Â· stále připojen. V nastavení zvuku vyberte jiný vstup.
+voice-voice-card-section-microphone-unavailable-a-still-connected-choose-another-input-in-audio = Mikrofon není k dispozici · stále připojen. V nastavení zvuku vyberte jiný vstup.
 # Context: voice_channel_button
 voice-voice-channel-button-connected = , připojeno
 # Context: voice_channel_button
 voice-voice-channel-button-voice-channel = hlasový kanál
 # Context: voice_channel
-voice-voice-channel-last-known-participants-a-reconnect-to-refresh = Poslední známí účastníci Â· znovu se připojte k obnovení
+voice-voice-channel-last-known-participants-a-reconnect-to-refresh = Poslední známí účastníci · znovu se připojte k obnovení
 # Context: voice_channel
 voice-voice-channel-no-one-s-here-yet = Nikdo tu ještě není
 # Context: voice_channel

@@ -2077,17 +2077,25 @@ reading-chat-reading-settings-scrolling-speed = スクロール速度
 # Context: chat_reading_settings
 reading-chat-reading-settings-smooth-scrolling = スムーズなスクロール
 # Context: chat_reading_settings
+reading-chat-reading-settings-compact-message-spacing = メッセージの間隔を詰める
+# Context: chat_reading_settings
+reading-chat-reading-settings-tighter-gaps-between-message-groups = メッセージグループ間の間隔を狭めて、より多くのメッセージを表示します。
+# Context: chat_reading_settings
 reading-chat-reading-settings-visible-chat-gifs-play-automatically = 表示されるチャット GIF は自動的に再生されます。
 # Context: layout_settings
 reading-layout-settings-channel-and-conversation-list-width-in-wide-windows = ワイド ウィンドウでのチャネルと会話リストの幅。
 # Context: layout_settings
-reading-layout-settings-keep-the-member-list-open-whenever-the-window-is-wide = ウィンドウが十分に広い場合は常にメンバー リストを開いたままにしてください。
+reading-layout-settings-keep-the-server-member-list-open = ウィンドウが十分に広いとき、サーバーのメンバーリストを開いたままにします。
+# Context: layout_settings
+reading-layout-settings-keep-the-member-list-open-in-direct-messages = ウィンドウが十分に広いとき、ダイレクトメッセージとグループメッセージでメンバーリストを開いたままにします。
 # Context: layout_settings
 reading-layout-settings-layout = レイアウト
 # Context: layout_settings
 reading-layout-settings-reset-layout = レイアウトをリセットする
 # Context: layout_settings
-reading-layout-settings-show-people-in-wide-windows = 広いウィンドウに人物を表示
+reading-layout-settings-show-people-in-servers = サーバーでメンバーを表示
+# Context: layout_settings
+reading-layout-settings-show-people-in-direct-messages = ダイレクトメッセージでメンバーを表示
 # Context: layout_settings
 reading-layout-settings-sidebar-width = サイドバーの幅
 # Context: reading_save_notice

@@ -92,11 +92,16 @@ impl MessagingUi {
 			design::card_divider(ui);
 			design::switch(
 				ui,
-				"reading-layout-settings-show-people-in-wide-windows",
-				Some(
-					"reading-layout-settings-keep-the-member-list-open-whenever-the-window-is-wide",
-				),
+				"reading-layout-settings-show-people-in-servers",
+				Some("reading-layout-settings-keep-the-server-member-list-open"),
 				&mut value.show_members,
+			);
+			design::card_divider(ui);
+			design::switch(
+				ui,
+				"reading-layout-settings-show-people-in-direct-messages",
+				Some("reading-layout-settings-keep-the-member-list-open-in-direct-messages"),
+				&mut value.show_members_dms,
 			);
 		});
 		if reset {
@@ -104,6 +109,7 @@ impl MessagingUi {
 			value.zoom_percent = defaults.zoom_percent;
 			value.sidebar_width = defaults.sidebar_width;
 			value.show_members = defaults.show_members;
+			value.show_members_dms = defaults.show_members_dms;
 			self.reading_save_requested = true;
 		}
 		self.reading_save_notice(ui, demo);
@@ -135,6 +141,13 @@ impl MessagingUi {
 					"reading-chat-reading-settings-hide-standalone-links-when-their-image-or-gif-preview-is",
 				),
 				&mut value.hide_media_links,
+			);
+			design::card_divider(ui);
+			design::switch(
+				ui,
+				"reading-chat-reading-settings-compact-message-spacing",
+				Some("reading-chat-reading-settings-tighter-gaps-between-message-groups"),
+				&mut value.compact_messages,
 			);
 		});
 		design::group(
@@ -180,6 +193,7 @@ impl MessagingUi {
 			let defaults = ReadingPreferences::default();
 			value.animate_gifs = defaults.animate_gifs;
 			value.hide_media_links = defaults.hide_media_links;
+			value.compact_messages = defaults.compact_messages;
 			value.confirm_external_links = defaults.confirm_external_links;
 			value.smooth_scrolling = defaults.smooth_scrolling;
 			value.scroll_speed_percent = defaults.scroll_speed_percent;
@@ -263,6 +277,8 @@ mod tests {
 				_ => {}
 			}
 		}
+		// Labels are looked up by their English text, whatever the host locale is.
+		crate::i18n::set_current(crate::i18n::Language::English);
 		let ctx = egui::Context::default();
 		let mut view = MessagingUi {
 			notifications_enabled: true,
@@ -295,6 +311,8 @@ mod tests {
 			zoom_percent: 125,
 			sidebar_width: 300,
 			show_members: false,
+			show_members_dms: false,
+			compact_messages: true,
 			animate_gifs: false,
 			smooth_scrolling: true,
 			scroll_speed_percent: 100,
@@ -310,7 +328,7 @@ mod tests {
 		let found = frame(&mut view, vec![]);
 		let people = found
 			.iter()
-			.find(|(text, _)| text == "Show People in wide windows")
+			.find(|(text, _)| text == "Show People in servers")
 			.unwrap()
 			.1
 			.center();

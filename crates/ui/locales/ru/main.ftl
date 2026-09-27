@@ -2077,17 +2077,25 @@ reading-chat-reading-settings-scrolling-speed = Скорость прокрут�
 # Context: chat_reading_settings
 reading-chat-reading-settings-smooth-scrolling = Плавная прокрутка
 # Context: chat_reading_settings
+reading-chat-reading-settings-compact-message-spacing = Компактные интервалы сообщений
+# Context: chat_reading_settings
+reading-chat-reading-settings-tighter-gaps-between-message-groups = Меньшие промежутки между группами сообщений помещают больше сообщений на экран.
+# Context: chat_reading_settings
 reading-chat-reading-settings-visible-chat-gifs-play-automatically = Видимые GIF-файлы чата воспроизводятся автоматически.
 # Context: layout_settings
 reading-layout-settings-channel-and-conversation-list-width-in-wide-windows = Ширина списка каналов и разговоров в широких окнах.
 # Context: layout_settings
-reading-layout-settings-keep-the-member-list-open-whenever-the-window-is-wide = Держите список участников открытым, когда окно достаточно широкое.
+reading-layout-settings-keep-the-server-member-list-open = Список участников сервера остаётся открытым, когда окно достаточно широкое.
+# Context: layout_settings
+reading-layout-settings-keep-the-member-list-open-in-direct-messages = Список участников остаётся открытым в личных и групповых сообщениях, когда окно достаточно широкое.
 # Context: layout_settings
 reading-layout-settings-layout = Макет
 # Context: layout_settings
 reading-layout-settings-reset-layout = Сбросить макет
 # Context: layout_settings
-reading-layout-settings-show-people-in-wide-windows = Показывать людей в широких окнах
+reading-layout-settings-show-people-in-servers = Показывать людей на серверах
+# Context: layout_settings
+reading-layout-settings-show-people-in-direct-messages = Показывать людей в личных сообщениях
 # Context: layout_settings
 reading-layout-settings-sidebar-width = Ширина боковой панели
 # Context: reading_save_notice

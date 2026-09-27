@@ -288,13 +288,11 @@ impl SearchUi {
 								ui.label(
 									design::semibold(
 										ui,
-										crate::i18n::translate_if_key(
-											if key == "search-overlays-from" {
-												"search-overlays-from-user"
-											} else {
-												"search-overlays-mentions-user"
-											},
-										),
+										crate::i18n::translate_if_key(if key == "from" {
+											"search-overlays-from-user"
+										} else {
+											"search-overlays-mentions-user"
+										}),
 										13.0,
 									)
 									.color(colors.muted),

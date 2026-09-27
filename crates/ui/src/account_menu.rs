@@ -939,7 +939,7 @@ impl MessagingUi {
 	}
 }
 
-fn presence_status_key(status: PresenceStatus) -> &'static str {
+pub(super) fn presence_status_key(status: PresenceStatus) -> &'static str {
 	match status {
 		PresenceStatus::Online => "status-online",
 		PresenceStatus::Idle => "status-idle",

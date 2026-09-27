@@ -396,12 +396,12 @@ impl Draft {
 						"has",
 						"search-filters-show-any-content",
 						&[
-							("search-filters-show-link", "search-filters-show-link-2"),
-							("search-filters-show-embed", "search-filters-show-embed-2"),
-							("search-filters-show-file", "search-filters-show-file-2"),
-							("search-filters-show-image", "search-filters-show-image-2"),
-							("search-filters-show-video", "search-filters-show-video-2"),
-							("search-filters-show-sound", "search-filters-show-sound-2"),
+							("link", "search-filters-show-link-2"),
+							("embed", "search-filters-show-embed-2"),
+							("file", "search-filters-show-file-2"),
+							("image", "search-filters-show-image-2"),
+							("video", "search-filters-show-video-2"),
+							("sound", "search-filters-show-sound-2"),
 						],
 						true,
 					);
@@ -465,12 +465,9 @@ impl Draft {
 						"author_type",
 						"search-filters-show-choose-author-type",
 						&[
-							("search-filters-show-user", "search-filters-show-user-2"),
-							("search-filters-show-bot", "search-filters-show-bot-2"),
-							(
-								"search-filters-show-webhook",
-								"search-filters-show-webhook-2",
-							),
+							("user", "search-filters-show-user-2"),
+							("bot", "search-filters-show-bot-2"),
+							("webhook", "search-filters-show-webhook-2"),
 						],
 						true,
 					);
@@ -482,8 +479,8 @@ impl Draft {
 						"pinned",
 						"search-filters-show-any",
 						&[
-							("search-filters-show-true", "search-filters-show-true-2"),
-							("search-filters-show-false", "search-filters-show-false-2"),
+							("true", "search-filters-show-true-2"),
+							("false", "search-filters-show-false-2"),
 						],
 						false,
 					);

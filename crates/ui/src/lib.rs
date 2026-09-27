@@ -1753,53 +1753,28 @@ impl MessagingUi {
 													ui.add(
 														egui::Label::new(
 															RichText::new(
-																crate::i18n::translate_if_key(
-																	&(if !self
-																		.own_presence
+																if !self
+																	.own_presence
+																	.custom_status
+																	.is_empty()
+																{
+																	self.own_presence
 																		.custom_status
-																		.is_empty()
-																	{
-																		self.own_presence
-																			.custom_status
-																			.clone()
-																	} else if let Some(game) = self
-																		.own_game
-																		.as_deref()
-																		.filter(|_| {
-																			self.share_game_activity
-																		}) {
-																		game.to_owned()
-																	} else if state.demo {
-																		language
-																			.text("offline-preview")
-																	} else if state
-																		.gateway_connected
-																	{
-																		language.text(
-																			match self
-																				.own_presence
-																				.status
-																				.wire()
-																			{
-																				"lib-account-card-online" => {
-																					"status-online"
-																				}
-																				"lib-account-card-idle" => {
-																					"status-idle"
-																				}
-																				"lib-account-card-dnd" => {
-																					"status-dnd"
-																				}
-																				_ => {
-																					"status-offline"
-																				}
-																			},
-																		)
-																	} else {
-																		language
-																			.text("reconnecting")
-																	}),
-																),
+																		.clone()
+																} else if let Some(game) = self
+																	.own_game
+																	.as_deref()
+																	.filter(|_| {
+																		self.share_game_activity
+																	}) {
+																	game.to_owned()
+																} else if state.demo {
+																	language.text("offline-preview")
+																} else if state.gateway_connected {
+																	language.text(account_menu::presence_status_key(self.own_presence.status))
+																} else {
+																	language.text("reconnecting")
+																},
 															)
 															.size(12.0)
 															.color(colors.muted),

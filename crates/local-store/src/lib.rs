@@ -5,7 +5,8 @@ use model::{Id, Message, ReadingPreferences, User};
 use rusqlite::{Connection, OptionalExtension, params};
 use std::{
 	collections::{BTreeMap, BTreeSet},
-	path::Path,
+	ffi::OsString,
+	path::{Path, PathBuf},
 };
 
 const MAX_MEDIA_JSON: usize = 256 * 1024;
@@ -148,6 +149,55 @@ impl From<rusqlite::Error> for StoreError {
 		Self::Unavailable
 	}
 }
+
+/// Resolves an explicit absolute root without falling back when it is invalid.
+fn resolve_data_dir(configured: Option<OsString>, default: Option<PathBuf>) -> Result<PathBuf> {
+	match configured {
+		Some(root) => {
+			let root = PathBuf::from(root);
+			if root.as_os_str().is_empty() || !root.is_absolute() {
+				return Err(StoreError::Unavailable);
+			}
+			Ok(root)
+		}
+		None => default.ok_or(StoreError::Unavailable),
+	}
+}
+
+/// Keeps source-build data persistent but separate from installed Serein data.
+fn default_data_dir() -> Option<PathBuf> {
+	#[cfg(feature = "development-data")]
+	{
+		dirs::data_local_dir().map(|root| root.join("serein-development"))
+	}
+	#[cfg(not(feature = "development-data"))]
+	{
+		dirs::data_local_dir().map(|root| root.join("serein"))
+	}
+}
+
+/// Creates only missing directories privately on Unix and preserves existing permissions.
+fn create_data_dir(root: &Path) -> Result<()> {
+	#[cfg(unix)]
+	{
+		use std::os::unix::fs::DirBuilderExt;
+		std::fs::DirBuilder::new()
+			.recursive(true)
+			.mode(0o700)
+			.create(root)
+			.map_err(|_| StoreError::Unavailable)
+	}
+	#[cfg(not(unix))]
+	{
+		std::fs::create_dir_all(root).map_err(|_| StoreError::Unavailable)
+	}
+}
+
+/// Shared root for local application data. Developers may select an isolated absolute path.
+pub fn data_dir() -> std::result::Result<PathBuf, StoreError> {
+	resolve_data_dir(std::env::var_os("SEREIN_DATA_DIR"), default_data_dir())
+}
+
 /// Reject excess entries during parsing, before allocating a whole malformed array.
 struct CachedEmbeds(Vec<model::Embed>);
 impl<'de> serde::Deserialize<'de> for CachedEmbeds {
@@ -181,17 +231,10 @@ impl<'de> serde::Deserialize<'de> for CachedEmbeds {
 	}
 }
 impl LocalStore {
+	/// Opens the SQLite store beneath the selected application-data root.
 	pub fn open_default() -> Result<Self> {
-		let root = dirs::data_local_dir()
-			.ok_or(StoreError::Unavailable)?
-			.join("serein");
-		std::fs::create_dir_all(&root).map_err(|_| StoreError::Unavailable)?;
-		#[cfg(unix)]
-		{
-			use std::os::unix::fs::PermissionsExt;
-			std::fs::set_permissions(&root, std::fs::Permissions::from_mode(0o700))
-				.map_err(|_| StoreError::Unavailable)?;
-		}
+		let root = data_dir()?;
+		create_data_dir(&root)?;
 		Self::open(&root.join("client.sqlite3"))
 	}
 	pub fn open(path: &Path) -> Result<Self> {
@@ -1411,6 +1454,71 @@ impl LocalStore {
 }
 #[cfg(test)]
 mod tests {
+	#[test]
+	fn data_directory_override_is_absolute_and_never_falls_back() {
+		let default = std::env::temp_dir();
+		assert!(default.is_absolute());
+		assert_eq!(
+			resolve_data_dir(None, Some(default.clone())),
+			Ok(default.clone())
+		);
+		let configured = default.join("serein-development");
+		assert_eq!(
+			resolve_data_dir(Some(configured.clone().into_os_string()), None),
+			Ok(configured)
+		);
+		assert_eq!(
+			resolve_data_dir(Some(OsString::new()), Some(default.clone())),
+			Err(StoreError::Unavailable)
+		);
+		assert_eq!(
+			resolve_data_dir(Some(OsString::from("relative")), Some(default)),
+			Err(StoreError::Unavailable)
+		);
+	}
+
+	#[cfg(feature = "development-data")]
+	#[test]
+	fn development_data_directory_is_persistent_and_separate() {
+		let root = default_data_dir().unwrap();
+		assert!(root.is_absolute());
+		assert_eq!(
+			root.file_name().and_then(|name| name.to_str()),
+			Some("serein-development")
+		);
+	}
+
+	#[cfg(unix)]
+	#[test]
+	fn existing_data_directory_permissions_are_preserved() {
+		use std::os::unix::fs::PermissionsExt;
+		let root = std::env::temp_dir().join(format!(
+			"serein-existing-permissions-{}-{}",
+			std::process::id(),
+			std::time::SystemTime::now()
+				.duration_since(std::time::UNIX_EPOCH)
+				.unwrap()
+				.as_nanos()
+		));
+		std::fs::create_dir(&root).unwrap();
+		std::fs::set_permissions(&root, std::fs::Permissions::from_mode(0o755)).unwrap();
+		create_data_dir(&root).unwrap();
+		assert_eq!(
+			std::fs::metadata(&root).unwrap().permissions().mode() & 0o777,
+			0o755
+		);
+		std::fs::remove_dir(root).unwrap();
+	}
+
+	#[cfg(not(feature = "development-data"))]
+	#[test]
+	fn packaged_data_directory_uses_the_os_default() {
+		assert_eq!(
+			default_data_dir(),
+			dirs::data_local_dir().map(|root| root.join("serein"))
+		);
+	}
+
 	#[test]
 	fn changed_rows_preserve_retained_data_and_rollback_invalid_updates() {
 		let mut store = LocalStore::initialize(Connection::open_in_memory().unwrap()).unwrap();

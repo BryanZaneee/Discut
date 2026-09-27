@@ -57,6 +57,8 @@ pub enum Action {
 	RemoveFriend,
 	AcceptFriend(Id),
 	Profile(User),
+	/// Open a mutual server picked from the card.
+	Server(Id),
 	Avatar(model::EmbedMedia),
 	Banner(model::EmbedMedia),
 	/// Shared user action picked from the card's overflow menu.
@@ -974,6 +976,364 @@ fn divider(ui: &mut egui::Ui, theme: &Theme) {
 	);
 	ui.add_space(4.0);
 }
+/// Which mutual list the side panel beside the card shows.
+#[derive(Clone, Copy, PartialEq, Eq)]
+enum Mutuals {
+	Servers,
+	Friends,
+}
+const MUTUALS_WIDTH: f32 = 300.0;
+
+/// Inline "3 Mutual Servers" link under the name; opens the matching side panel.
+fn mutual_link(ui: &mut egui::Ui, theme: &Theme, icon: Icon, text: String) -> egui::Response {
+	let galley = ui
+		.painter()
+		.layout_no_wrap(text, egui::FontId::proportional(14.0), theme.muted);
+	let (rect, response) = ui.allocate_exact_size(
+		vec2(22.0 + galley.size().x, galley.size().y.max(20.0)),
+		egui::Sense::click(),
+	);
+	let color = if response.hovered() {
+		theme.text
+	} else {
+		theme.muted
+	};
+	icons::paint(
+		ui.painter(),
+		icon,
+		Rect::from_center_size(pos2(rect.left() + 8.0, rect.center().y), Vec2::splat(16.0)),
+		color,
+	);
+	let text = pos2(rect.left() + 22.0, rect.center().y - galley.size().y * 0.5);
+	let width = galley.size().x;
+	let label = galley.text().to_owned();
+	ui.painter()
+		.galley_with_override_text_color(text, galley, color);
+	if response.hovered() {
+		ui.painter().hline(
+			text.x..=text.x + width,
+			rect.bottom() - 1.0,
+			Stroke::new(1.0, color),
+		);
+	}
+	response.widget_info(|| egui::WidgetInfo::labeled(egui::Role::Button, true, &label));
+	response.on_hover_cursor(egui::CursorIcon::PointingHand)
+}
+
+/// One clickable row in the mutuals panel: a 32 px face painted by `face`, then the name.
+fn mutual_row(
+	ui: &mut egui::Ui,
+	theme: &Theme,
+	name: &str,
+	face: impl FnOnce(&mut egui::Ui, Rect),
+) -> egui::Response {
+	let (rect, response) =
+		ui.allocate_exact_size(vec2(ui.available_width(), 44.0), egui::Sense::click());
+	if response.hovered() {
+		ui.painter().rect_filled(rect, 8, theme.chip_hover);
+	}
+	let avatar = Rect::from_min_size(
+		pos2(rect.left() + 8.0, rect.center().y - 16.0),
+		Vec2::splat(32.0),
+	);
+	face(ui, avatar);
+	let galley = ui.painter().layout(
+		name.to_owned(),
+		egui::FontId::proportional(14.0),
+		theme.text,
+		rect.right() - avatar.right() - 20.0,
+	);
+	ui.painter().galley(
+		pos2(
+			avatar.right() + 12.0,
+			rect.center().y - galley.size().y * 0.5,
+		),
+		galley,
+		theme.text,
+	);
+	response.on_hover_cursor(egui::CursorIcon::PointingHand)
+}
+
+/// Side panel listing mutual servers or friends, pointing at the link that opened it.
+#[allow(clippy::too_many_arguments)]
+fn mutuals_panel(
+	ctx: &egui::Context,
+	kind: Mutuals,
+	data: &model::UserProfile,
+	state: &State,
+	avatars: &mut Avatars,
+	theme: &Theme,
+	(card, link, bounds): (Rect, Rect, Rect),
+	user: Id,
+) -> (Rect, Option<Action>) {
+	let mut action = None;
+	let left = card.left() - 12.0 - MUTUALS_WIDTH;
+	let on_left = left >= bounds.left();
+	let x = if on_left { left } else { card.right() + 12.0 };
+	let (title, count) = match kind {
+		Mutuals::Servers => ("profiles-show-mutual-servers", data.mutual_guilds.len()),
+		Mutuals::Friends => ("profiles-show-mutual-friends", data.mutual_friends.len()),
+	};
+	let area = egui::Area::new(egui::Id::unique(("profile-mutuals-panel", user)))
+		.kind(egui::UiKind::Popup)
+		.order(egui::Order::Foreground)
+		.fixed_pos(pos2(x, (link.center().y - 40.0).max(bounds.top())))
+		.constrain_to(bounds)
+		.interactable(true)
+		.show(ctx, |ui| {
+			// Area remembers its previous size; let the list grow past the first, empty frame.
+			ui.set_max_height(bounds.height());
+			ui.style_mut().interaction.selectable_labels = false;
+			ui.visuals_mut().override_text_color = Some(theme.text);
+			egui::Frame::new()
+				.fill(theme.card)
+				.stroke(Stroke::new(1.0, theme.border))
+				.corner_radius(RADIUS)
+				.shadow(egui::epaint::Shadow {
+					offset: [0, 8],
+					blur: 24,
+					spread: 0,
+					color: Color32::from_black_alpha(140),
+				})
+				.show(ui, |ui| {
+					ui.set_width(MUTUALS_WIDTH);
+					ui.spacing_mut().item_spacing = vec2(0.0, 2.0);
+					egui::Frame::new()
+						.inner_margin(egui::Margin {
+							left: 16,
+							right: 16,
+							top: 14,
+							bottom: 10,
+						})
+						.show(ui, |ui| {
+							ui.horizontal(|ui| {
+								ui.label(
+									RichText::new(crate::i18n::translate(title))
+										.size(15.0)
+										.strong(),
+								);
+								ui.with_layout(
+									egui::Layout::right_to_left(egui::Align::Center),
+									|ui| {
+										ui.label(
+											RichText::new(count.to_string())
+												.size(14.0)
+												.strong()
+												.color(theme.muted),
+										);
+									},
+								);
+							});
+						});
+					let (line, _) = ui
+						.allocate_exact_size(vec2(ui.available_width(), 1.0), egui::Sense::hover());
+					ui.painter().hline(
+						line.x_range(),
+						line.center().y,
+						Stroke::new(1.0, theme.divider),
+					);
+					egui::Frame::new().inner_margin(8).show(ui, |ui| {
+						egui::ScrollArea::vertical()
+							.id_salt(("profile-mutuals", user, title))
+							.max_height((bounds.height() - 80.0).clamp(88.0, 360.0))
+							.min_scrolled_height((bounds.height() - 80.0).clamp(88.0, 360.0))
+							.show(ui, |ui| match kind {
+								Mutuals::Servers => {
+									for mutual in &data.mutual_guilds {
+										let guild = state.guilds.iter().find(|g| g.id == mutual.id);
+										let name = guild.map_or_else(
+											|| {
+												format!(
+													"{} {}",
+													crate::i18n::translate(
+														"profiles-show-server-2"
+													),
+													mutual.id
+												)
+											},
+											|guild| guild.name.clone(),
+										);
+										let row = mutual_row(ui, theme, &name, |ui, rect| {
+											if let Some(guild) = guild {
+												avatars
+													.paint_guild(ui, guild, rect, state.demo, 16);
+											} else {
+												ui.painter().circle_filled(
+													rect.center(),
+													16.0,
+													theme.chip,
+												);
+											}
+										});
+										if row.clicked() && guild.is_some() {
+											action = Some(Action::Server(mutual.id));
+										}
+									}
+								}
+								Mutuals::Friends => {
+									for friend in &data.mutual_friends {
+										let row = mutual_row(
+											ui,
+											theme,
+											state.user_display_name(friend),
+											|ui, rect| {
+												ui.scope_builder(
+													UiBuilder::new().max_rect(rect),
+													|ui| {
+														avatars.show_plain(
+															ui, friend, 32.0, state.demo,
+														);
+													},
+												);
+											},
+										);
+										if row.clicked() {
+											action = Some(Action::Profile(friend.clone()));
+										}
+									}
+								}
+							});
+					});
+				});
+		});
+	let rect = area.response.rect;
+	// Small tail pointing back at the link that opened the panel.
+	let y = link
+		.center()
+		.y
+		.clamp(rect.top() + 18.0, rect.bottom() - 18.0);
+	let (edge, tip) = if on_left {
+		(rect.right() - 1.0, rect.right() + 7.0)
+	} else {
+		(rect.left() + 1.0, rect.left() - 7.0)
+	};
+	let painter = ctx.layer_painter(area.response.layer_id);
+	painter.add(egui::Shape::convex_polygon(
+		vec![pos2(edge, y - 8.0), pos2(tip, y), pos2(edge, y + 8.0)],
+		theme.card,
+		Stroke::NONE,
+	));
+	painter.line_segment(
+		[pos2(edge + (tip - edge) / 8.0, y - 7.0), pos2(tip, y)],
+		Stroke::new(1.0, theme.border),
+	);
+	painter.line_segment(
+		[pos2(tip, y), pos2(edge + (tip - edge) / 8.0, y + 7.0)],
+		Stroke::new(1.0, theme.border),
+	);
+	(rect, action)
+}
+
+/// Display name and glyph for a connected account's service.
+fn brand(kind: &str) -> (&str, Icon) {
+	match kind {
+		"github" => ("GitHub", Icon::GitHub),
+		"twitch" => ("Twitch", Icon::Twitch),
+		"steam" => ("Steam", Icon::Steam),
+		"spotify" => ("Spotify", Icon::Spotify),
+		"youtube" => ("YouTube", Icon::YouTube),
+		"twitter" => ("X", Icon::XLogo),
+		"reddit" => ("Reddit", Icon::Reddit),
+		"facebook" => ("Facebook", Icon::Facebook),
+		"instagram" => ("Instagram", Icon::Instagram),
+		"tiktok" => ("TikTok", Icon::TikTok),
+		"paypal" => ("PayPal", Icon::PayPal),
+		"amazon-music" => ("Amazon Music", Icon::Amazon),
+		"bluesky" => ("Bluesky", Icon::Bluesky),
+		"mastodon" => ("Mastodon", Icon::Mastodon),
+		"skype" => ("Skype", Icon::Skype),
+		// Neither icon set ships an Xbox mark (Microsoft brand guidelines); keep the controller.
+		"xbox" => ("Xbox", Icon::GameController),
+		"playstation" => ("PlayStation", Icon::PlayStation),
+		"battlenet" => ("Battle.net", Icon::BattleNet),
+		"epicgames" => ("Epic Games", Icon::EpicGames),
+		"leagueoflegends" => ("League of Legends", Icon::LeagueOfLegends),
+		"riotgames" => ("Riot Games", Icon::RiotGames),
+		"bungie" => ("Bungie.net", Icon::Bungie),
+		"roblox" => ("Roblox", Icon::Roblox),
+		"crunchyroll" => ("Crunchyroll", Icon::Crunchyroll),
+		"domain" => ("Domain", Icon::Globe),
+		"ebay" => ("eBay", Icon::Ebay),
+		other => (other, Icon::Link),
+	}
+}
+
+/// Public profile page for a connected account, when the service has one. Names and IDs are
+/// restricted to plain path characters so they can never change the destination host.
+fn connection_url(connection: &model::ProfileConnection) -> Option<String> {
+	fn plain(value: &str) -> bool {
+		!value.is_empty()
+			&& value
+				.chars()
+				.all(|c| c.is_ascii_alphanumeric() || matches!(c, '-' | '_' | '.'))
+			&& !value.contains("..")
+	}
+	let (name, id) = (connection.name.as_str(), connection.id.as_str());
+	let by_name = |base: &str| plain(name).then(|| format!("{base}{name}"));
+	let by_id = |base: &str| plain(id).then(|| format!("{base}{id}"));
+	match connection.kind.as_str() {
+		"github" => by_name("https://github.com/"),
+		"twitch" => by_name("https://www.twitch.tv/"),
+		"steam" => by_id("https://steamcommunity.com/profiles/"),
+		"spotify" => by_id("https://open.spotify.com/user/"),
+		"youtube" => by_id("https://www.youtube.com/channel/"),
+		"twitter" => by_name("https://x.com/"),
+		"reddit" => by_name("https://www.reddit.com/user/"),
+		"instagram" => by_name("https://www.instagram.com/"),
+		"tiktok" => by_name("https://www.tiktok.com/@"),
+		"bluesky" => by_name("https://bsky.app/profile/"),
+		"roblox" => by_id("https://www.roblox.com/users/").map(|url| url + "/profile"),
+		"ebay" => by_name("https://www.ebay.com/usr/"),
+		"mastodon" => {
+			let (user, host) = name.trim_start_matches('@').split_once('@')?;
+			(plain(user) && plain(host) && host.contains('.'))
+				.then(|| format!("https://{host}/@{user}"))
+		}
+		"domain" => (plain(name) && name.contains('.')).then(|| format!("https://{name}")),
+		_ => None,
+	}
+}
+
+/// Row of connected-account glyphs; clicking one queues its profile page for the link prompt.
+fn connection_icons(
+	ui: &mut egui::Ui,
+	theme: &Theme,
+	connections: &[model::ProfileConnection],
+	opening: &mut Option<String>,
+) {
+	ui.horizontal_wrapped(|ui| {
+		ui.spacing_mut().item_spacing = vec2(8.0, 8.0);
+		for connection in connections {
+			let (label, icon) = brand(&connection.kind);
+			let url = connection_url(connection);
+			let sense = if url.is_some() {
+				egui::Sense::click()
+			} else {
+				egui::Sense::hover()
+			};
+			let (rect, response) = ui.allocate_exact_size(Vec2::splat(36.0), sense);
+			if response.hovered() {
+				ui.painter()
+					.circle_filled(rect.center(), 18.0, theme.chip_hover);
+			}
+			icons::paint(ui.painter(), icon, rect.shrink(5.0), theme.text);
+			let mut tip = format!("{label}: {}", connection.name);
+			if connection.verified {
+				tip.push_str(" ✓");
+			}
+			response.widget_info(|| egui::WidgetInfo::labeled(egui::Role::Link, true, &tip));
+			let response = response.on_hover_text(tip);
+			if let Some(url) = url
+				&& response
+					.on_hover_cursor(egui::CursorIcon::PointingHand)
+					.clicked()
+			{
+				*opening = Some(url);
+			}
+		}
+	});
+}
+
 fn creation_date(id: Id) -> Option<String> {
 	let seconds = ((id.0 >> 22) + 1_420_070_400_000) / 1000;
 	time::OffsetDateTime::from_unix_timestamp(seconds as i64)
@@ -1261,6 +1621,11 @@ pub fn show(
 	let menu_id = egui::Id::unique(("user-profile-more", user.id));
 	// A menu that was already open owns Escape and clicks on its own items this frame.
 	let menu_open = egui::Popup::is_id_open(ui.ctx(), menu_id);
+	// The mutuals side panel stays open across frames until toggled, dismissed or navigated.
+	let mutuals_id = egui::Id::unique(("profile-mutuals", user.id));
+	let mut mutuals = ui.ctx().data(|d| d.get_temp::<Mutuals>(mutuals_id));
+	let mut mutual_anchor = None;
+	let mut mutual_links = Vec::new();
 	let x = if anchor.x + 12.0 + WIDTH <= bounds.right() {
 		anchor.x + 12.0
 	} else {
@@ -1635,6 +2000,50 @@ pub fn show(
 									}
 								});
 							}
+							if let Some(data) = data.filter(|data| {
+								state.user.as_ref().is_none_or(|own| own.id != user.id)
+									&& (!data.mutual_guilds.is_empty()
+										|| !data.mutual_friends.is_empty())
+							}) {
+								ui.add_space(4.0);
+								ui.horizontal(|ui| {
+									ui.spacing_mut().item_spacing.x = 16.0;
+									for (kind, count, icon, one, many) in [
+										(
+											Mutuals::Servers,
+											data.mutual_guilds.len(),
+											Icon::Servers,
+											"profiles-show-mutual-server",
+											"profiles-show-mutual-servers",
+										),
+										(
+											Mutuals::Friends,
+											data.mutual_friends.len(),
+											Icon::People,
+											"profiles-show-mutual-friend",
+											"profiles-show-mutual-friends",
+										),
+									] {
+										if count == 0 {
+											continue;
+										}
+										let key = if count == 1 { one } else { many };
+										let link = mutual_link(
+											ui,
+											&theme,
+											icon,
+											format!("{count} {}", crate::i18n::translate(key)),
+										);
+										if link.clicked() {
+											mutuals = (mutuals != Some(kind)).then_some(kind);
+										}
+										if mutuals == Some(kind) {
+											mutual_anchor = Some(link.rect);
+										}
+										mutual_links.push(link.rect);
+									}
+								});
+							}
 							if let Some(custom) = custom {
 								ui.add_space(4.0);
 								ui.add(egui::Label::new(RichText::new(custom).size(13.0)).wrap());
@@ -1788,98 +2197,14 @@ pub fn show(
 													);
 												}
 											});
-											if state
-												.user
-												.as_ref()
-												.is_none_or(|own| own.id != user.id) && (!data
-												.mutual_guilds
-												.is_empty()
-												|| !data.mutual_friends.is_empty())
-											{
+											if !data.connections.is_empty() {
 												ui.add_space(10.0);
-												if !data.mutual_guilds.is_empty() {
-													let count = data.mutual_guilds.len();
-													egui::CollapsingHeader::new(
-														RichText::new(format!(
-															"{count} {}",
-															crate::i18n::translate_if_key(
-																if count == 1 {
-																	"profiles-show-mutual-server"
-																} else {
-																	"profiles-show-mutual-servers"
-																}
-															)
-														))
-														.size(13.0)
-														.strong(),
-													)
-													.id_salt(("mutual-servers", user.id))
-													.show(ui, |ui| {
-														for mutual in &data.mutual_guilds {
-															if let Some(guild) = state
-																.guilds
-																.iter()
-																.find(|g| g.id == mutual.id)
-															{
-																ui.horizontal(|ui| {
-																	let (rect, _) = ui
-																		.allocate_exact_size(
-																			egui::Vec2::splat(28.0),
-																			egui::Sense::hover(),
-																		);
-																	avatars.paint_guild(
-																		ui, guild, rect,
-																		state.demo, 8,
-																	);
-																	ui.label(
-																		RichText::new(&guild.name)
-																			.size(13.0),
-																	);
-																});
-															} else {
-																ui.label(
-																	RichText::new(format!(
-																		"{} {}",
-																		crate::i18n::translate(
-																			"profiles-show-server-2"
-																		),
-																		mutual.id
-																	))
-																	.size(13.0),
-																);
-															}
-														}
-													});
-												}
-												if !data.mutual_friends.is_empty() {
-													let count = data.mutual_friends.len();
-													egui::CollapsingHeader::new(
-														RichText::new(format!(
-															"{count} {}",
-															crate::i18n::translate(if count == 1 {
-																"profiles-show-mutual-friend"
-															} else {
-																"profiles-show-mutual-friends"
-															})
-														))
-														.size(13.0)
-														.strong(),
-													)
-													.id_salt(("mutual-friends", user.id))
-													.show(ui, |ui| {
-														for friend in &data.mutual_friends {
-															ui.horizontal(|ui| {
-																avatars.show_plain(
-																	ui, friend, 28.0, state.demo,
-																);
-																ui.label(
-																	RichText::new(&friend.name)
-																		.size(13.0),
-																);
-															});
-														}
-													});
-												}
+												connection_icons(
+													ui,
+													&theme,
+													&data.connections,
+													opening,
+												);
 											}
 										}
 									});
@@ -1956,15 +2281,54 @@ pub fn show(
 			ui.painter().set(background, theme.background(rect));
 		});
 	let rect = response.response.rect;
-	let pressed_outside = !menu_open
-		&& ui.ctx().input(|i| {
-			i.pointer.any_pressed()
-				&& i.pointer
-					.interact_pos()
-					.is_some_and(|pos| !rect.contains(pos))
-		});
+	let mut panel = None;
+	if let (Some(kind), Some(link), Some(data)) = (mutuals, mutual_anchor, data) {
+		let (panel_rect, panel_action) = mutuals_panel(
+			ui.ctx(),
+			kind,
+			data,
+			state,
+			avatars,
+			&theme,
+			(rect, link, bounds),
+			user.id,
+		);
+		panel = Some(panel_rect);
+		action = action.or(panel_action);
+	} else {
+		mutuals = None;
+	}
+	let pressed = ui.ctx().input(|i| {
+		i.pointer
+			.any_pressed()
+			.then(|| i.pointer.interact_pos())
+			.flatten()
+	});
+	let in_panel = |pos: Pos2| panel.is_some_and(|panel| panel.contains(pos));
+	let pressed_outside =
+		!menu_open && pressed.is_some_and(|pos| !rect.contains(pos) && !in_panel(pos));
+	if pressed.is_some_and(|pos| {
+		!in_panel(pos) && !mutual_links.iter().any(|link: &Rect| link.contains(pos))
+	}) {
+		mutuals = None;
+	}
+	// Escape closes the side panel before the card.
+	let panel_escape = mutuals.is_some()
+		&& ui
+			.ctx()
+			.input_mut(|i| i.consume_key(egui::Modifiers::NONE, egui::Key::Escape));
+	if panel_escape || action.is_some() {
+		mutuals = None;
+	}
+	ui.ctx().data_mut(|d| match mutuals {
+		Some(kind) => {
+			d.insert_temp(mutuals_id, kind);
+		}
+		None => d.remove::<Mutuals>(mutuals_id),
+	});
 	let escape = opening.is_none()
 		&& !menu_open
+		&& !panel_escape
 		&& ui
 			.ctx()
 			.input_mut(|i| i.consume_key(egui::Modifiers::NONE, egui::Key::Escape));
@@ -2005,7 +2369,8 @@ pub fn synthetic(user: &User, guild: Option<Id>) -> model::UserProfile {
             },
         ],
         connections: vec![model::ProfileConnection {
-            kind: "GitHub".into(),
+            kind: "github".into(),
+            id: "1".into(),
             name: "synthetic-profile".into(),
             verified: true,
         }],
@@ -2388,7 +2753,8 @@ mod tests {
 			.collect();
 		data.connections = (0..6)
 			.map(|i| model::ProfileConnection {
-				kind: "GitHub".into(),
+				kind: "github".into(),
+				id: i.to_string(),
 				name: format!("synthetic-profile-{i}"),
 				verified: true,
 			})

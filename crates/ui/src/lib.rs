@@ -4422,6 +4422,15 @@ impl MessagingUi {
 				Some(profiles::Action::Profile(next)) => {
 					self.profile.navigate(next);
 				}
+				Some(profiles::Action::Server(guild)) => {
+					self.profile.close();
+					if state.guild(guild).is_some() && self.server_settings.navigate_away(state) {
+						self.guild = Some(guild);
+						if let Some(command) = state.select_guild(guild) {
+							commands.push(command);
+						}
+					}
+				}
 				Some(profiles::Action::Close) => {
 					self.profile.close_unless_armed(&ctx);
 				}

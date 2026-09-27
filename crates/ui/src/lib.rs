@@ -1649,8 +1649,18 @@ impl MessagingUi {
 		let language = self.language;
 		let mut anchor = None;
 		let in_call = state.voice.active.is_some();
-		let card_fill = design::account_card_fill(ui);
-		egui::Frame::new()
+		let (card_fill, card_edge) = design::account_card_surface(ui);
+		// A see-through card has no coat of its own; the presence ring cuts out the strip's.
+		let ring = if card_fill.a() == 0 {
+			design::section_surface(
+				ui,
+				design::window_palette(ui).base,
+				design::ImageSection::ServerList,
+			)
+		} else {
+			card_fill
+		};
+		let card = egui::Frame::new()
 			.fill(card_fill)
 			.corner_radius(8)
 			.inner_margin(0)
@@ -1706,7 +1716,7 @@ impl MessagingUi {
 									ui,
 									avatar.rect,
 									profiles::presence_color(self.own_presence.status.wire()),
-									card_fill,
+									ring,
 								);
 								anchor =
 									Some(avatar.on_hover_text(language.text("profile-and-status")));
@@ -1818,6 +1828,9 @@ impl MessagingUi {
 						});
 					});
 			});
+		// Painted over the frame rather than as its stroke, so the card keeps the composer's height.
+		ui.painter()
+			.rect_stroke(card.response.rect, 8, card_edge, egui::StrokeKind::Inside);
 		if let Some(anchor) = anchor {
 			self.account_menu(&anchor, state, commands);
 		}
@@ -3490,6 +3503,9 @@ impl MessagingUi {
 		// span both, like Discord's bottom-left user pill.
 		let rail = notifications::RAIL_WIDTH;
 		let sidebar_max = self.prepare_reading_sidebar(ui, "navigation", rail);
+		// See-through chrome paints each section once; a shared column coat would stack under
+		// the rail and account strip and make them denser than the title bar.
+		let layered = design::layered_sections(ui);
 		let navigation = egui::Panel::left("navigation")
 			.resizable(true)
 			.show_separator_line(!design::has_window_background(ui))
@@ -3497,7 +3513,7 @@ impl MessagingUi {
 			.size_range(rail + 190.0..=rail + sidebar_max)
 			.frame(
 				egui::Frame::new()
-					.fill(if design::has_window_background(ui) {
+					.fill(if layered {
 						egui::Color32::TRANSPARENT
 					} else {
 						background.base
@@ -3509,13 +3525,19 @@ impl MessagingUi {
 					.show_separator_line(false)
 					.frame(
 						egui::Frame::new()
-							// The card's strip continues the channel list, so a window image
-							// shows through it at the same opacity instead of full strength.
+							// Over a window image the card's strip continues the channel list;
+							// over desktop transparency it is the rail's material, like the title bar.
 							.fill(if design::has_window_background(ui) {
 								design::section_surface(
 									ui,
 									background.sidebar,
 									design::ImageSection::ChannelList,
+								)
+							} else if layered {
+								design::section_surface(
+									ui,
+									background.base,
+									design::ImageSection::ServerList,
 								)
 							} else {
 								egui::Color32::TRANSPARENT
@@ -3530,16 +3552,19 @@ impl MessagingUi {
 					.show(ui, |ui| self.account_card(ui, state, &mut commands));
 				self.notification_rail(ui, state, &mut commands);
 				// The lists sit on their own rounded surface beside the rail, above the card.
+				let lists = ui.available_rect_before_wrap();
+				// A window image continues the lists into the card strip, so only it stays square.
+				let rounded = !design::has_window_background(ui);
 				ui.painter().rect_filled(
-					ui.available_rect_before_wrap(),
-					if design::has_window_background(ui) {
-						egui::CornerRadius::ZERO
-					} else {
+					lists,
+					if rounded {
 						egui::CornerRadius {
 							nw: 8,
 							sw: 8,
 							..Default::default()
 						}
+					} else {
+						egui::CornerRadius::ZERO
 					},
 					design::section_surface(
 						ui,
@@ -3547,6 +3572,21 @@ impl MessagingUi {
 						design::ImageSection::ChannelList,
 					),
 				);
+				if rounded && layered {
+					// No column coat sits under the corners, so the rail's material fills the
+					// notches and the curve still reads from the title bar into the account strip.
+					let notch = design::section_surface(
+						ui,
+						background.base,
+						design::ImageSection::ServerList,
+					);
+					for (corner, inward) in [
+						(lists.left_top(), egui::vec2(1.0, 1.0)),
+						(lists.left_bottom(), egui::vec2(1.0, -1.0)),
+					] {
+						design::paint_corner_notch(ui.painter(), corner, inward, 8.0, notch);
+					}
+				}
 				self.sidebar(ui, state, &title, &mut commands);
 			});
 		self.record_reading_sidebar(navigation.response.rect.width() - rail);

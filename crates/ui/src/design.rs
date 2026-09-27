@@ -556,14 +556,21 @@ pub fn glass(ui: &egui::Ui, color: Color32) -> (Color32, Stroke) {
 	}
 	let alpha = behind + (255 - behind) * 9 / 20;
 	let [r, g, b, _] = color.to_srgba_unmultiplied();
-	let edge = if ui.visuals().dark_mode {
-		Color32::from_white_alpha(18)
-	} else {
-		Color32::from_black_alpha(18)
-	};
 	(
 		Color32::from_rgba_unmultiplied(r, g, b, alpha as u8),
-		Stroke::new(1.0, edge),
+		hairline(ui),
+	)
+}
+
+/// The faint edge that outlines glass and see-through cards.
+fn hairline(ui: &egui::Ui) -> Stroke {
+	Stroke::new(
+		1.0,
+		if ui.visuals().dark_mode {
+			Color32::from_white_alpha(18)
+		} else {
+			Color32::from_black_alpha(18)
+		},
 	)
 }
 
@@ -583,14 +590,42 @@ pub fn glass_frame(ui: &egui::Ui, color: Color32, margin: egui::Margin) -> egui:
 		})
 }
 
-/// The server rail's own surface. Over see-through chrome the account card takes it too, so
-/// the card reads as the same translucent material; opaque chrome keeps the raised card.
-pub fn account_card_fill(ui: &egui::Ui) -> Color32 {
-	let rail = section_surface(ui, window_palette(ui).base, ImageSection::ServerList);
-	if rail.a() < 255 {
-		rail
+/// Whether every chrome section must paint only its own surface. Translucent coats stack, so
+/// under a window image or desktop transparency no shared column fill may sit beneath them;
+/// otherwise the title bar, rail and account strip would each show a different opacity.
+pub fn layered_sections(ui: &egui::Ui) -> bool {
+	let (enabled, transparency, _) = window_effects();
+	has_window_background(ui) || (enabled && transparency > 0)
+}
+
+/// Fill the notches outside a rounded corner at `corner`, for surfaces that cannot paint a
+/// shared coat underneath. `inward` points from the corner into the rounded rect.
+pub fn paint_corner_notch(
+	painter: &egui::Painter,
+	corner: egui::Pos2,
+	inward: egui::Vec2,
+	radius: f32,
+	color: Color32,
+) {
+	const STEPS: usize = 8;
+	let center = corner + inward * radius;
+	// A fan from the square corner covers the concave notch without overlapping the arc.
+	let mut points = vec![corner];
+	points.extend((0..=STEPS).map(|step| {
+		let angle = std::f32::consts::FRAC_PI_2 * step as f32 / STEPS as f32;
+		center - egui::vec2(inward.x * angle.cos(), inward.y * angle.sin()) * radius
+	}));
+	painter.add(egui::Shape::convex_polygon(points, color, Stroke::NONE));
+}
+
+/// Fill and edge of the account card. With layered sections a second coat would make the card
+/// denser than the rail beside it, so it adds none and is outlined by a hairline instead;
+/// opaque chrome keeps the raised card.
+pub fn account_card_surface(ui: &egui::Ui) -> (Color32, Stroke) {
+	if layered_sections(ui) {
+		(Color32::TRANSPARENT, hairline(ui))
 	} else {
-		palette(ui).raised
+		(palette(ui).raised, Stroke::NONE)
 	}
 }
 
@@ -2005,6 +2040,18 @@ pub fn build_badge(ui: &mut egui::Ui, build: Build) -> Option<egui::Response> {
 
 /// Discord-style settings row with a pill switch on the right. Clicking anywhere on the row
 /// toggles `enabled`; the accessible label is `label`.
+/// Blur control. Every compositor Serein targets (macOS, DWM acrylic, KDE and Wayland blur)
+/// only turns its own fixed blur on or off, so a strength slider would promise control that
+/// does not exist. The stored percentage stays for themes: zero is off, anything else on.
+pub fn blur_control(ui: &mut egui::Ui, label: &str, hint: &str, blur: &mut u8) -> egui::Response {
+	let mut on = *blur > 0;
+	let response = switch(ui, label, Some(hint), &mut on);
+	if response.changed() {
+		*blur = if on { 50 } else { 0 };
+	}
+	response
+}
+
 pub fn switch(
 	ui: &mut egui::Ui,
 	label: &str,

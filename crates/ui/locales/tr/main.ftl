@@ -3254,7 +3254,7 @@ settings-appearance-settings-used-for-buttons-selection-and-message-highlights =
 # Context: appearance_settings
 settings-appearance-settings-window-effects = Pencere efektleri
 # Context: appearance_settings
-settings-appearance-settings-zero-disables-blur-the-native-compositor-controls-its-exact-strength = Sıfır bulanıklığı devre dışı bırakır; yerel dizgici onun tam gücünü kontrol eder.
+settings-appearance-settings-the-system-applies-its-standard-blur-strength = Sistem standart bulanıklık gücünü uygular.
 # Context: chat_settings
 settings-chat-settings-channel-list = Kanal listesi
 # Context: chat_settings
@@ -3514,7 +3514,7 @@ theme-editor-show-window-gradient = Pencere gradyanı
 # Context: show
 theme-editor-show-your-primary-color-in-appearance-takes-precedence-over-this-accent = Görünümdeki ana renginiz bu vurguya göre önceliklidir.
 # Context: show
-theme-editor-show-zero-disables-blur-the-native-compositor-controls-its-exact-strength = Sıfır bulanıklığı devre dışı bırakır; yerel dizgici onun tam gücünü kontrol eder.
+theme-editor-show-the-system-applies-its-standard-blur-strength = Sistem standart bulanıklık gücünü uygular.
 # Context: key
 theme-editor-tab-advanced = Gelişmiş
 # Context: key

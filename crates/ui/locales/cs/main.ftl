@@ -3254,7 +3254,7 @@ settings-appearance-settings-used-for-buttons-selection-and-message-highlights =
 # Context: appearance_settings
 settings-appearance-settings-window-effects = Efekty oken
 # Context: appearance_settings
-settings-appearance-settings-zero-disables-blur-the-native-compositor-controls-its-exact-strength = Nula zakáže rozmazání; nativní skladatel kontroluje jeho přesnou sílu.
+settings-appearance-settings-the-system-applies-its-standard-blur-strength = Systém použije svou standardní sílu rozostření.
 # Context: chat_settings
 settings-chat-settings-channel-list = Seznam kanálů
 # Context: chat_settings
@@ -3514,7 +3514,7 @@ theme-editor-show-window-gradient = Přechod okna
 # Context: show
 theme-editor-show-your-primary-color-in-appearance-takes-precedence-over-this-accent = Vaše primární barva ve Vzhledu má přednost před tímto akcentem.
 # Context: show
-theme-editor-show-zero-disables-blur-the-native-compositor-controls-its-exact-strength = Nula zakáže rozmazání; nativní skladatel kontroluje jeho přesnou sílu.
+theme-editor-show-the-system-applies-its-standard-blur-strength = Systém použije svou standardní sílu rozostření.
 # Context: key
 theme-editor-tab-advanced = Moderní
 # Context: key

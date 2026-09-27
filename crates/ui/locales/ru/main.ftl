@@ -3254,7 +3254,7 @@ settings-appearance-settings-used-for-buttons-selection-and-message-highlights =
 # Context: appearance_settings
 settings-appearance-settings-window-effects = Оконные эффекты
 # Context: appearance_settings
-settings-appearance-settings-zero-disables-blur-the-native-compositor-controls-its-exact-strength = Ноль отключает размытие; собственный наборщик контролирует его точную силу.
+settings-appearance-settings-the-system-applies-its-standard-blur-strength = Система применяет стандартную силу размытия.
 # Context: chat_settings
 settings-chat-settings-channel-list = Список каналов
 # Context: chat_settings
@@ -3514,7 +3514,7 @@ theme-editor-show-window-gradient = Градиент окна
 # Context: show
 theme-editor-show-your-primary-color-in-appearance-takes-precedence-over-this-accent = Ваш основной цвет во Внешности имеет приоритет над этим акцентом.
 # Context: show
-theme-editor-show-zero-disables-blur-the-native-compositor-controls-its-exact-strength = Ноль отключает размытие; собственный наборщик контролирует его точную силу.
+theme-editor-show-the-system-applies-its-standard-blur-strength = Система применяет стандартную силу размытия.
 # Context: key
 theme-editor-tab-advanced = Передовой
 # Context: key

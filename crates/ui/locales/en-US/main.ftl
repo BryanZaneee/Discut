@@ -3254,7 +3254,7 @@ settings-appearance-settings-used-for-buttons-selection-and-message-highlights =
 # Context: appearance_settings
 settings-appearance-settings-window-effects = Window effects
 # Context: appearance_settings
-settings-appearance-settings-zero-disables-blur-the-native-compositor-controls-its-exact-strength = Zero disables blur; the native compositor controls its exact strength.
+settings-appearance-settings-the-system-applies-its-standard-blur-strength = The system applies its standard blur strength.
 # Context: chat_settings
 settings-chat-settings-channel-list = Channel list
 # Context: chat_settings
@@ -3514,7 +3514,7 @@ theme-editor-show-window-gradient = Window gradient
 # Context: show
 theme-editor-show-your-primary-color-in-appearance-takes-precedence-over-this-accent = Your primary color in Appearance takes precedence over this accent.
 # Context: show
-theme-editor-show-zero-disables-blur-the-native-compositor-controls-its-exact-strength = Zero disables blur; the native compositor controls its exact strength.
+theme-editor-show-the-system-applies-its-standard-blur-strength = The system applies its standard blur strength.
 # Context: key
 theme-editor-tab-advanced = Advanced
 # Context: key

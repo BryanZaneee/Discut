@@ -3254,7 +3254,7 @@ settings-appearance-settings-used-for-buttons-selection-and-message-highlights =
 # Context: appearance_settings
 settings-appearance-settings-window-effects = Efeitos de janela
 # Context: appearance_settings
-settings-appearance-settings-zero-disables-blur-the-native-compositor-controls-its-exact-strength = Zero desativa o desfoque; o compositor nativo controla sua força exata.
+settings-appearance-settings-the-system-applies-its-standard-blur-strength = O sistema aplica sua intensidade de desfoque padrão.
 # Context: chat_settings
 settings-chat-settings-channel-list = Lista de canais
 # Context: chat_settings
@@ -3514,7 +3514,7 @@ theme-editor-show-window-gradient = Gradiente de janela
 # Context: show
 theme-editor-show-your-primary-color-in-appearance-takes-precedence-over-this-accent = Sua cor primária na Aparência tem precedência sobre esse sotaque.
 # Context: show
-theme-editor-show-zero-disables-blur-the-native-compositor-controls-its-exact-strength = Zero desativa o desfoque; o compositor nativo controla sua força exata.
+theme-editor-show-the-system-applies-its-standard-blur-strength = O sistema aplica sua intensidade de desfoque padrão.
 # Context: key
 theme-editor-tab-advanced = Avançado
 # Context: key

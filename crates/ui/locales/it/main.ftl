@@ -3254,7 +3254,7 @@ settings-appearance-settings-used-for-buttons-selection-and-message-highlights =
 # Context: appearance_settings
 settings-appearance-settings-window-effects = Effetti della finestra
 # Context: appearance_settings
-settings-appearance-settings-zero-disables-blur-the-native-compositor-controls-its-exact-strength = Zero disabilita la sfocatura; il compositore nativo ne controlla l'esatta forza.
+settings-appearance-settings-the-system-applies-its-standard-blur-strength = Il sistema applica la sua intensità di sfocatura standard.
 # Context: chat_settings
 settings-chat-settings-channel-list = Elenco canali
 # Context: chat_settings
@@ -3514,7 +3514,7 @@ theme-editor-show-window-gradient = Gradiente della finestra
 # Context: show
 theme-editor-show-your-primary-color-in-appearance-takes-precedence-over-this-accent = Il tuo colore primario in Aspetto ha la precedenza su questo accento.
 # Context: show
-theme-editor-show-zero-disables-blur-the-native-compositor-controls-its-exact-strength = Zero disabilita la sfocatura; il compositore nativo ne controlla l'esatta forza.
+theme-editor-show-the-system-applies-its-standard-blur-strength = Il sistema applica la sua intensità di sfocatura standard.
 # Context: key
 theme-editor-tab-advanced = Avanzato
 # Context: key

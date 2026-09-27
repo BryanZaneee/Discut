@@ -814,15 +814,11 @@ impl ThemeEditor {
 									)
 									.changed();
 									ui.add_space(8.0);
-									effects_changed |= design::slider_row(
+									effects_changed |= design::blur_control(
 										ui,
 										"theme-editor-show-blur",
-										Some(
-											"theme-editor-show-zero-disables-blur-the-native-compositor-controls-its-exact-strength",
-										),
+										"theme-editor-show-the-system-applies-its-standard-blur-strength",
 										&mut blur,
-										0..=100,
-										"%",
 									)
 									.changed();
 									if effects_changed {

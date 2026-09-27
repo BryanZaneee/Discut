@@ -1010,15 +1010,11 @@ impl MessagingUi {
 						"%",
 					);
 					ui.add_space(8.0);
-					design::slider_row(
+					design::blur_control(
 						ui,
 						"settings-appearance-settings-blur",
-						Some(
-							"settings-appearance-settings-zero-disables-blur-the-native-compositor-controls-its-exact-strength",
-						),
+						"settings-appearance-settings-the-system-applies-its-standard-blur-strength",
 						&mut self.blur,
-						0..=100,
-						"%",
 					);
 				}
 			},

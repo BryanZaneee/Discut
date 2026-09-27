@@ -3254,7 +3254,7 @@ settings-appearance-settings-used-for-buttons-selection-and-message-highlights =
 # Context: appearance_settings
 settings-appearance-settings-window-effects = Efekty okienne
 # Context: appearance_settings
-settings-appearance-settings-zero-disables-blur-the-native-compositor-controls-its-exact-strength = Zero wyłącza rozmycie; natywny kompozytor kontroluje jego dokładną siłę.
+settings-appearance-settings-the-system-applies-its-standard-blur-strength = System stosuje swoją standardową siłę rozmycia.
 # Context: chat_settings
 settings-chat-settings-channel-list = Lista kanałów
 # Context: chat_settings
@@ -3514,7 +3514,7 @@ theme-editor-show-window-gradient = Nachylenie okna
 # Context: show
 theme-editor-show-your-primary-color-in-appearance-takes-precedence-over-this-accent = Twój podstawowy kolor w wyglądzie ma pierwszeństwo przed tym akcentem.
 # Context: show
-theme-editor-show-zero-disables-blur-the-native-compositor-controls-its-exact-strength = Zero wyłącza rozmycie; natywny kompozytor kontroluje jego dokładną siłę.
+theme-editor-show-the-system-applies-its-standard-blur-strength = System stosuje swoją standardową siłę rozmycia.
 # Context: key
 theme-editor-tab-advanced = Zaawansowany
 # Context: key

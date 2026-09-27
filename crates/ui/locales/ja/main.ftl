@@ -3254,7 +3254,7 @@ settings-appearance-settings-used-for-buttons-selection-and-message-highlights =
 # Context: appearance_settings
 settings-appearance-settings-window-effects = ウィンドウ効果
 # Context: appearance_settings
-settings-appearance-settings-zero-disables-blur-the-native-compositor-controls-its-exact-strength = ゼロはぼかしを無効にします。ネイティブ コンポジターはその正確な強度を制御します。
+settings-appearance-settings-the-system-applies-its-standard-blur-strength = システム標準の強さでぼかしを適用します。
 # Context: chat_settings
 settings-chat-settings-channel-list = チャンネルリスト
 # Context: chat_settings
@@ -3514,7 +3514,7 @@ theme-editor-show-window-gradient = ウィンドウのグラデーション
 # Context: show
 theme-editor-show-your-primary-color-in-appearance-takes-precedence-over-this-accent = 外観の基本色がこのアクセントより優先されます。
 # Context: show
-theme-editor-show-zero-disables-blur-the-native-compositor-controls-its-exact-strength = ゼロはぼかしを無効にします。ネイティブ コンポジターはその正確な強度を制御します。
+theme-editor-show-the-system-applies-its-standard-blur-strength = システム標準の強さでぼかしを適用します。
 # Context: key
 theme-editor-tab-advanced = 高度な
 # Context: key

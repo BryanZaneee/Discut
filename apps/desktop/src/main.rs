@@ -362,10 +362,20 @@ fn main() -> eframe::Result {
 				eframe::egui_wgpu::WgpuSetupCreateNew {
 					// Avoid Intel Vulkan driver startup crashes; keep the diagnostic override.
 					#[cfg(target_os = "windows")]
-					instance_descriptor: eframe::wgpu::InstanceDescriptor {
-						backends: eframe::wgpu::Backends::from_env()
-							.unwrap_or(eframe::wgpu::Backends::DX12),
-						..eframe::wgpu::InstanceDescriptor::new_without_display_handle_from_env()
+					instance_descriptor: {
+						let mut descriptor =
+							eframe::wgpu::InstanceDescriptor::new_without_display_handle_from_env();
+						descriptor.backends = eframe::wgpu::Backends::from_env()
+							.unwrap_or(eframe::wgpu::Backends::DX12);
+						// An HWND swapchain is always opaque; only a DirectComposition one carries
+						// alpha to the desktop and its acrylic backdrop. The env override still wins.
+						if transparency_available
+							&& eframe::wgpu::Dx12SwapchainKind::from_env().is_none()
+						{
+							descriptor.backend_options.dx12.presentation_system =
+								eframe::wgpu::Dx12SwapchainKind::DxgiFromVisual;
+						}
+						descriptor
 					},
 					// Only adapters that can present to this window are eligible; the saved
 					// preference just orders them. A power hint alone picks GPUs the display is
@@ -5441,9 +5451,8 @@ impl Desktop {
 			self.window.set_transparent(transparent);
 			self.window_transparent = transparent;
 		}
-		let blur = transparent && effects.2 > 0;
 		if let Some(window_blur) = &mut self.window_blur {
-			window_blur.set_enabled(blur);
+			window_blur.set_enabled(transparent && effects.2 > 0);
 		}
 	}
 	/// Frame period of the display the window is on; egui otherwise assumes 60 Hz.

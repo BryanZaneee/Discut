@@ -92,8 +92,10 @@ omitting it permits effects. Theme percentages override the Appearance defaults.
 sidebars, headers, conversation and composer. The retired `transparent_all` field is
 still accepted for older themes and ignored.
 These values and theme overrides update live within an enabled session.
-`blur` at zero disables native compositor blur; nonzero values request it, but the
-compositor chooses the exact radius. Systems without native blur keep translucency.
+`blur` at zero disables native compositor blur; nonzero values request it. Every
+supported compositor (macOS, Windows 11 acrylic, KDE and Wayland blur) applies its own
+fixed radius, so Appearance and the theme editor show blur as a switch. Systems without
+native blur keep translucency.
 Setting transparency to zero disables blur and restores the native opaque-window
 hint where supported; only restarting with the Appearance switch off releases the
 alpha-capable GPU surface. X11 cannot change its native hint after window creation.

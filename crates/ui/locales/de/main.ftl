@@ -3254,7 +3254,7 @@ settings-appearance-settings-used-for-buttons-selection-and-message-highlights =
 # Context: appearance_settings
 settings-appearance-settings-window-effects = Fenstereffekte
 # Context: appearance_settings
-settings-appearance-settings-zero-disables-blur-the-native-compositor-controls-its-exact-strength = Null deaktiviert die Unschärfe; Der native Compositor steuert seine genaue Stärke.
+settings-appearance-settings-the-system-applies-its-standard-blur-strength = Das System verwendet seine Standard-Unschärfestärke.
 # Context: chat_settings
 settings-chat-settings-channel-list = Kanalliste
 # Context: chat_settings
@@ -3514,7 +3514,7 @@ theme-editor-show-window-gradient = Fensterverlauf
 # Context: show
 theme-editor-show-your-primary-color-in-appearance-takes-precedence-over-this-accent = Ihre Primärfarbe im Erscheinungsbild hat Vorrang vor diesem Akzent.
 # Context: show
-theme-editor-show-zero-disables-blur-the-native-compositor-controls-its-exact-strength = Null deaktiviert die Unschärfe; Der native Compositor steuert seine genaue Stärke.
+theme-editor-show-the-system-applies-its-standard-blur-strength = Das System verwendet seine Standard-Unschärfestärke.
 # Context: key
 theme-editor-tab-advanced = Fortschrittlich
 # Context: key

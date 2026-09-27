@@ -3254,7 +3254,7 @@ settings-appearance-settings-used-for-buttons-selection-and-message-highlights =
 # Context: appearance_settings
 settings-appearance-settings-window-effects = Effets de fenêtre
 # Context: appearance_settings
-settings-appearance-settings-zero-disables-blur-the-native-compositor-controls-its-exact-strength = Zéro désactive le flou ; le compositeur natif contrôle sa force exacte.
+settings-appearance-settings-the-system-applies-its-standard-blur-strength = Le système applique son intensité de flou standard.
 # Context: chat_settings
 settings-chat-settings-channel-list = Liste des chaînes
 # Context: chat_settings
@@ -3514,7 +3514,7 @@ theme-editor-show-window-gradient = Dégradé de fenêtre
 # Context: show
 theme-editor-show-your-primary-color-in-appearance-takes-precedence-over-this-accent = Votre couleur principale en Apparence prime sur cet accent.
 # Context: show
-theme-editor-show-zero-disables-blur-the-native-compositor-controls-its-exact-strength = Zéro désactive le flou ; le compositeur natif contrôle sa force exacte.
+theme-editor-show-the-system-applies-its-standard-blur-strength = Le système applique son intensité de flou standard.
 # Context: key
 theme-editor-tab-advanced = Avancé
 # Context: key

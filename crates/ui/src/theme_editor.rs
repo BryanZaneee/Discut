@@ -798,14 +798,12 @@ impl ThemeEditor {
 									if transparency {
 										style.transparency.get_or_insert(defaults.1);
 										style.blur.get_or_insert(defaults.2);
-										style.transparent_all.get_or_insert(defaults.3);
 									}
 									changed = true;
 								}
 								if transparency {
 									let mut amount = style.transparency.unwrap_or(defaults.1);
 									let mut blur = style.blur.unwrap_or(defaults.2);
-									let mut all = style.transparent_all.unwrap_or(defaults.3);
 									let mut effects_changed = design::slider_row(
 										ui,
 										"theme-editor-show-transparency",
@@ -827,20 +825,9 @@ impl ThemeEditor {
 										"%",
 									)
 									.changed();
-									ui.add_space(4.0);
-									effects_changed |= design::switch(
-										ui,
-										"theme-editor-show-apply-to-all-surfaces",
-										Some(
-											"theme-editor-show-include-sidebars-server-rail-headers-and-composer",
-										),
-										&mut all,
-									)
-									.changed();
 									if effects_changed {
 										style.transparency = Some(amount);
 										style.blur = Some(blur);
-										style.transparent_all = Some(all);
 										changed = true;
 									}
 								}

@@ -40,7 +40,6 @@ impl Settings {
 			transparency_blur: ui.transparency_blur,
 			transparency: ui.transparency,
 			blur: ui.blur,
-			transparent_all: ui.transparent_all,
 			voice_noise_suppression: ui.voice_processing.effective().suppression
 				!= model::voice_settings::NoiseSuppression::Off,
 			voice_processing: Some(ui.voice_processing),
@@ -81,7 +80,6 @@ impl Settings {
 		ui.transparency_blur = value.transparency_blur;
 		ui.transparency = value.transparency;
 		ui.blur = value.blur;
-		ui.transparent_all = value.transparent_all;
 		ui.voice_processing = value.voice_processing.unwrap_or_else(|| {
 			model::voice_settings::VoiceProcessing::from_legacy(value.voice_noise_suppression)
 		});

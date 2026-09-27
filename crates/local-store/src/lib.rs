@@ -48,7 +48,6 @@ pub struct AppPreferences {
 	pub transparency_blur: bool,
 	pub transparency: u8,
 	pub blur: u8,
-	pub transparent_all: bool,
 	#[serde(default)]
 	pub voice_noise_suppression: bool,
 	/// Absent in older preferences; migrate using the legacy suppression setting.
@@ -87,7 +86,6 @@ impl Default for AppPreferences {
 			transparency_blur: false,
 			transparency: 15,
 			blur: 50,
-			transparent_all: false,
 			voice_noise_suppression: true,
 			voice_processing: Some(model::voice_settings::VoiceProcessing::default()),
 			voice_push_to_talk: false,
@@ -1850,7 +1848,6 @@ mod tests {
 			transparency_blur: true,
 			transparency: 30,
 			blur: 60,
-			transparent_all: true,
 			notification_options: model::notification_preferences::Device {
 				current_channel: true,
 				disable_sounds: true,

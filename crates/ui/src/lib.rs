@@ -409,7 +409,6 @@ pub struct MessagingUi {
 	pub transparency_blur: bool,
 	pub transparency: u8,
 	pub blur: u8,
-	pub transparent_all: bool,
 }
 
 /// Context strip (reply/edit) drawn as the rounded top of the composer block.
@@ -418,26 +417,28 @@ fn composer_cap(
 	colors: &design::Palette,
 	add_contents: impl FnOnce(&mut egui::Ui),
 ) -> egui::Rect {
-	egui::Frame::new()
-		.fill(design::mix(colors.raised, colors.base, 0.45))
-		.corner_radius(egui::CornerRadius {
-			nw: 8,
-			ne: 8,
-			sw: 0,
-			se: 0,
-		})
-		.inner_margin(egui::Margin {
+	design::glass_frame(
+		ui,
+		design::mix(colors.raised, colors.base, 0.45),
+		egui::Margin {
 			left: 16,
 			right: 8,
 			top: 5,
 			bottom: 5,
-		})
-		.show(ui, |ui| {
-			ui.set_min_width((ui.available_width()).max(0.0));
-			ui.horizontal(|ui| add_contents(ui));
-		})
-		.response
-		.rect
+		},
+	)
+	.corner_radius(egui::CornerRadius {
+		nw: 8,
+		ne: 8,
+		sw: 0,
+		se: 0,
+	})
+	.show(ui, |ui| {
+		ui.set_min_width((ui.available_width()).max(0.0));
+		ui.horizontal(|ui| add_contents(ui));
+	})
+	.response
+	.rect
 }
 
 fn mention_switch(ui: &mut egui::Ui, colors: &design::Palette, on: &mut bool) {
@@ -1648,8 +1649,9 @@ impl MessagingUi {
 		let language = self.language;
 		let mut anchor = None;
 		let in_call = state.voice.active.is_some();
+		let card_fill = design::account_card_fill(ui);
 		egui::Frame::new()
-			.fill(colors.raised)
+			.fill(card_fill)
 			.corner_radius(8)
 			.inner_margin(0)
 			.show(ui, |ui| {
@@ -1704,7 +1706,7 @@ impl MessagingUi {
 									ui,
 									avatar.rect,
 									profiles::presence_color(self.own_presence.status.wire()),
-									colors.raised,
+									card_fill,
 								);
 								anchor =
 									Some(avatar.on_hover_text(language.text("profile-and-status")));
@@ -1837,11 +1839,16 @@ impl MessagingUi {
 			.show_separator_line(false)
 			.frame(
 				egui::Frame::new()
-					.fill(design::section_surface(
-						ui,
-						design::window_palette(ui).chat,
-						design::ImageSection::TopBar,
-					))
+					// Like the composer, the header shares the conversation's single coat.
+					.fill(if design::has_section_background(ui) {
+						design::section_surface(
+							ui,
+							design::window_palette(ui).chat,
+							design::ImageSection::TopBar,
+						)
+					} else {
+						egui::Color32::TRANSPARENT
+					})
 					.inner_margin(egui::Margin::symmetric(16, 0)),
 			)
 			.show(ui, |ui| {
@@ -2288,10 +2295,8 @@ impl MessagingUi {
 			self.emoji_picker = emoji_picker::Picker::default();
 			self.ime_active = false;
 			self.focus_switched_composer = false;
-			egui::Frame::new()
-				.fill(colors.raised)
+			design::glass_frame(ui, colors.raised, egui::Margin::same(12))
 				.corner_radius(8)
-				.inner_margin(12)
 				.show(ui, |ui| {
 					let mut hint =
 						"You don't have permission to send messages in this channel.".to_owned();
@@ -2724,14 +2729,12 @@ impl MessagingUi {
 			// The cap and the input form one block: undo the automatic vertical item gap.
 			ui.add_space(-ui.spacing().item_spacing.y);
 		}
-		egui::Frame::new()
-            .fill(colors.raised)
+		design::glass_frame(ui, colors.raised, egui::Margin::symmetric(10, 6))
             .corner_radius(if cap_top.is_some() {
                 egui::CornerRadius { nw: 0, ne: 0, sw: 8, se: 8 }
             } else {
                 egui::CornerRadius::same(8)
             })
-            .inner_margin(egui::Margin::symmetric(10, 6))
             .show(ui, |ui| {
                 // Outer frame bounds for the autocomplete popout: undo the inner margin and
                 // include the reply/edit cap so the popout never covers it.
@@ -3816,11 +3819,17 @@ impl MessagingUi {
 					.show_separator_line(false)
 					.frame(
 						egui::Frame::new()
-							.fill(design::section_surface(
-								ui,
-								background.chat,
-								design::ImageSection::Composer,
-							))
+							// The central panel already paints the chat surface; a second
+							// coat would band a darker strip under a see-through timeline.
+							.fill(if design::has_section_background(ui) {
+								design::section_surface(
+									ui,
+									background.chat,
+									design::ImageSection::Composer,
+								)
+							} else {
+								egui::Color32::TRANSPARENT
+							})
 							// The bottom inset matches the account card's, so the input and the
 							// account pill sit on one line across the window.
 							.inner_margin(egui::Margin {

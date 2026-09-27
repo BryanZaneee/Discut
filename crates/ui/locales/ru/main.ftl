@@ -3230,13 +3230,11 @@ settings-appearance-menu-theme = Тема
 # Context: appearance_settings
 settings-appearance-settings-accent = Акцент
 # Context: appearance_settings
-settings-appearance-settings-apply-to-all-surfaces = Наносить на все поверхности
 # Context: appearance_settings
 settings-appearance-settings-blur = Размытие
 # Context: appearance_settings
 settings-appearance-settings-choose-primary-color = Выберите основной цвет
 # Context: appearance_settings
-settings-appearance-settings-include-sidebars-server-rail-headers-and-composer = Включите боковые панели, серверную направляющую, заголовки и композитор.
 # Context: appearance_settings
 settings-appearance-settings-primary-color = Основной цвет
 # Context: appearance_settings
@@ -3430,7 +3428,6 @@ theme-editor-show-advanced = Передовой
 # Context: show
 theme-editor-show-app-background = Фон приложения
 # Context: show
-theme-editor-show-apply-to-all-surfaces = Наносить на все поверхности
 # Context: show
 theme-editor-show-blend-two-colors-behind-the-app-s-surfaces = Смешайте два цвета за поверхностями приложения.
 # Context: show
@@ -3460,7 +3457,6 @@ theme-editor-show-how-your-theme-appears-in-the-gallery = Как ваша тем
 # Context: show
 theme-editor-show-image-opacity = Непрозрачность изображения
 # Context: show
-theme-editor-show-include-sidebars-server-rail-headers-and-composer = Включите боковые панели, серверную направляющую, заголовки и композитор.
 # Context: show
 theme-editor-show-license = Лицензия
 # Context: show

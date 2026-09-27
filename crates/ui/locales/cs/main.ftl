@@ -3230,13 +3230,11 @@ settings-appearance-menu-theme = Téma
 # Context: appearance_settings
 settings-appearance-settings-accent = Přízvuk
 # Context: appearance_settings
-settings-appearance-settings-apply-to-all-surfaces = Aplikujte na všechny povrchy
 # Context: appearance_settings
 settings-appearance-settings-blur = Rozmazat
 # Context: appearance_settings
 settings-appearance-settings-choose-primary-color = Vyberte primární barvu
 # Context: appearance_settings
-settings-appearance-settings-include-sidebars-server-rail-headers-and-composer = Zahrňte postranní panely, serverovou lištu, záhlaví a skladatel.
 # Context: appearance_settings
 settings-appearance-settings-primary-color = Základní barva
 # Context: appearance_settings
@@ -3430,7 +3428,6 @@ theme-editor-show-advanced = Moderní
 # Context: show
 theme-editor-show-app-background = Pozadí aplikace
 # Context: show
-theme-editor-show-apply-to-all-surfaces = Aplikujte na všechny povrchy
 # Context: show
 theme-editor-show-blend-two-colors-behind-the-app-s-surfaces = Smíchejte dvě barvy za povrchy aplikace.
 # Context: show
@@ -3460,7 +3457,6 @@ theme-editor-show-how-your-theme-appears-in-the-gallery = Jak se váš motiv zob
 # Context: show
 theme-editor-show-image-opacity = Neprůhlednost obrazu
 # Context: show
-theme-editor-show-include-sidebars-server-rail-headers-and-composer = Zahrňte postranní panely, serverovou lištu, záhlaví a skladatel.
 # Context: show
 theme-editor-show-license = Licence
 # Context: show

@@ -1020,15 +1020,6 @@ impl MessagingUi {
 						0..=100,
 						"%",
 					);
-					ui.add_space(4.0);
-					design::switch(
-						ui,
-						"settings-appearance-settings-apply-to-all-surfaces",
-						Some(
-							"settings-appearance-settings-include-sidebars-server-rail-headers-and-composer",
-						),
-						&mut self.transparent_all,
-					);
 				}
 			},
 		);

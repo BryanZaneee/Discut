@@ -3332,7 +3332,6 @@ impl TimelineView {
 		// floats in the reserved strip above the composer, and a round control offers the way
 		// back to the live edge. They are painted after the scroll area so they sit above the
 		// messages and win the hit-test.
-		let colors = crate::design::palette(ui);
 		let area = output.inner_rect;
 		let now = std::time::Instant::now();
 		let typing = state
@@ -3342,22 +3341,27 @@ impl TimelineView {
 		// chat surface, with no flat band anywhere in it. While someone is typing the ramp runs
 		// tall enough to carry the indicator, and denser once the reader has scrolled away from
 		// the live edge, so the line stays legible over the messages behind it.
-		let fade_height = if typing.is_some() {
+		//
+		// A see-through surface (window transparency or a background image) cannot hide messages
+		// without also tinting what shows through, so its ramp only ever reaches the surface's
+		// own tint, and at the live edge, where the reserved strip is empty, it is skipped.
+		let surface = crate::design::section_surface(
+			ui,
+			crate::design::window_palette(ui).chat,
+			crate::design::ImageSection::MessageList,
+		);
+		let see_through = surface.a() < 255;
+		let fade_height = if see_through && self.following {
+			0.0
+		} else if typing.is_some() {
 			crate::typing::OVERLAY_HEIGHT + 52.0
 		} else {
 			20.0
 		};
-		// Over a background image the ramp inherits the message list's own opacity, so a
-		// see-through timeline no longer bands a dark strip across the image above the composer.
-		let surface = crate::design::section_surface(
-			ui,
-			colors.chat,
-			crate::design::ImageSection::MessageList,
-		);
-		let dense = if self.following {
-			surface.gamma_multiply(0.88)
-		} else if crate::design::has_section_background(ui) {
+		let dense = if see_through {
 			surface
+		} else if self.following {
+			surface.gamma_multiply(0.88)
 		} else {
 			surface.to_opaque()
 		};

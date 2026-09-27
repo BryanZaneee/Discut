@@ -3230,13 +3230,11 @@ settings-appearance-menu-theme = Tema
 # Context: appearance_settings
 settings-appearance-settings-accent = Aksan
 # Context: appearance_settings
-settings-appearance-settings-apply-to-all-surfaces = Tüm yüzeylere uygulayın
 # Context: appearance_settings
 settings-appearance-settings-blur = Bulanıklık
 # Context: appearance_settings
 settings-appearance-settings-choose-primary-color = Ana rengi seçin
 # Context: appearance_settings
-settings-appearance-settings-include-sidebars-server-rail-headers-and-composer = Kenar çubuklarını, sunucu rayını, başlıkları ve oluşturucuyu ekleyin.
 # Context: appearance_settings
 settings-appearance-settings-primary-color = Ana renk
 # Context: appearance_settings
@@ -3430,7 +3428,6 @@ theme-editor-show-advanced = Gelişmiş
 # Context: show
 theme-editor-show-app-background = Uygulama arka planı
 # Context: show
-theme-editor-show-apply-to-all-surfaces = Tüm yüzeylere uygulayın
 # Context: show
 theme-editor-show-blend-two-colors-behind-the-app-s-surfaces = Uygulamanın yüzeylerinin arkasında iki rengi karıştırın.
 # Context: show
@@ -3460,7 +3457,6 @@ theme-editor-show-how-your-theme-appears-in-the-gallery = Temanızın galeride n
 # Context: show
 theme-editor-show-image-opacity = Görüntü opaklığı
 # Context: show
-theme-editor-show-include-sidebars-server-rail-headers-and-composer = Kenar çubuklarını, sunucu rayını, başlıkları ve oluşturucuyu ekleyin.
 # Context: show
 theme-editor-show-license = Lisans
 # Context: show

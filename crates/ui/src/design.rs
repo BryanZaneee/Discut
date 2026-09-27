@@ -380,19 +380,20 @@ struct ExtensionPalette {
 thread_local! {
 	static EXTENSION_THEME: std::cell::Cell<Option<[ExtensionPalette; 2]>> = const { std::cell::Cell::new(None) };
 	static EXTENSION_STYLE: std::cell::Cell<extensions::ThemeStyle> = std::cell::Cell::new(extensions::ThemeStyle::default());
-	static WINDOW_EFFECTS: std::cell::Cell<(bool, u8, u8, bool)> = const { std::cell::Cell::new((false, 15, 50, false)) };
+	static WINDOW_EFFECTS: std::cell::Cell<(bool, u8, u8)> = const { std::cell::Cell::new((false, 15, 50)) };
 	static BACKGROUND_IMAGE: std::cell::RefCell<Option<(std::sync::Arc<egui::ColorImage>, egui::TextureHandle)>> = const { std::cell::RefCell::new(None) };
 }
 
-pub fn set_window_effects(enabled: bool, transparency: u8, blur: u8, all: bool) {
-	WINDOW_EFFECTS.set((enabled, transparency.min(100), blur.min(100), all));
+/// Transparency always covers every surface: rail, sidebars, headers, chat and composer.
+pub fn set_window_effects(enabled: bool, transparency: u8, blur: u8) {
+	WINDOW_EFFECTS.set((enabled, transparency.min(100), blur.min(100)));
 }
 
-pub fn default_window_effects() -> (bool, u8, u8, bool) {
+pub fn default_window_effects() -> (bool, u8, u8) {
 	WINDOW_EFFECTS.get()
 }
 
-pub fn window_effects() -> (bool, u8, u8, bool) {
+pub fn window_effects() -> (bool, u8, u8) {
 	let defaults = default_window_effects();
 	if !defaults.0 {
 		return defaults;
@@ -402,7 +403,6 @@ pub fn window_effects() -> (bool, u8, u8, bool) {
 		defaults.0 && style.transparency_blur.unwrap_or(true),
 		style.transparency.unwrap_or(defaults.1),
 		style.blur.unwrap_or(defaults.2),
-		style.transparent_all.unwrap_or(defaults.3),
 	)
 }
 const THEME_FIELDS: [&str; 18] = [
@@ -515,11 +515,8 @@ pub enum ImageSection {
 }
 
 /// Cover one window image with a section surface. Only the surface changes opacity.
-pub fn section_surface(ui: &egui::Ui, mut color: Color32, section: ImageSection) -> Color32 {
-	let (enabled, transparency, _, all) = window_effects();
-	if enabled && !all && !matches!(section, ImageSection::MessageList) {
-		color = color.to_opaque();
-	}
+pub fn section_surface(ui: &egui::Ui, color: Color32, section: ImageSection) -> Color32 {
+	let (enabled, transparency, _) = window_effects();
 	if !has_window_background(ui) {
 		return color;
 	}
@@ -538,11 +535,63 @@ pub fn section_surface(ui: &egui::Ui, mut color: Color32, section: ImageSection)
 		ImageSection::MemberList => sections.member_list,
 		ImageSection::Composer => sections.composer,
 	};
-	if enabled && (all || matches!(section, ImageSection::MessageList)) {
+	if enabled {
 		opacity = (u16::from(opacity) * u16::from(100 - transparency) / 100) as u8;
 	}
 	let [r, g, b, _] = color.to_srgba_unmultiplied();
 	Color32::from_rgba_unmultiplied(r, g, b, (u16::from(opacity) * 255 / 100) as u8)
+}
+
+/// Opacity of the conversation surface; below 255 the desktop or an image shows through.
+pub fn chat_alpha(ui: &egui::Ui) -> u8 {
+	section_surface(ui, window_palette(ui).chat, ImageSection::MessageList).a()
+}
+
+/// Controls floating on a see-through conversation become frosted glass with a hairline
+/// edge: always denser than the surface behind them, so text stays legible at any setting.
+pub fn glass(ui: &egui::Ui, color: Color32) -> (Color32, Stroke) {
+	let behind = u16::from(chat_alpha(ui));
+	if behind == 255 {
+		return (color, Stroke::NONE);
+	}
+	let alpha = behind + (255 - behind) * 9 / 20;
+	let [r, g, b, _] = color.to_srgba_unmultiplied();
+	let edge = if ui.visuals().dark_mode {
+		Color32::from_white_alpha(18)
+	} else {
+		Color32::from_black_alpha(18)
+	};
+	(
+		Color32::from_rgba_unmultiplied(r, g, b, alpha as u8),
+		Stroke::new(1.0, edge),
+	)
+}
+
+/// A [`glass`] frame whose hairline sits inside `margin`, so see-through and opaque surfaces
+/// keep the same size and the composer stays level with the account card.
+pub fn glass_frame(ui: &egui::Ui, color: Color32, margin: egui::Margin) -> egui::Frame {
+	let (fill, edge) = glass(ui, color);
+	let inset = edge.width as i8;
+	egui::Frame::new()
+		.fill(fill)
+		.stroke(edge)
+		.inner_margin(egui::Margin {
+			left: margin.left - inset,
+			right: margin.right - inset,
+			top: margin.top - inset,
+			bottom: margin.bottom - inset,
+		})
+}
+
+/// The server rail's own surface. Over see-through chrome the account card takes it too, so
+/// the card reads as the same translucent material; opaque chrome keeps the raised card.
+pub fn account_card_fill(ui: &egui::Ui) -> Color32 {
+	let rail = section_surface(ui, window_palette(ui).base, ImageSection::ServerList);
+	if rail.a() < 255 {
+		rail
+	} else {
+		palette(ui).raised
+	}
 }
 
 pub fn has_section_background(ui: &egui::Ui) -> bool {
@@ -587,7 +636,7 @@ pub fn paint_chat_background(ui: &egui::Ui, rect: egui::Rect) {
 
 // Only app backgrounds follow desktop transparency; editor thumbnails stay unchanged.
 fn translucent_background(mut background: extensions::Background) -> extensions::Background {
-	let (enabled, transparency, _, _) = window_effects();
+	let (enabled, transparency, _) = window_effects();
 	if enabled {
 		background.opacity =
 			(u16::from(background.opacity) * u16::from(100 - transparency) / 100) as u8;
@@ -676,20 +725,17 @@ pub fn colors(dark: bool, variant: Variant) -> Palette {
 	} else {
 		customize(palette, primary_color())
 	};
-	let (enabled, transparency, _, all) = window_effects();
+	let (enabled, transparency, _) = window_effects();
 	if enabled && transparency > 0 {
 		let alpha = 100 - u16::from(transparency);
-		for (surface, chrome) in [
-			(&mut palette.base, true),
-			(&mut palette.sidebar, true),
-			(&mut palette.chat, false),
-			(&mut palette.raised, true),
-			(&mut palette.canvas, false),
-			(&mut palette.surface, true),
+		for surface in [
+			&mut palette.base,
+			&mut palette.sidebar,
+			&mut palette.chat,
+			&mut palette.raised,
+			&mut palette.canvas,
+			&mut palette.surface,
 		] {
-			if chrome && !all {
-				continue;
-			}
 			let [r, g, b, a] = surface.to_srgba_unmultiplied();
 			*surface = Color32::from_rgba_unmultiplied(r, g, b, (u16::from(a) * alpha / 100) as u8);
 		}
@@ -779,7 +825,7 @@ pub fn paint_backdrop(ctx: &egui::Context) {
 		return;
 	}
 	let [top, bottom] = palette.backdrop.unwrap_or_else(|| {
-		let (enabled, transparency, _, _) = window_effects();
+		let (enabled, transparency, _) = window_effects();
 		let mut base = palette.base.to_opaque();
 		if enabled {
 			base = base.gamma_multiply(f32::from(100 - transparency) / 100.0);
@@ -3004,7 +3050,7 @@ mod sign_in_widget_tests {
 			for (enabled, transparency, expected_alpha) in
 				[(false, 100, 255), (true, 50, 128), (true, 100, 0)]
 			{
-				set_window_effects(enabled, transparency, 0, true);
+				set_window_effects(enabled, transparency, 0);
 				let output = ctx.run_ui(egui::RawInput::default(), |ui| {
 					paint_backdrop(&ctx);
 					paint_chat_background(ui, ui.max_rect());
@@ -3039,7 +3085,7 @@ mod sign_in_widget_tests {
 			}
 		}
 		set_extension_theme(None);
-		set_window_effects(false, 15, 50, false);
+		set_window_effects(false, 15, 50);
 	}
 
 	/// The sign-in screen depends on these two: a row that reports a click and shows both

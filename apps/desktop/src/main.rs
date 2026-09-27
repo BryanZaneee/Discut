@@ -5424,10 +5424,9 @@ impl Desktop {
 			self.transparency_available,
 			self.messaging.transparency,
 			self.messaging.blur,
-			self.messaging.transparent_all,
 		);
 		if effects != ui::design::default_window_effects() {
-			ui::design::set_window_effects(effects.0, effects.1, effects.2, effects.3);
+			ui::design::set_window_effects(effects.0, effects.1, effects.2);
 			ui::design::apply(ctx);
 			ctx.request_repaint();
 		}

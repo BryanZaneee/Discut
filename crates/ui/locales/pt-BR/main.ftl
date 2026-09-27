@@ -3230,13 +3230,11 @@ settings-appearance-menu-theme = Tema
 # Context: appearance_settings
 settings-appearance-settings-accent = Sotaque
 # Context: appearance_settings
-settings-appearance-settings-apply-to-all-surfaces = Aplicar em todas as superfícies
 # Context: appearance_settings
 settings-appearance-settings-blur = Borrão
 # Context: appearance_settings
 settings-appearance-settings-choose-primary-color = Escolha a cor primária
 # Context: appearance_settings
-settings-appearance-settings-include-sidebars-server-rail-headers-and-composer = Inclui barras laterais, barra de servidor, cabeçalhos e compositor.
 # Context: appearance_settings
 settings-appearance-settings-primary-color = Cor primária
 # Context: appearance_settings
@@ -3430,7 +3428,6 @@ theme-editor-show-advanced = Avançado
 # Context: show
 theme-editor-show-app-background = Plano de fundo do aplicativo
 # Context: show
-theme-editor-show-apply-to-all-surfaces = Aplicar em todas as superfícies
 # Context: show
 theme-editor-show-blend-two-colors-behind-the-app-s-surfaces = Misture duas cores atrás das superfícies do aplicativo.
 # Context: show
@@ -3460,7 +3457,6 @@ theme-editor-show-how-your-theme-appears-in-the-gallery = Como o seu tema aparec
 # Context: show
 theme-editor-show-image-opacity = Opacidade da imagem
 # Context: show
-theme-editor-show-include-sidebars-server-rail-headers-and-composer = Inclui barras laterais, barra de servidor, cabeçalhos e compositor.
 # Context: show
 theme-editor-show-license = Licença
 # Context: show

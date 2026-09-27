@@ -3230,13 +3230,11 @@ settings-appearance-menu-theme = テーマ
 # Context: appearance_settings
 settings-appearance-settings-accent = アクセント
 # Context: appearance_settings
-settings-appearance-settings-apply-to-all-surfaces = すべての表面に適用
 # Context: appearance_settings
 settings-appearance-settings-blur = ぼかし
 # Context: appearance_settings
 settings-appearance-settings-choose-primary-color = 原色を選択してください
 # Context: appearance_settings
-settings-appearance-settings-include-sidebars-server-rail-headers-and-composer = サイドバー、サーバー レール、ヘッダー、およびコンポーザーが含まれます。
 # Context: appearance_settings
 settings-appearance-settings-primary-color = 原色
 # Context: appearance_settings
@@ -3430,7 +3428,6 @@ theme-editor-show-advanced = 高度な
 # Context: show
 theme-editor-show-app-background = アプリの背景
 # Context: show
-theme-editor-show-apply-to-all-surfaces = すべての表面に適用
 # Context: show
 theme-editor-show-blend-two-colors-behind-the-app-s-surfaces = アプリの表面の裏側で 2 つの色をブレンドします。
 # Context: show
@@ -3460,7 +3457,6 @@ theme-editor-show-how-your-theme-appears-in-the-gallery = テーマがギャラ�
 # Context: show
 theme-editor-show-image-opacity = 画像の不透明度
 # Context: show
-theme-editor-show-include-sidebars-server-rail-headers-and-composer = サイドバー、サーバー レール、ヘッダー、およびコンポーザーが含まれます。
 # Context: show
 theme-editor-show-license = ライセンス
 # Context: show

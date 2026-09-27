@@ -1407,9 +1407,12 @@ impl Picker {
 											);
 										});
 									} else {
-										ui.label(crate::i18n::translate(
-											"emoji-picker-popup-hover-a-sticker-to-preview-it",
-										));
+										ui.add(
+											egui::Label::new(crate::i18n::translate(
+												"emoji-picker-popup-hover-a-sticker-to-preview-it",
+											))
+											.truncate(),
+										);
 									}
 									return;
 								}
@@ -1426,17 +1429,23 @@ impl Picker {
 									);
 									match &hovered_gif {
 										Some(title) => {
-											ui.label(
-												crate::design::semibold(ui, title, 15.0)
-													.color(colors.text_strong),
+											ui.add(
+												egui::Label::new(
+													crate::design::semibold(ui, title, 15.0)
+														.color(colors.text_strong),
+												)
+												.truncate(),
 											);
 										}
 										None => {
-											ui.label(
-												egui::RichText::new(crate::i18n::translate(
-													"emoji-picker-popup-click-a-gif-to-send-it-right-away",
-												))
-												.color(colors.muted),
+											ui.add(
+												egui::Label::new(
+													egui::RichText::new(crate::i18n::translate(
+														"emoji-picker-popup-click-a-gif-to-send-it-right-away",
+													))
+													.color(colors.muted),
+												)
+												.truncate(),
 											);
 										}
 									}
@@ -1477,11 +1486,14 @@ impl Picker {
 											28.0,
 											colors.muted,
 										);
-										ui.label(
-											egui::RichText::new(crate::i18n::translate(
-												"emoji-picker-popup-hover-an-emoji-to-preview-it",
-											))
-											.color(colors.muted),
+										ui.add(
+											egui::Label::new(
+												egui::RichText::new(crate::i18n::translate(
+													"emoji-picker-popup-hover-an-emoji-to-preview-it",
+												))
+												.color(colors.muted),
+											)
+											.truncate(),
 										);
 									}
 								}
@@ -1761,12 +1773,17 @@ fn tile(
 			);
 		}
 		let family = crate::design::semibold_family(ui.ctx());
-		let galley = ui.painter().layout_no_wrap(
+		let icon_size = if icon.is_some() { 22.0 } else { 0.0 };
+		// Long localized labels elide to one line inside the tile.
+		let mut job = egui::text::LayoutJob::simple_singleline(
 			label.to_owned(),
 			egui::FontId::new(15.0, family),
 			egui::Color32::WHITE,
 		);
-		let icon_size = if icon.is_some() { 22.0 } else { 0.0 };
+		job.wrap = egui::text::TextWrapping::truncate_at_width(
+			rect.width() - 24.0 - icon_size - if icon.is_some() { 8.0 } else { 0.0 },
+		);
+		let galley = ui.painter().layout_job(job);
 		let total = galley.size().x + icon_size + if icon.is_some() { 8.0 } else { 0.0 };
 		let mut cursor = rect.center().x - total / 2.0;
 		if let Some(icon) = icon {
@@ -1829,7 +1846,7 @@ fn gif_home(
 			if tile(
 				ui,
 				cell(0),
-				"emoji-picker-gif-body-favorites",
+				&crate::i18n::translate("emoji-picker-gif-body-favorites"),
 				Some(crate::icons::Icon::StarFill),
 				favorite_art,
 				0,
@@ -1842,7 +1859,7 @@ fn gif_home(
 			if tile(
 				ui,
 				cell(1),
-				"emoji-picker-gif-body-trending-gifs",
+				&crate::i18n::translate("emoji-picker-gif-body-trending-gifs"),
 				Some(crate::icons::Icon::Fire),
 				trending_art,
 				1,

@@ -801,7 +801,7 @@ emoji-picker-gif-body-no-favorites-yet = Пока нет избранных
 # Context: gif_body
 emoji-picker-gif-body-no-gifs-found = GIF-файлы не найдены
 # Context: gif_body
-emoji-picker-gif-body-searching-klipy = Поиск КЛИПЫ…
+emoji-picker-gif-body-searching-klipy = Поиск в KLIPY…
 # Context: gif_body
 emoji-picker-gif-body-trending-gifs = Популярные GIF-изображения
 # Context: gif_body
@@ -847,7 +847,7 @@ emoji-picker-search-emoji-label = Поиск смайликов по имени
 # Context: popup
 emoji-picker-search-gifs-label = Поиск GIF-файлов на KLIPY
 # Context: popup
-emoji-picker-search-klipy = Поиск КЛИПЫ
+emoji-picker-search-klipy = Поиск в KLIPY
 # Context: popup
 emoji-picker-search-stickers = Найдите идеальную наклейку
 # Context: popup

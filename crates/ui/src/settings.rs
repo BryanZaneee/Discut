@@ -1269,20 +1269,32 @@ pub(super) fn nav_item(ui: &mut egui::Ui, label: &str, selected: bool) -> egui::
 			egui::StrokeKind::Inside,
 		);
 	}
-	ui.painter().text(
-		egui::pos2(rect.left() + 12.0, rect.center().y),
-		egui::Align2::LEFT_CENTER,
-		&label,
+	let color = if selected {
+		colors.text_strong
+	} else if hot {
+		colors.text
+	} else {
+		colors.muted
+	};
+	// Long localized page names elide inside the row; hovering shows the full name.
+	let mut job = egui::text::LayoutJob::simple_singleline(
+		label.clone(),
 		egui::FontId::new(15.0, design::medium_family(ui.ctx())),
-		if selected {
-			colors.text_strong
-		} else if hot {
-			colors.text
-		} else {
-			colors.muted
-		},
+		color,
 	);
-	response
+	job.wrap = egui::text::TextWrapping::truncate_at_width(rect.width() - 24.0);
+	let galley = ui.painter().layout_job(job);
+	let elided = galley.elided;
+	ui.painter().galley(
+		egui::pos2(rect.left() + 12.0, rect.center().y - galley.size().y / 2.0),
+		galley,
+		color,
+	);
+	if elided {
+		response.on_hover_text(label)
+	} else {
+		response
+	}
 }
 
 /// Discord's round close button with the "ESC" hint underneath.

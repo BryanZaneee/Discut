@@ -3601,6 +3601,8 @@ timeline-show-system-see-all = 。全て見る
 # Context: show_with_scroll
 timeline-show-with-scroll-application-interaction-pending = アプリケーションのインタラクションが保留中…
 # Context: show_with_scroll
+timeline-show-with-scroll-click-to-see-attachment = クリックして添付ファイルを表示
+# Context: show_with_scroll
 timeline-show-with-scroll-deleted-message-had-no-text = [削除されたメッセージにはテキストがありませんでした]
 # Context: show_with_scroll
 timeline-show-with-scroll-dismiss-message = メッセージを閉じる

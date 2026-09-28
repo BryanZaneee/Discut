@@ -3601,6 +3601,8 @@ timeline-show-system-see-all = . Zobrazit vše
 # Context: show_with_scroll
 timeline-show-with-scroll-application-interaction-pending = Čeká se na interakci s aplikací…
 # Context: show_with_scroll
+timeline-show-with-scroll-click-to-see-attachment = Kliknutím zobrazíte přílohu
+# Context: show_with_scroll
 timeline-show-with-scroll-deleted-message-had-no-text = [Smazaná zpráva neobsahovala žádný text]
 # Context: show_with_scroll
 timeline-show-with-scroll-dismiss-message = Zavřít zprávu

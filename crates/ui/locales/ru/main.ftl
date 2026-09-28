@@ -3601,6 +3601,8 @@ timeline-show-system-see-all = . Посмотреть все
 # Context: show_with_scroll
 timeline-show-with-scroll-application-interaction-pending = Ожидается взаимодействие с приложением…
 # Context: show_with_scroll
+timeline-show-with-scroll-click-to-see-attachment = Нажмите, чтобы посмотреть вложение
+# Context: show_with_scroll
 timeline-show-with-scroll-deleted-message-had-no-text = [В удаленном сообщении не было текста]
 # Context: show_with_scroll
 timeline-show-with-scroll-dismiss-message = Закрыть сообщение

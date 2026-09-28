@@ -3601,6 +3601,8 @@ timeline-show-system-see-all = . Tümünü gör
 # Context: show_with_scroll
 timeline-show-with-scroll-application-interaction-pending = Uygulama etkileşimi bekleniyor…
 # Context: show_with_scroll
+timeline-show-with-scroll-click-to-see-attachment = Eki görmek için tıkla
+# Context: show_with_scroll
 timeline-show-with-scroll-deleted-message-had-no-text = [Silinen mesajda metin yoktu]
 # Context: show_with_scroll
 timeline-show-with-scroll-dismiss-message = Mesajı kapat

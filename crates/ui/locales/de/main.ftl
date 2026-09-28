@@ -3601,6 +3601,8 @@ timeline-show-system-see-all = . Alle anzeigen
 # Context: show_with_scroll
 timeline-show-with-scroll-application-interaction-pending = Anwendungsinteraktion ausstehend…
 # Context: show_with_scroll
+timeline-show-with-scroll-click-to-see-attachment = Klicke, um den Anhang zu sehen
+# Context: show_with_scroll
 timeline-show-with-scroll-deleted-message-had-no-text = [Gelöschte Nachricht hatte keinen Text]
 # Context: show_with_scroll
 timeline-show-with-scroll-dismiss-message = Nachricht verwerfen

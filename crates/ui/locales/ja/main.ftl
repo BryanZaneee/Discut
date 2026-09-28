@@ -1622,6 +1622,7 @@ main-sign-in-header-welcome-back = おかえり
 # Context: sign_in_header
 main-sign-in-header-welcome-to-serein = セレインへようこそ
 # Context: sign_in_preview
+main-sign-in-status-copy-failure-details = エラーの詳細をコピー
 main-sign-in-preview-explore-the-offline-preview = オフライン プレビューを確認する
 # Context: sign_in_preview
 main-sign-in-preview-sample-conversations-no-discord-connection = 会話例。 Discord接続がありません。

@@ -1622,6 +1622,7 @@ main-sign-in-header-welcome-back = Добро пожаловать
 # Context: sign_in_header
 main-sign-in-header-welcome-to-serein = Добро пожаловать в Серейн
 # Context: sign_in_preview
+main-sign-in-status-copy-failure-details = Копировать сведения об ошибке
 main-sign-in-preview-explore-the-offline-preview = Ознакомьтесь с предварительной версией в автономном режиме
 # Context: sign_in_preview
 main-sign-in-preview-sample-conversations-no-discord-connection = Примеры разговоров. Нет подключения к Дискорду.

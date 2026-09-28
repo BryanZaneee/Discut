@@ -1623,6 +1623,7 @@ main-sign-in-header-welcome-back = Welcome back
 # Context: sign_in_header
 main-sign-in-header-welcome-to-serein = Welcome to Serein
 # Context: sign_in_preview
+main-sign-in-status-copy-failure-details = Copy failure details
 main-sign-in-preview-explore-the-offline-preview = Explore the offline preview
 # Context: sign_in_preview
 main-sign-in-preview-sample-conversations-no-discord-connection = Sample conversations. No Discord connection.

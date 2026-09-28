@@ -103,19 +103,64 @@ impl Envelope<'_> {
 	}
 }
 
+/// Redacted first failing READY decode stage, for a user-copyable login report.
+pub fn diagnose(bytes: &[u8]) -> String {
+	if bytes.len() > MAX_GATEWAY_WIRE {
+		return format!(
+			"READY is {} bytes; limit is {MAX_GATEWAY_WIRE}",
+			bytes.len()
+		);
+	}
+	if let Some(cause) = crate::diagnostics::trace::<Envelope<'_>>("", bytes) {
+		return cause;
+	}
+	let Ok(envelope) = decode(bytes) else {
+		return "READY envelope could not be decoded".into();
+	};
+	if let Some(cause) =
+		crate::diagnostics::trace::<Guilds>("guilds", envelope.guilds.get().as_bytes())
+	{
+		return cause;
+	}
+	if envelope.permissions().is_err() {
+		return crate::permissions::diagnose_ready_fields(
+			envelope.guilds.get().as_bytes(),
+			envelope.merged_members.map(|m| m.get().as_bytes()),
+			envelope.user.id,
+		);
+	}
+	"READY decoded; a later size or consistency check failed".into()
+}
+/// Redacted first failing READY_SUPPLEMENTAL decode stage.
+pub fn diagnose_supplemental(bytes: &[u8]) -> String {
+	if bytes.len() > MAX_GATEWAY_WIRE {
+		return format!(
+			"READY_SUPPLEMENTAL is {} bytes; limit is {MAX_GATEWAY_WIRE}",
+			bytes.len()
+		);
+	}
+	if let Some(cause) = crate::diagnostics::trace::<Supplemental<'_>>("", bytes) {
+		return cause;
+	}
+	let Ok(raw) = serde_json::from_slice::<Supplemental<'_>>(bytes) else {
+		return "READY_SUPPLEMENTAL could not be decoded".into();
+	};
+	crate::diagnostics::trace::<Guilds>("guilds", raw.guilds.get().as_bytes())
+		.unwrap_or_else(|| "READY_SUPPLEMENTAL decoded; a later consistency check failed".into())
+}
+#[derive(Deserialize)]
+struct Supplemental<'a> {
+	#[serde(default = "empty_array", borrow)]
+	guilds: &'a RawValue,
+	#[serde(default)]
+	merged_members: Vec<Vec<crate::VoiceMemberDto>>,
+	#[serde(default, borrow)]
+	presences: Option<&'a RawValue>,
+	#[serde(default, borrow)]
+	merged_presences: Option<&'a RawValue>,
+}
 /// Supplemental optional metadata cannot invalidate an already accepted account snapshot.
 pub fn supplemental(bytes: &[u8]) -> Result<(crate::ReadySupplemental, Warnings), DecodeError> {
-	#[derive(Deserialize)]
-	struct Supplemental<'a> {
-		#[serde(default = "empty_array", borrow)]
-		guilds: &'a RawValue,
-		#[serde(default)]
-		merged_members: Vec<Vec<crate::VoiceMemberDto>>,
-		#[serde(default, borrow)]
-		presences: Option<&'a RawValue>,
-		#[serde(default, borrow)]
-		merged_presences: Option<&'a RawValue>,
-	}
 	if bytes.len() > MAX_GATEWAY_WIRE {
 		return Err(DecodeError);
 	}
@@ -305,6 +350,31 @@ mod tests {
 
 	fn fixture() -> serde_json::Value {
 		json!({"user":{"id":"9","username":"Synthetic"},"session_id":"synthetic","resume_gateway_url":"wss://gateway.discord.gg/","guilds":[{"id":"1","owner_id":"9","name":"Synthetic","roles":[],"channels":[{"id":"2","type":0,"name":"general","permission_overwrites":[]}]}]})
+	}
+
+	#[test]
+	fn diagnosis_names_the_failing_field_without_account_values() {
+		let mut payload = fixture();
+		payload["user"]["username"] = json!(42);
+		let bytes = serde_json::to_vec(&payload).unwrap();
+		assert!(decode(&bytes).is_err());
+		assert_eq!(
+			diagnose(&bytes),
+			"user.username: invalid type: integer `…`, expected a string"
+		);
+		let mut payload = fixture();
+		payload["guilds"][0]["channels"][0]["name"] = json!({"secret": "value"});
+		let bytes = serde_json::to_vec(&payload).unwrap();
+		let cause = diagnose(&bytes);
+		assert!(cause.starts_with("guilds[0].channels[0]"), "{cause}");
+		assert!(
+			!cause.contains("secret") && !cause.contains("value"),
+			"{cause}"
+		);
+		assert_eq!(
+			diagnose(&serde_json::to_vec(&fixture()).unwrap()),
+			"READY decoded; a later size or consistency check failed"
+		);
 	}
 
 	#[test]

@@ -1622,6 +1622,7 @@ main-sign-in-header-welcome-back = tekrar hoşgeldiniz
 # Context: sign_in_header
 main-sign-in-header-welcome-to-serein = Serein'e hoş geldiniz
 # Context: sign_in_preview
+main-sign-in-status-copy-failure-details = Hata ayrıntılarını kopyala
 main-sign-in-preview-explore-the-offline-preview = Çevrimdışı önizlemeyi keşfedin
 # Context: sign_in_preview
 main-sign-in-preview-sample-conversations-no-discord-connection = Örnek konuşmalar. Discord bağlantısı yok.

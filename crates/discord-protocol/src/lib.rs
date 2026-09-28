@@ -4,6 +4,7 @@ pub mod activity_sharing;
 pub mod application_commands;
 pub mod archives;
 mod attachments;
+mod diagnostics;
 mod embeds;
 mod extra_content;
 pub mod forum;
@@ -1065,6 +1066,17 @@ pub struct Deleted {
 pub struct BulkDeleted {
 	pub ids: Vec<Id>,
 	pub channel_id: Id,
+}
+/// Redacted decode cause of a whole Gateway packet, for a user-copyable failure report.
+pub fn diagnose_packet(bytes: &[u8]) -> String {
+	if bytes.len() > MAX_GATEWAY_WIRE {
+		return format!(
+			"Gateway packet is {} bytes; limit is {MAX_GATEWAY_WIRE}",
+			bytes.len()
+		);
+	}
+	diagnostics::trace::<GatewayPacket>("packet", bytes)
+		.unwrap_or_else(|| "Gateway packet decoded; a later check failed".into())
 }
 #[derive(Deserialize)]
 pub struct GatewayPacket {

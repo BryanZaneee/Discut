@@ -426,6 +426,41 @@ pub fn ready_fields(
 		user,
 	)
 }
+/// Redacted first failure of [`ready_fields`] for a user-copyable login report.
+pub(crate) fn diagnose_ready_fields(guilds: &[u8], merged: Option<&[u8]>, user: Id) -> String {
+	type Merged = List<List<Member, MAX_MEMBERS>, MAX_ITEMS>;
+	if let Some(cause) = crate::diagnostics::trace::<List<Guild, MAX_ITEMS>>("guilds", guilds)
+		.or_else(|| merged.and_then(|m| crate::diagnostics::trace::<Merged>("merged_members", m)))
+	{
+		return cause;
+	}
+	let (Ok(guilds), Ok(merged)) = (
+		serde_json::from_slice::<List<Guild, MAX_ITEMS>>(guilds),
+		merged.map(serde_json::from_slice::<Merged>).transpose(),
+	) else {
+		return "guilds: permission data could not be decoded".into();
+	};
+	if let Some(rows) = merged
+		.as_ref()
+		.filter(|rows| rows.0.len() != guilds.0.len())
+	{
+		return format!(
+			"merged_members: {} rows for {} guilds",
+			rows.0.len(),
+			guilds.0.len()
+		);
+	}
+	let mut merged = merged.map(|rows| rows.0.into_iter());
+	for (index, guild) in guilds.0.into_iter().enumerate() {
+		let members = merged.as_mut().and_then(Iterator::next).unwrap_or_default();
+		if checked_snapshot([Ok((guild, members.0))], user).is_err() {
+			return format!(
+				"guilds[{index}]: role, member or channel permissions failed validation"
+			);
+		}
+	}
+	"guilds: permissions failed a cross-server consistency check".into()
+}
 pub fn guild(bytes: &[u8], user: Id) -> Result<p::Snapshot, DecodeError> {
 	checked_snapshot([Ok((decode(bytes)?, Vec::new()))], user)
 }

@@ -1622,6 +1622,7 @@ main-sign-in-header-welcome-back = Vítejte zpět
 # Context: sign_in_header
 main-sign-in-header-welcome-to-serein = Vítejte v destinaci Serein
 # Context: sign_in_preview
+main-sign-in-status-copy-failure-details = Kopírovat podrobnosti o chybě
 main-sign-in-preview-explore-the-offline-preview = Prozkoumejte offline náhled
 # Context: sign_in_preview
 main-sign-in-preview-sample-conversations-no-discord-connection = Ukázkové rozhovory. Žádné připojení Discord.

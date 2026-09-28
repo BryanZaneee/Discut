@@ -1622,6 +1622,7 @@ main-sign-in-header-welcome-back = Bienvenido de nuevo
 # Context: sign_in_header
 main-sign-in-header-welcome-to-serein = Bienvenido a Serein
 # Context: sign_in_preview
+main-sign-in-status-copy-failure-details = Copiar detalles del error
 main-sign-in-preview-explore-the-offline-preview = Explora la vista previa sin conexión
 # Context: sign_in_preview
 main-sign-in-preview-sample-conversations-no-discord-connection = Conversaciones de muestra. Sin conexión de Discord.

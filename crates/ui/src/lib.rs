@@ -1901,6 +1901,7 @@ impl MessagingUi {
 		}
 	}
 	/// Conversation header: channel identity on the left, tools and search on the right.
+	#[allow(clippy::too_many_arguments)]
 	fn channel_header(
 		&mut self,
 		ui: &mut egui::Ui,
@@ -1908,6 +1909,7 @@ impl MessagingUi {
 		selected_voice: bool,
 		show_members: bool,
 		wide_members: bool,
+		search_open: bool,
 		commands: &mut Vec<Command>,
 	) {
 		let colors = design::palette(ui);
@@ -1924,6 +1926,10 @@ impl MessagingUi {
 							design::window_palette(ui).chat,
 							design::ImageSection::TopBar,
 						)
+					} else if search_open {
+						// Spanning the search pane, the header sits outside the central panel,
+						// so it paints the chat coat that panel would otherwise provide.
+						design::window_palette(ui).chat
 					} else {
 						egui::Color32::TRANSPARENT
 					})
@@ -3723,6 +3729,7 @@ impl MessagingUi {
 				selected_voice,
 				show_members,
 				wide_members,
+				true,
 				&mut commands,
 			);
 			let width = if wide_members {
@@ -3866,6 +3873,7 @@ impl MessagingUi {
 						selected_voice,
 						show_members,
 						wide_members,
+						false,
 						&mut commands,
 					);
 				}

@@ -2367,6 +2367,7 @@ impl State {
 				self.startup_warnings.presence |= warnings.presence;
 				self.startup_warnings.emojis |= warnings.emojis;
 				self.startup_warnings.stickers |= warnings.stickers;
+				self.startup_warnings.entries |= warnings.entries;
 				if warnings.read_state {
 					self.read_state.reset();
 				}

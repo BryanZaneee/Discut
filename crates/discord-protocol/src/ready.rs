@@ -1,8 +1,10 @@
 //! Split READY once, borrowing the large arrays for their independent bounded projections.
 use crate::{
-	ChannelDto, DecodeError, MAX_GATEWAY_WIRE, MAX_WIRE, Ready, UserDto, permissions, presence,
-	read_state,
+	ChannelDto, DecodeError, MAX_GATEWAY_WIRE, MAX_WIRE, Ready, UserDto,
+	lossy::{Lossy, Slots, null_default},
+	permissions, presence, read_state,
 };
+use model::account::MAX_ENTRIES;
 use model::account::Warnings;
 use serde::{
 	Deserialize, Deserializer,
@@ -18,7 +20,7 @@ pub struct Envelope<'a> {
 	pub session_id: String,
 	pub resume_gateway_url: String,
 	#[serde(default)]
-	users: Vec<UserDto>,
+	users: Lossy<UserDto, MAX_ENTRIES, true>,
 	#[serde(default, borrow)]
 	read_state: Option<&'a RawValue>,
 	#[serde(default, borrow)]
@@ -26,7 +28,7 @@ pub struct Envelope<'a> {
 	#[serde(default, borrow)]
 	sessions: Option<&'a RawValue>,
 	#[serde(default)]
-	private_channels: Vec<ChannelDto>,
+	private_channels: Lossy<ChannelDto, MAX_ENTRIES>,
 	#[serde(default = "empty_array", borrow)]
 	guilds: &'a RawValue,
 	#[serde(default, borrow)]
@@ -56,8 +58,12 @@ impl Envelope<'_> {
 	pub fn navigation(self) -> Result<(Ready, Warnings), DecodeError> {
 		let mut warnings = Warnings::default();
 		let guilds: Guilds = crate::decode_gateway(self.guilds.get().as_bytes())?;
-		warnings.emojis = guilds.1;
-		warnings.stickers = guilds.2;
+		warnings.emojis = guilds.emojis;
+		warnings.stickers = guilds.stickers;
+		let skipped = guilds.skipped
+			|| self.users.skipped
+			|| self.private_channels.skipped
+			|| self.relationships.as_ref().is_some_and(|r| r.1);
 		let read_state = optional(self.read_state, &mut warnings.read_state);
 		let user_guild_settings = optional(self.user_guild_settings, &mut warnings.notifications)
 			.filter(|settings: &crate::notifications::Snapshot| {
@@ -89,14 +95,15 @@ impl Envelope<'_> {
 				user: self.user,
 				session_id: self.session_id,
 				resume_gateway_url: self.resume_gateway_url,
-				users: self.users,
+				users: self.users.items,
 				read_state,
 				user_guild_settings,
 				sessions,
-				private_channels: self.private_channels,
-				guilds: guilds.0,
+				private_channels: self.private_channels.items,
+				guilds: guilds.items,
 				presences,
 				merged_presences,
+				skipped,
 			},
 			warnings,
 		))
@@ -153,7 +160,7 @@ struct Supplemental<'a> {
 	#[serde(default = "empty_array", borrow)]
 	guilds: &'a RawValue,
 	#[serde(default)]
-	merged_members: Vec<Vec<crate::VoiceMemberDto>>,
+	merged_members: Slots<Lossy<crate::VoiceMemberDto, MAX_ENTRIES, true>, MAX_ENTRIES>,
 	#[serde(default, borrow)]
 	presences: Option<&'a RawValue>,
 	#[serde(default, borrow)]
@@ -166,17 +173,36 @@ pub fn supplemental(bytes: &[u8]) -> Result<(crate::ReadySupplemental, Warnings)
 	}
 	let raw: Supplemental<'_> = serde_json::from_slice(bytes).map_err(|_| DecodeError)?;
 	let guilds: Guilds = crate::decode_gateway(raw.guilds.get().as_bytes())?;
+	// `merged_members` is index-aligned with `guilds`: drop the rows of skipped guilds too.
+	let mut entries = raw
+		.merged_members
+		.items
+		.iter()
+		.any(|row| row.as_ref().is_none_or(|r| r.skipped));
+	let mut merged_members: Vec<_> = raw
+		.merged_members
+		.items
+		.into_iter()
+		.map(|row| row.map(|row| row.items).unwrap_or_default())
+		.collect();
+	for &index in guilds.dropped.iter().rev() {
+		if index < merged_members.len() {
+			merged_members.remove(index);
+		}
+	}
+	entries |= guilds.skipped;
 	let mut warnings = Warnings {
-		emojis: guilds.1,
-		stickers: guilds.2,
+		emojis: guilds.emojis,
+		stickers: guilds.stickers,
+		entries,
 		..Warnings::default()
 	};
 	let presences = checked_presences(raw.presences, &mut warnings.presence);
 	let merged_presences = checked_merged_presences(raw.merged_presences, &mut warnings.presence);
 	Ok((
 		crate::ReadySupplemental {
-			guilds: guilds.0,
-			merged_members: raw.merged_members,
+			guilds: guilds.items,
+			merged_members,
 			presences,
 			merged_presences,
 		},
@@ -237,20 +263,29 @@ struct Guild<'a> {
 	properties: Option<crate::GuildProperties>,
 	#[serde(default)]
 	icon: Option<String>,
-	#[serde(default)]
+	#[serde(default, deserialize_with = "null_default")]
 	name: String,
-	#[serde(default, deserialize_with = "crate::threads::list")]
-	channels: Vec<ChannelDto>,
-	#[serde(default, deserialize_with = "crate::threads::list")]
-	threads: Vec<ChannelDto>,
 	#[serde(default)]
-	roles: Vec<crate::RoleDto>,
+	channels: Lossy<ChannelDto, MAX_ENTRIES>,
 	#[serde(default)]
-	voice_states: Vec<crate::VoiceStateDto>,
+	threads: Lossy<ChannelDto, MAX_ENTRIES>,
 	#[serde(default)]
-	members: Vec<crate::VoiceMemberDto>,
+	roles: Lossy<crate::RoleDto, MAX_ENTRIES>,
+	#[serde(default)]
+	voice_states: Lossy<crate::VoiceStateDto, MAX_ENTRIES, true>,
+	#[serde(default)]
+	members: Lossy<crate::VoiceMemberDto, MAX_ENTRIES, true>,
 }
-struct Guilds(Vec<crate::GuildDto>, bool, bool);
+#[derive(Default)]
+struct Guilds {
+	items: Vec<crate::GuildDto>,
+	emojis: bool,
+	stickers: bool,
+	/// Anything inside a guild, or a whole guild, was dropped.
+	skipped: bool,
+	/// Array positions of guilds that could not be decoded at all.
+	dropped: Vec<usize>,
+}
 impl<'de> Deserialize<'de> for Guilds {
 	fn deserialize<D: Deserializer<'de>>(d: D) -> Result<Self, D::Error> {
 		struct GuildVisitor;
@@ -260,24 +295,36 @@ impl<'de> Deserialize<'de> for Guilds {
 				f.write_str("bounded READY guilds")
 			}
 			fn visit_seq<A: SeqAccess<'de>>(self, mut seq: A) -> Result<Guilds, A::Error> {
-				let mut guilds = Vec::new();
+				let mut out = Guilds::default();
 				let mut unavailable = false;
 				let mut stickers_unavailable = false;
 				let mut entries = 0usize;
-				while let Some(guild) = seq.next_element::<Guild<'de>>()? {
-					entries += 1 + guild.channels.len() + guild.threads.len();
+				let mut index = 0;
+				while let Some(raw) = seq.next_element::<&'de RawValue>()? {
+					index += 1;
+					let Ok(guild) = serde_json::from_str::<Guild<'de>>(raw.get()) else {
+						out.skipped = true;
+						out.dropped.push(index - 1);
+						continue;
+					};
+					out.skipped |= guild.channels.skipped
+						|| guild.threads.skipped
+						|| guild.roles.skipped
+						|| guild.voice_states.skipped
+						|| guild.members.skipped;
+					entries += 1 + guild.channels.items.len() + guild.threads.items.len();
 					if entries > model::account::MAX_ENTRIES {
 						return Err(serde::de::Error::custom(
 							"Account navigation capacity exceeded",
 						));
 					}
-					guilds.push(crate::GuildDto {
+					out.items.push(crate::GuildDto {
 						id: guild.id,
 						emojis: optional(guild.emojis, &mut unavailable),
 						properties: guild.properties,
 						icon: guild.icon,
 						name: guild.name,
-						channels: guild.channels,
+						channels: guild.channels.items,
 						stickers: optional::<crate::stickers::Catalog>(
 							guild.stickers,
 							&mut stickers_unavailable,
@@ -291,13 +338,15 @@ impl<'de> Deserialize<'de> for Guilds {
 								}
 							}
 						}),
-						threads: guild.threads,
-						roles: guild.roles,
-						voice_states: guild.voice_states,
-						members: guild.members,
+						threads: guild.threads.items,
+						roles: guild.roles.items,
+						voice_states: guild.voice_states.items,
+						members: guild.members.items,
 					});
 				}
-				Ok(Guilds(guilds, unavailable, stickers_unavailable))
+				out.emojis = unavailable;
+				out.stickers = stickers_unavailable;
+				Ok(out)
 			}
 		}
 		d.deserialize_seq(GuildVisitor)
@@ -362,19 +411,48 @@ mod tests {
 			diagnose(&bytes),
 			"user.username: invalid type: integer `…`, expected a string"
 		);
-		let mut payload = fixture();
-		payload["guilds"][0]["channels"][0]["name"] = json!({"secret": "value"});
-		let bytes = serde_json::to_vec(&payload).unwrap();
-		let cause = diagnose(&bytes);
-		assert!(cause.starts_with("guilds[0].channels[0]"), "{cause}");
-		assert!(
-			!cause.contains("secret") && !cause.contains("value"),
-			"{cause}"
-		);
 		assert_eq!(
 			diagnose(&serde_json::to_vec(&fixture()).unwrap()),
 			"READY decoded; a later size or consistency check failed"
 		);
+	}
+
+	#[test]
+	fn malformed_entries_are_dropped_instead_of_rejecting_login() {
+		let mut payload = fixture();
+		let channel = payload["guilds"][0]["channels"][0].clone();
+		let mut nulls = channel.clone();
+		for key in [
+			"position",
+			"flags",
+			"recipients",
+			"is_spam",
+			"is_message_request",
+		] {
+			nulls[key] = json!(null);
+		}
+		let mut bad = channel.clone();
+		bad["id"] = json!("20");
+		bad["type"] = json!("text");
+		payload["guilds"][0]["channels"] = json!([nulls, bad]);
+		payload["guilds"][0]["name"] = json!(null);
+		payload["guilds"]
+			.as_array_mut()
+			.unwrap()
+			.push(json!({"id": false}));
+		payload["private_channels"] =
+			json!([{"id":"30","type":1,"recipients":[{"id":"31","username":null}]},{"id":"x"}]);
+		payload["relationships"] = json!([{"id":"31","type":1,"user_ignored":null},{"type":1}]);
+		let bytes = serde_json::to_vec(&payload).unwrap();
+		let envelope = decode(&bytes).unwrap();
+		assert!(envelope.permissions().is_ok());
+		let (mut ready, _) = envelope.navigation().unwrap();
+		assert!(ready.skipped);
+		assert_eq!(ready.relationships.as_ref().unwrap().0.len(), 1);
+		let (guilds, channels) = ready.navigation().unwrap();
+		assert_eq!(guilds.len(), 1);
+		assert!(channels.iter().any(|c| c.id == model::Id(30)));
+		assert!(!channels.iter().any(|c| c.id == model::Id(20)));
 	}
 
 	#[test]
@@ -403,6 +481,7 @@ mod tests {
 				presence: true,
 				emojis: true,
 				stickers: false,
+				entries: false,
 			}
 		);
 		assert!(
@@ -428,9 +507,9 @@ mod tests {
 		assert!(warnings.emojis && warnings.presence);
 		assert_eq!(extra.guilds.len(), 1);
 		assert!(extra.guilds[0].emojis.is_none() && extra.merged_presences.is_none());
-		assert!(
-			supplemental(br#"{"guilds":[{"id":"1","voice_states":[{"user_id":false}]}]}"#).is_err()
-		);
+		let (extra, warnings) =
+			supplemental(br#"{"guilds":[{"id":"1","voice_states":[{"user_id":false}]}]}"#).unwrap();
+		assert!(warnings.entries && extra.guilds[0].voice_states.is_empty());
 	}
 
 	#[test]
@@ -494,7 +573,11 @@ mod tests {
 		let mut payload = fixture();
 		payload["guilds"][0]["roles"] = json!([{"id":"1","permissions":"invalid"}]);
 		let bytes = serde_json::to_vec(&payload).unwrap();
-		assert!(decode(&bytes).unwrap().permissions().is_err());
+		let permissions = decode(&bytes).unwrap().permissions().unwrap();
+		assert!(
+			permissions.guilds[0].roles.is_none(),
+			"Unreadable roles stay unknown"
+		);
 		for fault in [
 			json!({"id":"1","channels":[{"id":"2","type":0},{"id":"2","type":0}]}),
 			json!({"id":"1","channels":[{"id":"2","guild_id":"3","type":0}]}),
@@ -503,9 +586,15 @@ mod tests {
 			let mut payload = fixture();
 			payload["guilds"] = json!([fault]);
 			let bytes = serde_json::to_vec(&payload).unwrap();
-			let result = decode(&bytes).unwrap().navigation();
-			assert!(result.is_err() || result.unwrap().0.navigation().is_err());
+			let (mut ready, _) = decode(&bytes).unwrap().navigation().unwrap();
+			let (guilds, channels) = ready.navigation().unwrap();
+			assert!(ready.skipped && guilds.len() == 1 && channels.len() <= 1);
 		}
+		let mut payload = fixture();
+		payload["user"]["username"] = json!(null);
+		let bytes = serde_json::to_vec(&payload).unwrap();
+		assert!(decode(&bytes).is_err(), "Our own identity stays required");
+		assert!(diagnose(&bytes).starts_with("user.username: invalid type: null"));
 		for count in [model::account::MAX_ENTRIES - 1, model::account::MAX_ENTRIES] {
 			let mut ready: Ready = crate::decode(&serde_json::to_vec(&fixture()).unwrap()).unwrap();
 			ready.guilds[0].channels = (0..count)

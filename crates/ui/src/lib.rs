@@ -3843,6 +3843,7 @@ impl MessagingUi {
 					(warnings.sessions, "session status"),
 					(warnings.emojis, "some server emoji"),
 					(warnings.stickers, "some server stickers"),
+					(warnings.entries, "some malformed channels, DMs or contacts"),
 				]
 				.into_iter()
 				.filter_map(|(unavailable, label)| unavailable.then_some(label))

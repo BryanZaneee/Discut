@@ -535,11 +535,197 @@ impl MessagingUi {
 					);
 				});
 				self.voice_participant_menu(&row, state, entry);
+				if entry.participant.streaming {
+					self.stream_preview_popup(ui, &row, state, entry);
+				}
 				if let Some(user) = user {
 					self.profile.person_click(ui, &row, None, user);
 				}
 			},
 		);
+	}
+
+	fn stream_preview_popup(
+		&mut self,
+		ui: &mut egui::Ui,
+		row: &egui::Response,
+		state: &State,
+		entry: &RosterEntry,
+	) {
+		let target = (entry.guild, entry.channel, entry.participant.user);
+		let mut tooltip = egui::Tooltip::for_enabled(row)
+			.gap(8.0)
+			.width(324.0)
+			.accessible_name("Stream preview");
+		tooltip.popup = tooltip.popup.align(egui::RectAlign::RIGHT_START).frame(
+			egui::Frame::popup(&row.ctx.style_of(row.ctx.theme()))
+				.fill(design::palette(ui).raised)
+				.inner_margin(12)
+				.corner_radius(10),
+		);
+		let open = tooltip.popup.is_open();
+		if open {
+			let frame = ui.ctx().cumulative_frame_nr();
+			if !self
+				.stream_preview_open
+				.is_some_and(|(previous, last_frame)| {
+					previous == target && frame <= last_frame.saturating_add(1)
+				}) {
+				self.stream_preview_request = Some(target);
+			}
+			self.stream_preview_open = Some((target, frame));
+		}
+		let colors = design::palette(ui);
+		tooltip.show(|ui| {
+			ui.set_width(300.0);
+			ui.spacing_mut().item_spacing.y = 10.0;
+			ui.horizontal(|ui| {
+				ui.label(design::semibold(ui, "Streaming Now", 15.0).color(colors.text_strong));
+				live_badge(ui);
+			});
+			let url = state
+				.voice
+				.preview
+				.as_ref()
+				.filter(|preview| (preview.guild, preview.channel, preview.user) == target)
+				.and_then(|preview| preview.url.clone())
+				.or_else(|| {
+					state.demo.then(|| {
+						format!(
+							"https://cdn.discordapp.com/streams/guild:{}:{}:{}/0123456789abcdef.png",
+							entry.guild, entry.channel, entry.participant.user
+						)
+					})
+				});
+			if let Some(url) = url {
+				self.avatars.show_media(
+					ui,
+					&model::EmbedMedia {
+						url: Some(url),
+						width: 512,
+						height: 288,
+						..Default::default()
+					},
+					egui::vec2(300.0, 169.0),
+					state.demo,
+					crate::avatars::Surface::Banner,
+				);
+			} else {
+				let (rect, _) =
+					ui.allocate_exact_size(egui::vec2(300.0, 169.0), egui::Sense::hover());
+				ui.painter().rect_filled(rect, 8, colors.canvas);
+				let preview = state
+					.voice
+					.preview
+					.as_ref()
+					.filter(|preview| (preview.guild, preview.channel, preview.user) == target);
+				if preview.is_some_and(|preview| preview.loading) {
+					ui.put(
+						egui::Rect::from_center_size(rect.center(), egui::Vec2::splat(24.0)),
+						egui::Spinner::new().color(colors.muted),
+					);
+				} else {
+					ui.painter().text(
+						rect.center(),
+						egui::Align2::CENTER_CENTER,
+						preview
+							.and_then(|preview| preview.error)
+							.unwrap_or("Preview hidden or unavailable"),
+						egui::FontId::proportional(13.0),
+						colors.muted,
+					);
+				}
+			}
+			let watching = state.voice.active.as_ref().is_some_and(|call| {
+				call.channel == entry.channel && call.watching == Some(entry.participant.user)
+			});
+			let connected = state.voice.active.as_ref().is_some_and(|call| {
+				call.channel == entry.channel
+					&& matches!(call.phase, Phase::Connected | Phase::Waiting)
+			});
+			let can_watch = !watching
+				&& (connected || (state.voice.active.is_none() && state.can_call(entry.channel)))
+				&& state
+					.user
+					.as_ref()
+					.is_none_or(|user| user.id != entry.participant.user);
+			let button = ui
+				.add_enabled_ui(can_watch, |ui| {
+					design::positive_icon_button(
+						ui,
+						crate::icons::Icon::ScreenShare,
+						if watching { "Watching" } else { "Watch Stream" },
+					)
+				})
+				.inner
+				.on_disabled_hover_text(if watching {
+					"Already watching this stream"
+				} else {
+					"Join this voice channel before watching"
+				});
+			if button.clicked() {
+				self.stream_preview_watch = Some((entry.channel, entry.participant.user));
+				ui.close();
+			}
+		});
+		if !open
+			&& self
+				.stream_preview_open
+				.is_some_and(|(previous, _)| previous == target)
+		{
+			self.stream_preview_open = None;
+		}
+	}
+
+	pub(super) fn apply_stream_preview_watch(
+		&mut self,
+		state: &mut State,
+		commands: &mut Vec<Command>,
+	) {
+		let Some((channel, user)) = self.stream_preview_watch else {
+			return;
+		};
+		if !state.voice.roster.iter().any(|entry| {
+			entry.channel == channel
+				&& entry.participant.user == user
+				&& entry.participant.streaming
+		}) {
+			self.stream_preview_watch = None;
+			state.status = "This stream is no longer live";
+			return;
+		}
+		match state
+			.voice
+			.active
+			.as_ref()
+			.map(|call| (call.channel, call.phase))
+		{
+			None => {
+				if self
+					.request_call_audio(state, channel, false, None, commands)
+					.is_err()
+				{
+					self.stream_preview_watch = None;
+					state.status = "Could not join this stream's voice channel";
+				}
+			}
+			Some((active, _)) if active != channel => {
+				self.stream_preview_watch = None;
+				state.status = "Leave the current call before watching this stream";
+			}
+			Some((_, Phase::Connected | Phase::Waiting)) => {
+				self.stream_preview_watch = None;
+				if state.voice.active.as_ref().and_then(|call| call.watching) != Some(user)
+					&& state.watch_stream(user).is_none()
+				{
+					state.status = "This stream is not available in the connected voice channel";
+				}
+			}
+			Some((_, Phase::Failed)) => {
+				self.stream_preview_watch = None;
+			}
+			Some((_, _)) => {}
+		}
 	}
 
 	/// Guild voice channel: Discord-style black stage with participant tiles and, when
@@ -997,7 +1183,7 @@ impl MessagingUi {
 	}
 
 	/// Apply a tile's watch click once the stage has mutable state again.
-	fn apply_watch_request(&mut self, state: &mut State) {
+	pub(super) fn apply_watch_request(&mut self, state: &mut State) {
 		match self.watch_request.take() {
 			Some(Some(user)) => {
 				let _ = state.watch_stream(user);
@@ -4645,6 +4831,182 @@ mod tests {
 			"Idle participants keep a plain row"
 		);
 		output.drop_without_applying_deltas();
+	}
+
+	#[test]
+	fn streaming_roster_hover_has_preview_and_watch_action() {
+		let mut state = test_support::demo_state();
+		state.voice.roster = vec![RosterEntry {
+			guild: Id(10),
+			channel: Id(25),
+			participant: client_core::voice::Participant {
+				user: Id(2),
+				muted: false,
+				deafened: false,
+				server_muted: false,
+				server_deafened: false,
+				video: false,
+				streaming: true,
+			},
+			member: None,
+		}];
+		let mut messaging = MessagingUi::default();
+		let ctx = egui::Context::default();
+		ctx.memory_mut(|memory| memory.set_everything_is_visible(true));
+		let first = ctx.run_ui(
+			egui::RawInput {
+				screen_rect: Some(egui::Rect::from_min_size(
+					egui::Pos2::ZERO,
+					egui::vec2(640.0, 420.0),
+				)),
+				..Default::default()
+			},
+			|ui| {
+				ui.set_width(190.0);
+				messaging.voice_participant(ui, &state, &state.voice.roster[0]);
+			},
+		);
+		first.drop_without_applying_deltas();
+		let mut output = ctx.run_ui(
+			egui::RawInput {
+				screen_rect: Some(egui::Rect::from_min_size(
+					egui::Pos2::ZERO,
+					egui::vec2(640.0, 420.0),
+				)),
+				..Default::default()
+			},
+			|ui| {
+				ui.set_width(190.0);
+				messaging.voice_participant(ui, &state, &state.voice.roster[0]);
+			},
+		);
+		fn labels(shape: &egui::Shape, text: &mut String) {
+			match shape {
+				egui::Shape::Text(label) => text.push_str(&label.galley.job.text),
+				egui::Shape::Vec(shapes) => shapes.iter().for_each(|shape| labels(shape, text)),
+				_ => {}
+			}
+		}
+		let mut text = String::new();
+		output
+			.shapes
+			.iter()
+			.for_each(|shape| labels(&shape.shape, &mut text));
+		output.textures_delta.clear();
+		assert!(
+			text.contains("Streaming Now") && text.contains("Watch Stream"),
+			"{text}"
+		);
+		assert_eq!(
+			messaging.stream_preview_request,
+			Some((Id(10), Id(25), Id(2)))
+		);
+		messaging.stream_preview_request = None;
+		for render_row in [true, false, true] {
+			ctx.run_ui(Default::default(), |ui| {
+				if render_row {
+					messaging.voice_participant(ui, &state, &state.voice.roster[0]);
+				}
+			})
+			.drop_without_applying_deltas();
+			if !render_row {
+				assert!(messaging.stream_preview_request.is_none());
+			}
+		}
+		assert_eq!(
+			messaging.stream_preview_request.take(),
+			Some((Id(10), Id(25), Id(2))),
+			"Reopening after the row disappears must refresh the still"
+		);
+		ctx.run_ui(Default::default(), |ui| {
+			messaging.voice_participant(ui, &state, &state.voice.roster[0]);
+		})
+		.drop_without_applying_deltas();
+		assert!(
+			messaging.stream_preview_request.is_none(),
+			"An uninterrupted hover requests only once"
+		);
+	}
+
+	#[test]
+	fn streaming_roster_click_still_opens_profile() {
+		let state = test_support::voice_demo_state();
+		let entry = &state.voice.roster[2];
+		assert!(entry.participant.streaming);
+		let mut messaging = MessagingUi::default();
+		let ctx = egui::Context::default();
+		let mut rect = egui::Rect::NOTHING;
+		ctx.run_ui(Default::default(), |ui| {
+			rect = ui
+				.scope(|ui| messaging.voice_participant(ui, &state, entry))
+				.response
+				.rect;
+		})
+		.drop_without_applying_deltas();
+		let pos = rect.left_center() + egui::vec2(40.0, 0.0);
+		for pressed in [true, false] {
+			ctx.run_ui(
+				egui::RawInput {
+					events: vec![
+						egui::Event::PointerMoved(pos),
+						egui::Event::PointerButton {
+							pos,
+							button: egui::PointerButton::Primary,
+							pressed,
+							modifiers: egui::Modifiers::NONE,
+						},
+					],
+					..Default::default()
+				},
+				|ui| {
+					ui.scope(|ui| messaging.voice_participant(ui, &state, entry));
+				},
+			)
+			.drop_without_applying_deltas();
+		}
+		assert_eq!(
+			messaging.profile.open_user().map(|user| user.id),
+			Some(entry.participant.user)
+		);
+	}
+
+	#[test]
+	fn stream_preview_watch_clears_rejected_and_completed_intents() {
+		for phase in [Phase::Connected, Phase::Waiting] {
+			for present in [false, true] {
+				let mut state = test_support::voice_demo_state();
+				let call = state.voice.active.as_mut().unwrap();
+				call.phase = phase;
+				if !present {
+					call.participants
+						.retain(|participant| participant.user != Id(3));
+				}
+				let mut messaging = MessagingUi {
+					stream_preview_watch: Some((Id(25), Id(3))),
+					..Default::default()
+				};
+				let mut commands = vec![];
+				messaging.apply_stream_preview_watch(&mut state, &mut commands);
+				assert!(messaging.stream_preview_watch.is_none());
+				assert_eq!(
+					state.voice.active.as_ref().unwrap().watching,
+					present.then_some(Id(3))
+				);
+				assert!(commands.is_empty());
+				if !present {
+					assert_eq!(
+						state.status,
+						"This stream is not available in the connected voice channel"
+					);
+				} else {
+					state.status = "";
+					messaging.stream_preview_watch = Some((Id(25), Id(3)));
+					messaging.apply_stream_preview_watch(&mut state, &mut commands);
+					assert!(messaging.stream_preview_watch.is_none());
+					assert!(state.status.is_empty());
+				}
+			}
+		}
 	}
 
 	#[test]

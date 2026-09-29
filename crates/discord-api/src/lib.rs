@@ -1269,8 +1269,9 @@ impl DiscordApi {
 		let (content, filters) = model::search_terms(query).map_err(|_| Failure::Protocol)?;
 		// Encode values separately; user input cannot add arbitrary query parameters.
 		let encoded: String = content.bytes().map(|b| format!("%{b:02X}")).collect();
+		// Server searches span every readable channel unless `in:` narrows them.
 		let mut path = match guild {
-			Some(guild) => format!("/guilds/{guild}/messages/search?channel_id={channel}&"),
+			Some(guild) => format!("/guilds/{guild}/messages/search?"),
 			None => format!("/channels/{channel}/messages/search?"),
 		};
 		path.push_str(&format!(
@@ -1278,6 +1279,9 @@ impl DiscordApi {
 		));
 		let mut maximum = before.map(|id| id.0);
 		for (key, value) in filters {
+			if key == "channel_id" && guild.is_none() {
+				return Err(Failure::Protocol);
+			}
 			if key == "max_id" {
 				let id = value.parse::<u64>().map_err(|_| Failure::Protocol)?;
 				maximum = Some(maximum.map_or(id, |current| current.min(id)));
@@ -1305,7 +1309,7 @@ impl DiscordApi {
 			return Ok(client_core::search::Outcome::Indexing);
 		}
 		reply
-			.into_page(channel, maximum.map(model::Id))
+			.into_page(guild.is_none().then_some(channel), maximum.map(model::Id))
 			.map(client_core::search::Outcome::Page)
 			.map_err(|_| Failure::Protocol)
 	}
@@ -2129,9 +2133,9 @@ mod tests {
             api.base=format!("http://{}",listener.local_addr().unwrap());
             let server=tokio::spawn(async move {
                 for (route,status,body) in [
-                    ("/guilds/2/messages/search?channel_id=1&content=%78%26%23%3F%2E%2E&limit=25&sort_by=timestamp&sort_order=desc","200 OK",r#"{"messages":[[{"id":"9","channel_id":"1","author":{"id":"3","username":"Synthetic"},"content":"match"}]],"total_results":1}"#),
+                    ("/guilds/2/messages/search?content=%78%26%23%3F%2E%2E&limit=25&sort_by=timestamp&sort_order=desc","200 OK",r#"{"messages":[[{"id":"9","channel_id":"1","author":{"id":"3","username":"Synthetic"},"content":"match"}]],"total_results":1}"#),
                     ("/channels/1/messages/search?content=%78&limit=25&sort_by=timestamp&sort_order=desc&max_id=9","200 OK",r#"{"messages":[],"total_results":0}"#),
-                    ("/guilds/2/messages/search?channel_id=1&content=%78&limit=25&sort_by=timestamp&sort_order=desc&max_id=8&offset=25","200 OK",r#"{"messages":[],"total_results":50}"#),
+                    ("/guilds/2/messages/search?content=%78&limit=25&sort_by=timestamp&sort_order=desc&max_id=8&offset=25","200 OK",r#"{"messages":[],"total_results":50}"#),
                     ("/channels/1/messages/search?content=%78&limit=25&sort_by=timestamp&sort_order=desc&offset=9975","200 OK",r#"{"messages":[],"total_results":10000}"#),
                     ("/channels/1/messages/search?content=%78&limit=25&sort_by=timestamp&sort_order=desc&max_id=9&offset=25","200 OK",r#"{"messages":[[{"id":"9","channel_id":"1","author":{"id":"3","username":"Synthetic"},"content":"outside filter"}]],"total_results":50}"#),
                     ("/channels/1/messages/search?content=%78&limit=25&sort_by=timestamp&sort_order=desc","403 Forbidden",r#"{"code":50001}"#),

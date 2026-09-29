@@ -40,6 +40,10 @@ pub struct SearchUi {
 	oldest_first: bool,
 	hide_highlight: bool,
 	filter_draft: Option<filters::Draft>,
+	/// Names behind the readable `from:`/`mentions:`/`in:` tokens in `query`.
+	labels: filters::Labels,
+	/// Replace IDs in an externally supplied query with names on the next frame.
+	relabel: bool,
 	search_anchor: Option<egui::Rect>,
 	suggestion_index: usize,
 	formats: crate::markdown::FormatCache,
@@ -74,6 +78,7 @@ impl SearchUi {
 		self.open = true;
 		self.pins = pins;
 		self.query = query.unwrap_or_default();
+		self.relabel = true;
 		self.focus = !pins;
 		self.filters_open = false;
 		self.filter_draft = None;
@@ -94,8 +99,9 @@ impl SearchUi {
 		self.open = true;
 		self.pins = false;
 		self.query = query.to_owned();
+		self.relabel = true;
 		self.pending_submit = true;
-		self.filters_open = filters::active_user_token(query).is_some();
+		self.filters_open = filters::active_token(query).is_some();
 		self.focus = self.filters_open;
 	}
 	/// Fixture-only: open the pins popout and request the first page on the next frame.
@@ -154,6 +160,9 @@ impl SearchUi {
 				.and_then(|view| view.page.as_ref())
 				.is_some_and(|page| page.hits.iter().any(|hit| hit.id == id))
 		};
+		if std::mem::take(&mut self.relabel) {
+			self.query = filters::display(&self.query, state, &mut self.labels);
+		}
 		self.formats.retain(on_page);
 		self.previews.retain(|id, _| on_page(*id));
 		if self.viewing.is_some_and(|(message, _)| !on_page(message)) {
@@ -180,6 +189,23 @@ impl SearchUi {
 		let colors = design::palette(ui);
 		let allowed = state.can_search();
 		let mut submit = false;
+		// Servers are searched as a whole, like Discord; `in:` narrows to channels.
+		let scope = state
+			.selected
+			.and_then(|id| state.channel(id))
+			.map(|channel| {
+				channel
+					.guild
+					.and_then(|guild| state.guilds.iter().find(|entry| entry.id == guild))
+					.map_or_else(
+						|| state.conversation_name(channel).to_owned(),
+						|guild| guild.name.clone(),
+					)
+			});
+		let hint = scope.map_or_else(
+			|| crate::i18n::translate("search-header-input-search"),
+			|name| crate::i18n::translate_args("search-header-input-search-in", &[("name", &name)]),
+		);
 		let frame = egui::Frame::new()
 			.fill(colors.base)
 			.corner_radius(6)
@@ -189,35 +215,16 @@ impl SearchUi {
 				ui.set_height(28.0);
 				ui.horizontal_centered(|ui| {
 					ui.spacing_mut().item_spacing.x = 6.0;
-					// Search is always scoped to this conversation; show its name, not an ID.
-					if let Some(channel) = state.selected.and_then(|id| state.channel(id)) {
-						let name = state.conversation_name(channel);
-						let width = (ui.available_width() * 0.35).clamp(36.0, 110.0);
-						ui.allocate_ui_with_layout(
-							egui::vec2(width, 24.0),
-							egui::Layout::left_to_right(egui::Align::Center),
-							|ui| {
-								ui.add(
-									egui::Label::new(
-										RichText::new(if channel.guild.is_some() {
-											format!("#{name}")
-										} else {
-											name.to_owned()
-										})
-										.size(12.0)
-										.color(colors.muted),
-									)
-									.truncate(),
-								)
-								.on_hover_text(name);
-							},
-						);
-					}
+					let mut layouter = |ui: &egui::Ui, text: &dyn egui::TextBuffer, width: f32| {
+						let job = filters::highlight(ui, text.as_str(), width);
+						ui.fonts_mut(|fonts| fonts.layout_job(job))
+					};
 					let output = egui::TextEdit::singleline(&mut self.query)
 						.id_salt("conversation-search-query")
 						.char_limit(256)
 						.frame(egui::Frame::NONE)
-						.hint_text(crate::i18n::translate("search-header-input-search"))
+						.hint_text(RichText::new(hint).color(colors.muted))
+						.layouter(&mut layouter)
 						.desired_width((ui.available_width() - 28.0).max(30.0))
 						.show(ui);
 					let input = output
@@ -242,8 +249,9 @@ impl SearchUi {
 						self.filters_open = true;
 						self.suggestion_index = 0;
 					}
-					let valid = allowed && model::search_terms(&self.query).is_ok();
-					submit = valid
+					// Enter picks the highlighted suggestion while a filter is being typed.
+					submit = allowed
+						&& filters::active_token(&self.query).is_none()
 						&& input.lost_focus()
 						&& ui.input(|i| i.key_pressed(egui::Key::Enter))
 						&& !self.ime_frame;
@@ -261,16 +269,35 @@ impl SearchUi {
 				});
 			});
 		self.search_anchor = Some(frame.response.rect);
-		if submit && let Some(command) = state.request_search(self.query.trim().into(), None) {
+		if submit {
+			self.submit(state, commands);
+		}
+	}
+	/// The typed query with readable filter labels resolved to the IDs Discord expects.
+	fn wire(&self, state: &State) -> Result<String, &'static str> {
+		let query = filters::wire(self.query.trim(), state, &self.labels)?;
+		model::search_terms(&query)?;
+		Ok(query)
+	}
+	fn submit(&mut self, state: &mut State, commands: &mut Vec<Command>) {
+		if let Ok(query) = self.wire(state)
+			&& let Some(command) = state.request_search(query.clone(), None)
+		{
 			commands.push(command);
+			self.query = filters::display(&query, state, &mut self.labels);
 			self.filters_open = false;
 		}
 	}
 	pub fn results_visible(&self, state: &State) -> bool {
 		self.open && !self.pins && (self.pending_submit || state.search.is_some())
 	}
-	fn open_filters(&mut self) {
-		self.filter_draft = Some(filters::Draft::new(&self.query));
+	fn open_filters(&mut self, state: &State) {
+		let query = filters::active_token(&self.query)
+			.map_or(self.query.as_str(), |(start, _, _)| {
+				self.query[..start].trim()
+			});
+		let query = filters::wire(query, state, &self.labels).unwrap_or_else(|_| query.to_owned());
+		self.filter_draft = Some(filters::Draft::new(&query));
 		self.filters_open = false;
 	}
 	pub fn overlays(
@@ -287,7 +314,7 @@ impl SearchUi {
 		if let Some(draft) = &mut self.filter_draft {
 			match draft.show(ctx, state, avatars) {
 				filters::Action::Apply(query) => {
-					self.query = query;
+					self.query = filters::display(&query, state, &mut self.labels);
 					self.filter_draft = None;
 					submit = true;
 				}
@@ -316,28 +343,42 @@ impl SearchUi {
 						.show(ui, |ui| {
 							ui.set_width((width - 20.0).max(1.0));
 							ui.spacing_mut().item_spacing.y = 4.0;
-							if let Some((start, key, typed)) =
-								filters::active_user_token(&self.query)
-							{
-								let key = key.to_owned();
+							if let Some((start, key, typed)) = filters::active_token(&self.query) {
+								let typed = typed.to_lowercase();
 								let users = filters::users(state);
-								let matching: Vec<_> = users
-									.iter()
-									.copied()
-									.filter(|user| {
-										user.name.to_lowercase().contains(&typed.to_lowercase())
-											|| user.id.to_string() == typed
-									})
-									.collect();
+								let channels = filters::channels(state);
+								// (label, id) per suggestion; users and channels share the list.
+								let matching: Vec<(String, Id)> = if key == "in" {
+									channels
+										.iter()
+										.filter(|channel| {
+											filters::label(&channel.name)
+												.to_lowercase()
+												.contains(typed.trim_start_matches('#'))
+										})
+										.take(100)
+										.map(|channel| (filters::label(&channel.name), channel.id))
+										.collect()
+								} else {
+									users
+										.iter()
+										.filter(|user| {
+											filters::label(&user.name)
+												.to_lowercase()
+												.contains(&typed)
+										})
+										.map(|user| (filters::label(&user.name), user.id))
+										.collect()
+								};
 								ui.label(
 									design::semibold(
 										ui,
-										crate::i18n::translate_if_key(if key == "from" {
-											"search-overlays-from-user"
-										} else {
-											"search-overlays-mentions-user"
+										crate::i18n::translate_if_key(match key {
+											"from" => "search-overlays-from-user",
+											"in" => "search-overlays-in-channel",
+											_ => "search-overlays-mentions-user",
 										}),
-										13.0,
+										12.0,
 									)
 									.color(colors.muted),
 								);
@@ -363,32 +404,53 @@ impl SearchUi {
 								egui::ScrollArea::vertical()
 									.max_height(260.0)
 									.show(ui, |ui| {
-										for (index, user) in matching.iter().enumerate() {
-											let row = filters::user_row(
-												ui,
-												user,
-												avatars,
-												state.demo,
-												index == self.suggestion_index,
-											);
-											if index == self.suggestion_index && (up || down) {
+										for (index, (label, id)) in matching.iter().enumerate() {
+											let selected = index == self.suggestion_index;
+											let row = if key == "in" {
+												let channel = channels
+													.iter()
+													.find(|channel| channel.id == *id);
+												channel.map(|channel| {
+													filters::channel_row(
+														ui, state, channel, selected,
+													)
+												})
+											} else {
+												let user = users.iter().find(|user| user.id == *id);
+												user.map(|user| {
+													filters::user_row(
+														ui, user, avatars, state.demo, selected,
+													)
+												})
+											};
+											let Some(row) = row else {
+												continue;
+											};
+											if selected && (up || down) {
 												row.scroll_to_me(None);
 											}
-											if row.clicked()
-												|| (enter && index == self.suggestion_index)
-											{
-												chosen = Some(user.id);
+											if row.clicked() || (enter && selected) {
+												chosen = Some((label.clone(), *id));
 											}
 										}
 										if matching.is_empty() {
-											ui.label(crate::i18n::translate(
-												"search-overlays-no-matching-users-in-this-conversation",
+											ui.label(crate::i18n::translate_if_key(
+												if key == "in" {
+													"search-overlays-no-matching-channels"
+												} else {
+													"search-overlays-no-matching-users-in-this-conversation"
+												},
 											));
 										}
 									});
-								if let Some(id) = chosen {
-									let query = format!("{}{key}:{id} ", &self.query[..start]);
-									if model::search_terms(&query).is_ok() {
+								if let Some((label, id)) = chosen {
+									let query = format!("{}{key}:{label} ", &self.query[..start]);
+									if model::valid_search_query(&query) {
+										self.labels.remember(
+											if key == "in" { "channel" } else { "user" },
+											&label,
+											id,
+										);
 										self.query = query;
 										self.filters_open = false;
 										self.focus = true;
@@ -397,8 +459,7 @@ impl SearchUi {
 							} else {
 								submit = ui
 									.add_enabled_ui(
-										state.can_search()
-											&& model::search_terms(&self.query).is_ok(),
+										state.can_search() && self.wire(state).is_ok(),
 										|ui| {
 											filters::suggestion_row(
 												ui,
@@ -408,7 +469,7 @@ impl SearchUi {
 													crate::i18n::translate(
 														"search-overlays-search-for"
 													),
-													self.query
+													self.query.trim()
 												),
 												"",
 											)
@@ -424,16 +485,22 @@ impl SearchUi {
 										design::semibold(
 											ui,
 											crate::i18n::translate("search-overlays-filters"),
-											13.0,
+											12.0,
 										)
 										.color(colors.muted),
 									);
 								});
+								let server = filters::guild(state).is_some();
 								for (title, detail, key) in [
 									(
 										"search-open-filters-from-a-specific-user",
 										"search-open-filters-from-user",
 										"from",
+									),
+									(
+										"search-open-filters-in-a-specific-channel",
+										"search-open-filters-in-channel",
+										"in",
 									),
 									(
 										"search-open-filters-includes-a-specific-type-of-data",
@@ -451,6 +518,9 @@ impl SearchUi {
 										"",
 									),
 								] {
+									if key == "in" && !server {
+										continue;
+									}
 									let row = filters::suggestion_row(
 										ui,
 										key,
@@ -458,14 +528,14 @@ impl SearchUi {
 										&crate::i18n::translate_if_key(detail),
 									);
 									if row.clicked() {
-										if key == "from" || key == "mentions" {
+										if matches!(key, "from" | "mentions" | "in") {
 											let query = format!("{} {key}:", self.query.trim());
 											if query.len() <= 1024 && query.chars().count() <= 256 {
 												self.query = query.trim_start().to_owned();
 												self.focus = true;
 											}
 										} else {
-											self.open_filters();
+											self.open_filters(state);
 										}
 									}
 								}
@@ -483,10 +553,10 @@ impl SearchUi {
 			}
 		}
 		if submit {
-			if self.query.is_empty() {
+			if self.query.trim().is_empty() {
 				commands.push(state.clear_search());
-			} else if let Some(command) = state.request_search(self.query.trim().to_owned(), None) {
-				commands.push(command);
+			} else {
+				self.submit(state, commands);
 			}
 			self.filters_open = false;
 		}
@@ -844,8 +914,8 @@ impl SearchUi {
 			self.viewer(ui, state, avatars, media.download);
 			return;
 		}
-		if submit && let Some(command) = state.request_search(self.query.trim().into(), None) {
-			commands.push(command);
+		if submit {
+			self.submit(state, commands);
 		}
 		let loading = state.search.as_ref().is_some_and(|view| view.loading);
 		let title = match state.search.as_ref().and_then(|view| view.page.as_ref()) {
@@ -860,17 +930,17 @@ impl SearchUi {
 			_ if loading => crate::i18n::translate("search-pane-searching"),
 			_ => crate::i18n::translate("search-header-input-search"),
 		};
-		let active_query = state
-			.search
-			.as_ref()
-			.map_or(self.query.as_str(), |view| view.query.as_str());
+		let active_query = state.search.as_ref().map_or_else(
+			|| self.wire(state).unwrap_or_default(),
+			|view| view.query.clone(),
+		);
 		let filter_count =
-			model::search_terms(active_query).map_or(0, |(_, filters)| filters.len());
+			model::search_terms(&active_query).map_or(0, |(_, filters)| filters.len());
 		ui.allocate_ui_with_layout(
 			egui::vec2(ui.available_width(), CHIP_HEIGHT),
 			egui::Layout::left_to_right(egui::Align::Center),
 			|ui| {
-				ui.label(design::semibold(ui, title, 16.0).color(colors.text_strong));
+				ui.label(design::semibold(ui, title, 14.0).color(colors.text_strong));
 				ui.with_layout(egui::Layout::right_to_left(egui::Align::Center), |ui| {
 					ui.spacing_mut().item_spacing.x = 8.0;
 					let settings_label = crate::i18n::translate("search-pane-settings");
@@ -908,7 +978,7 @@ impl SearchUi {
 						crate::i18n::translate("search-overlays-filters")
 					};
 					if chip(ui, Chip::new(icons::Icon::Sliders, &label)).clicked() {
-						self.open_filters();
+						self.open_filters(state);
 					}
 				});
 			},
@@ -955,7 +1025,7 @@ impl SearchUi {
 					.auto_shrink([false, false])
 					.max_height((ui.available_height() - footer_height).max(1.0))
 					.show(ui, |ui| {
-						ui.spacing_mut().item_spacing.y = 16.0;
+						ui.spacing_mut().item_spacing.y = 8.0;
 						if page.partial {
 							ui.label(
 								RichText::new(crate::i18n::translate(
@@ -975,12 +1045,23 @@ impl SearchUi {
 								),
 							);
 						}
+						let mut previous = None;
 						for index in 0..page.hits.len() {
 							let hit = &page.hits[if self.oldest_first {
 								page.hits.len() - 1 - index
 							} else {
 								index
 							}];
+							// Consecutive hits from one channel share its heading, as in Discord.
+							if previous != Some(hit.channel) {
+								if previous.is_some() {
+									ui.add_space(8.0);
+								}
+								previous = Some(hit.channel);
+								if let Some(channel) = state.channel(hit.channel) {
+									channel_heading(ui, state, channel);
+								}
+							}
 							ui.push_id(hit.id, |ui| {
 								self.result_card(
 									ui,
@@ -1012,18 +1093,20 @@ impl SearchUi {
 		{
 			commands.push(command);
 		}
-		if let Some(target) = target
-			&& let Some(command) = state.open_search_hit(target)
-		{
-			commands.push(command);
+		if let Some(target) = target {
+			commands.extend(state.open_search_hit(target));
+			// A hit in another channel moves the selection; the results stay open beside it.
+			self.channel = state.selected;
 		}
 	}
+	/// Discord's pager: Previous, numbered pages with gaps, Next. A gap opens a jump field.
 	fn pager(
 		&mut self,
 		ui: &mut egui::Ui,
 		view: &client_core::search::SearchView,
 		allowed: bool,
 	) -> Option<u32> {
+		let colors = design::palette(ui);
 		let current = view.offset / model::SEARCH_PAGE_SIZE as u32;
 		if self.page_request != Some(view.request) {
 			self.page_request = Some(view.request);
@@ -1032,34 +1115,182 @@ impl SearchUi {
 		let pages = view.page_count();
 		let mut requested = None;
 		hairline(ui);
+		let previous_label = crate::i18n::translate("search-page-previous-short");
+		let next_label = crate::i18n::translate("search-page-next-short");
+		let font = egui::FontId::new(14.0, design::medium_family(ui.ctx()));
+		let text_width = |text: &str| {
+			ui.painter()
+				.layout_no_wrap(text.to_owned(), font.clone(), egui::Color32::WHITE)
+				.size()
+				.x
+		};
+		const SLOT: f32 = 30.0;
+		const GAP: f32 = 4.0;
+		let arrows = |labels: bool| {
+			2.0 * (16.0 + 16.0)
+				+ if labels {
+					text_width(&previous_label) + text_width(&next_label) + 12.0
+				} else {
+					0.0
+				}
+		};
+		let fits = |slots: usize, labels: bool| {
+			slots.min(pages as usize) as f32 * (SLOT + GAP) + arrows(labels) + 2.0 * GAP
+		};
+		let available = ui.available_width();
+		let retry = view.error.is_some();
+		let reserve = if retry { SLOT + GAP } else { 0.0 };
+		let (slots, labels) = [(7, true), (5, true), (5, false), (0, false)]
+			.into_iter()
+			.find(|(slots, labels)| *slots == 0 || fits(*slots, *labels) + reserve <= available)
+			.unwrap_or((0, false));
+		let used = if slots == 0 {
+			arrows(false) + text_width(&format!("{} / {pages}", current + 1)) + 4.0 * GAP
+		} else {
+			fits(slots, labels)
+		} + reserve;
+		ui.add_space(2.0);
 		ui.horizontal(|ui| {
-			ui.spacing_mut().item_spacing.x = 4.0;
+			ui.spacing_mut().item_spacing.x = GAP;
+			ui.add_space(((available - used) * 0.5).max(0.0));
 			ui.add_enabled_ui(allowed && !view.loading, |ui| {
-				if ui
-					.add_enabled_ui(current > 0, |ui| {
-						icons::button(
-							ui,
-							icons::Icon::CaretLeft,
-							24.0,
-							&crate::i18n::translate("search-page-previous"),
+				let arrow = |ui: &mut egui::Ui, next: bool, enabled: bool| {
+					let label = if next { &next_label } else { &previous_label };
+					let galley = labels.then(|| {
+						ui.painter().layout_no_wrap(
+							label.to_owned(),
+							font.clone(),
+							egui::Color32::WHITE,
 						)
-					})
-					.inner
-					.clicked()
-				{
+					});
+					let width = 32.0 + galley.as_ref().map_or(0.0, |g| g.size().x + 6.0);
+					let (rect, response) = ui.allocate_exact_size(
+						egui::vec2(width, SLOT),
+						if enabled {
+							egui::Sense::click()
+						} else {
+							egui::Sense::hover()
+						},
+					);
+					let enabled = enabled && ui.is_enabled();
+					response.widget_info(|| {
+						egui::WidgetInfo::labeled(
+							egui::Role::Button,
+							enabled,
+							crate::i18n::translate(if next {
+								"search-page-next"
+							} else {
+								"search-page-previous"
+							}),
+						)
+					});
+					let color = if !enabled {
+						colors.muted.gamma_multiply(0.5)
+					} else if response.hovered() || response.has_focus() {
+						colors.text_strong
+					} else {
+						colors.text
+					};
+					let icon = egui::Rect::from_center_size(
+						egui::pos2(
+							if next {
+								rect.right() - 12.0
+							} else {
+								rect.left() + 12.0
+							},
+							rect.center().y,
+						),
+						egui::Vec2::splat(14.0),
+					);
+					icons::paint(
+						ui.painter(),
+						if next {
+							icons::Icon::ChevronRight
+						} else {
+							icons::Icon::CaretLeft
+						},
+						icon,
+						color,
+					);
+					if let Some(galley) = galley {
+						let x = if next {
+							icon.left() - 4.0 - galley.size().x
+						} else {
+							icon.right() + 4.0
+						};
+						ui.painter().galley_with_override_text_color(
+							egui::pos2(x, rect.center().y - galley.size().y * 0.5),
+							galley,
+							color,
+						);
+					}
+					enabled && response.clicked()
+				};
+				if arrow(ui, false, current > 0) {
 					requested = Some((current - 1).min(pages - 1));
 				}
-				if ui.available_width() > 260.0 {
-					ui.label(crate::i18n::translate("search-page-label"));
+				if slots == 0 {
+					let summary = ui.add(
+						egui::Button::new(
+							RichText::new(format!("{} / {pages}", current + 1))
+								.font(font.clone())
+								.color(colors.text),
+						)
+						.frame(false),
+					);
+					requested = requested.or(self.page_jump(&summary, pages));
+				} else {
+					for slot in page_slots(current, pages, slots) {
+						match slot {
+							Some(page) => {
+								if page_button(ui, page, page == current).clicked()
+									&& page != current
+								{
+									requested = Some(page);
+								}
+							}
+							None => {
+								let gap = page_gap(ui);
+								requested = requested.or(self.page_jump(&gap, pages));
+							}
+						}
+					}
 				}
+				if arrow(ui, true, current + 1 < pages) {
+					requested = Some(current + 1);
+				}
+				if retry
+					&& icons::button(
+						ui,
+						icons::Icon::Reload,
+						24.0,
+						&crate::i18n::translate("search-page-retry"),
+					)
+					.clicked()
+				{
+					requested = Some(current);
+				}
+			});
+		});
+		requested
+	}
+	/// Jump-to-page field opened from a pager gap.
+	fn page_jump(&mut self, response: &egui::Response, pages: u32) -> Option<u32> {
+		let mut requested = None;
+		egui::Popup::menu(response).show(|ui| {
+			ui.horizontal(|ui| {
+				ui.label(crate::i18n::translate("search-page-label"));
 				let input = ui
 					.add(
 						egui::TextEdit::singleline(&mut self.page_input)
 							.id_salt("search-page-number")
-							.desired_width(36.0)
+							.desired_width(40.0)
 							.char_limit(3),
 					)
 					.accessible_name(crate::i18n::translate("search-page-label"));
+				if response.clicked() {
+					input.request_focus();
+				}
 				self.page_input
 					.retain(|character| character.is_ascii_digit());
 				ui.label(format!("/ {pages}"));
@@ -1072,7 +1303,7 @@ impl SearchUi {
 					.add_enabled_ui(page.is_some(), |ui| {
 						icons::button(
 							ui,
-							icons::Icon::Search,
+							icons::Icon::ArrowRight,
 							24.0,
 							&crate::i18n::translate("search-page-go"),
 						)
@@ -1086,31 +1317,7 @@ impl SearchUi {
 					&& let Some(page) = page
 				{
 					requested = Some(page - 1);
-				}
-				if ui
-					.add_enabled_ui(current + 1 < pages, |ui| {
-						icons::button(
-							ui,
-							icons::Icon::ChevronRight,
-							24.0,
-							&crate::i18n::translate("search-page-next"),
-						)
-					})
-					.inner
-					.clicked()
-				{
-					requested = Some(current + 1);
-				}
-				if view.error.is_some()
-					&& icons::button(
-						ui,
-						icons::Icon::Reload,
-						24.0,
-						&crate::i18n::translate("search-page-retry"),
-					)
-					.clicked()
-				{
-					requested = Some(current);
+					ui.close();
 				}
 			});
 		});
@@ -1188,11 +1395,9 @@ impl SearchUi {
 		target: &mut Option<Id>,
 	) {
 		let colors = design::palette(ui);
-		ui.spacing_mut().item_spacing.y = 6.0;
-		if !self.pins
-			&& let Some(channel) = state.channel(hit.channel)
-		{
-			channel_heading(ui, state, channel);
+		// Result text sits a step below the timeline's, as in Discord's narrower results pane.
+		if let Some(font) = ui.style_mut().text_styles.get_mut(&egui::TextStyle::Body) {
+			font.size = (font.size - 1.0).max(12.0);
 		}
 		// The card senses clicks on its previous-frame rect so child widgets keep priority.
 		let card_id = ui.scope_id().with("card");
@@ -1261,7 +1466,7 @@ impl SearchUi {
 									ui,
 									&hit.author,
 									state.user_display_name(&hit.author),
-									15.0,
+									14.0,
 									name_color,
 									egui::Sense::hover(),
 									88.0,
@@ -1272,15 +1477,10 @@ impl SearchUi {
 									if let Ok(utc) =
 										time::OffsetDateTime::from_unix_timestamp(seconds as i64)
 									{
-										let local = crate::local_time::local(utc);
 										ui.label(
-											RichText::new(format!(
-												"{:02}:{:02}",
-												local.hour(),
-												local.minute()
-											))
-											.size(12.0)
-											.color(colors.muted),
+											RichText::new(sent_at(utc))
+												.size(11.0)
+												.color(colors.muted),
 										);
 									}
 								}
@@ -1379,7 +1579,27 @@ impl SearchUi {
 	}
 }
 
-const CHIP_HEIGHT: f32 = 32.0;
+const CHIP_HEIGHT: f32 = 30.0;
+
+/// Discord-style send time: "Today at 14:18", "Yesterday at 23:17", or the full date.
+fn sent_at(utc: time::OffsetDateTime) -> String {
+	let at = crate::local_time::local(utc);
+	let clock = format!("{:02}:{:02}", at.hour(), at.minute());
+	let today = crate::local_time::now().date();
+	if at.date() == today {
+		crate::i18n::translate_args("search-result-today-at", &[("time", &clock)])
+	} else if today.previous_day() == Some(at.date()) {
+		crate::i18n::translate_args("search-result-yesterday-at", &[("time", &clock)])
+	} else {
+		let date = at.date();
+		format!(
+			"{:02}/{:02}/{} {clock}",
+			u8::from(date.month()),
+			date.day(),
+			date.year()
+		)
+	}
+}
 
 /// Shared download, audio and video controllers borrowed from the timeline for one frame.
 pub struct MediaUi<'a> {
@@ -1435,7 +1655,7 @@ fn chip(ui: &mut egui::Ui, chip: Chip<'_>) -> egui::Response {
 		if chip.height < CHIP_HEIGHT {
 			12.0
 		} else {
-			14.0
+			13.0
 		},
 		design::medium_family(ui.ctx()),
 	);
@@ -1516,6 +1736,91 @@ fn chip(ui: &mut egui::Ui, chip: Chip<'_>) -> egui::Response {
 		response
 	}
 }
+/// Zero-based pages to show in at most `slots` places; `None` marks a gap.
+fn page_slots(current: u32, pages: u32, slots: usize) -> Vec<Option<u32>> {
+	let slots = slots.max(5) as u32;
+	if pages <= slots {
+		return (0..pages).map(Some).collect();
+	}
+	let half = (slots - 4) / 2;
+	let (start, end) = (current.saturating_sub(half), current + half);
+	let mut out = Vec::new();
+	if start <= 2 {
+		out.extend((0..slots - 2).map(Some));
+		out.extend([None, Some(pages - 1)]);
+	} else if end + 3 >= pages {
+		out.extend([Some(0), None]);
+		out.extend((pages - (slots - 2)..pages).map(Some));
+	} else {
+		out.extend([Some(0), None]);
+		out.extend((start..=end).map(Some));
+		out.extend([None, Some(pages - 1)]);
+	}
+	out
+}
+
+/// Round page number; the current page is filled with the accent like Discord's.
+fn page_button(ui: &mut egui::Ui, page: u32, current: bool) -> egui::Response {
+	let colors = design::palette(ui);
+	let (rect, response) = ui.allocate_exact_size(egui::Vec2::splat(30.0), egui::Sense::click());
+	let label = (page + 1).to_string();
+	response.widget_info(|| {
+		egui::WidgetInfo::selected(egui::Role::Button, ui.is_enabled(), current, &label)
+	});
+	let hot = response.hovered() || response.has_focus();
+	if current {
+		ui.painter()
+			.circle_filled(rect.center(), 15.0, colors.accent);
+	} else if hot {
+		ui.painter()
+			.circle_filled(rect.center(), 15.0, colors.hover);
+	}
+	ui.painter().text(
+		rect.center(),
+		egui::Align2::CENTER_CENTER,
+		label,
+		egui::FontId::new(14.0, design::semibold_family(ui.ctx())),
+		if current {
+			egui::Color32::WHITE
+		} else if hot {
+			colors.text_strong
+		} else {
+			colors.text
+		},
+	);
+	response
+}
+
+/// Gap between page numbers; opens the jump-to-page field.
+fn page_gap(ui: &mut egui::Ui) -> egui::Response {
+	let colors = design::palette(ui);
+	let (rect, response) = ui.allocate_exact_size(egui::Vec2::splat(30.0), egui::Sense::click());
+	response.widget_info(|| {
+		egui::WidgetInfo::labeled(
+			egui::Role::Button,
+			ui.is_enabled(),
+			crate::i18n::translate("search-page-go"),
+		)
+	});
+	let hot = response.hovered() || response.has_focus();
+	if hot {
+		ui.painter()
+			.circle_filled(rect.center(), 15.0, colors.hover);
+	}
+	ui.painter().text(
+		rect.center(),
+		egui::Align2::CENTER_CENTER,
+		"…",
+		egui::FontId::new(14.0, design::semibold_family(ui.ctx())),
+		if hot {
+			colors.text_strong
+		} else {
+			colors.muted
+		},
+	);
+	response.on_hover_text(crate::i18n::translate("search-page-go"))
+}
+
 /// One-pixel separator without the default spacing.
 fn hairline(ui: &mut egui::Ui) {
 	let colors = design::palette(ui);
@@ -1544,12 +1849,12 @@ fn channel_heading(ui: &mut egui::Ui, state: &State, channel: &model::Channel) {
 			)
 		});
 	ui.allocate_ui_with_layout(
-		egui::vec2(ui.available_width(), 22.0),
+		egui::vec2(ui.available_width(), 20.0),
 		egui::Layout::left_to_right(egui::Align::Center),
 		|ui| {
 			ui.spacing_mut().item_spacing.x = 6.0;
 			let total = ui.available_width();
-			icons::inline(ui, icons::channel(channel.kind), 18.0, colors.text);
+			icons::inline(ui, icons::channel(channel.kind), 16.0, colors.text);
 			ui.scope(|ui| {
 				ui.set_max_width(if context.is_some() {
 					total * 0.58
@@ -1558,7 +1863,7 @@ fn channel_heading(ui: &mut egui::Ui, state: &State, channel: &model::Channel) {
 				});
 				ui.add(
 					egui::Label::new(
-						design::semibold(ui, channel.name.as_str(), 15.0).color(colors.text_strong),
+						design::semibold(ui, channel.name.as_str(), 14.0).color(colors.text_strong),
 					)
 					.truncate(),
 				);
@@ -1566,10 +1871,10 @@ fn channel_heading(ui: &mut egui::Ui, state: &State, channel: &model::Channel) {
 			if let Some((icon, name)) = context {
 				ui.with_layout(egui::Layout::right_to_left(egui::Align::Center), |ui| {
 					ui.add(
-						egui::Label::new(RichText::new(name).size(13.0).color(colors.muted))
+						egui::Label::new(RichText::new(name).size(12.0).color(colors.muted))
 							.truncate(),
 					);
-					icons::inline(ui, icon, 14.0, colors.muted);
+					icons::inline(ui, icon, 13.0, colors.muted);
 				});
 			}
 		},

@@ -907,6 +907,7 @@ mod tests {
 			state.search = Some(crate::search::SearchView {
 				pins,
 				channel: Id(1),
+				guild: None,
 				query: "Synthetic".into(),
 				before: None,
 				offset: 0,

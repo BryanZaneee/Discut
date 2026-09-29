@@ -367,54 +367,17 @@ fn result_jump_and_numeric_pager_keep_scope_and_allow_explicit_retry() {
 	assert!(view.search.open);
 	assert_eq!(state.search.as_ref().unwrap().request, request);
 	assert_eq!(state.search.as_ref().unwrap().query, "needle");
-	for entered in ["0", "4", "3"] {
-		let labels = frame(&ctx, &mut view, &mut state, vec![], true, false).1;
-		let field = labels
+	let page_button = |labels: &[(String, egui::Rect)], page: &str| {
+		labels
 			.iter()
-			.find(|(text, _)| {
-				text == if entered == "0" {
-					"1"
-				} else if entered == "4" {
-					"0"
-				} else {
-					"4"
-				}
-			})
-			.unwrap()
+			.find(|(text, _)| text == page)
+			.unwrap_or_else(|| panic!("page {page} in {labels:?}"))
 			.1
-			.center();
-		click(&ctx, &mut view, &mut state, field);
-		frame(
-			&ctx,
-			&mut view,
-			&mut state,
-			vec![
-				key(egui::Key::A, primary()),
-				egui::Event::Text(entered.into()),
-			],
-			true,
-			false,
-		);
-		let commands = frame(
-			&ctx,
-			&mut view,
-			&mut state,
-			vec![key(egui::Key::Enter, egui::Modifiers::NONE)],
-			true,
-			false,
-		)
-		.0;
-		assert_eq!(
-			commands
-				.iter()
-				.filter(|command| matches!(command, Command::Search { .. }))
-				.count(),
-			usize::from(entered == "3")
-		);
-		if entered == "3" {
-			assert!(commands.iter().any(|command| matches!(command, Command::Search { channel: Id(10), query, before: None, offset: 50, .. } if query == "needle")));
-		}
-	}
+			.center()
+	};
+	let labels = frame(&ctx, &mut view, &mut state, vec![], true, false).1;
+	let commands = click(&ctx, &mut view, &mut state, page_button(&labels, "3"));
+	assert!(commands.iter().any(|command| matches!(command, Command::Search { channel: Id(10), query, before: None, offset: 50, .. } if query == "needle")));
 	let loading_request = state.search.as_ref().unwrap().request;
 	let commands = frame(
 		&ctx,
@@ -436,26 +399,11 @@ fn result_jump_and_numeric_pager_keep_scope_and_allow_explicit_retry() {
 		Err(client_core::auth::Failure::Network),
 	);
 	let labels = frame(&ctx, &mut view, &mut state, vec![], true, false).1;
-	let field = labels
-		.iter()
-		.find(|(text, _)| text == "3")
-		.unwrap()
-		.1
-		.center();
-	click(&ctx, &mut view, &mut state, field);
-	let commands = frame(
-		&ctx,
-		&mut view,
-		&mut state,
-		vec![key(egui::Key::Enter, egui::Modifiers::NONE)],
-		true,
-		false,
-	)
-	.0;
+	let commands = click(&ctx, &mut view, &mut state, page_button(&labels, "2"));
 	assert!(
 		commands
 			.iter()
-			.any(|command| matches!(command, Command::Search { offset: 50, .. }))
+			.any(|command| matches!(command, Command::Search { offset: 25, .. }))
 	);
 	page(&mut state, 75);
 	for dark in [false, true] {
@@ -472,9 +420,9 @@ fn result_jump_and_numeric_pager_keep_scope_and_allow_explicit_retry() {
 			}
 			let pager: Vec<_> = labels
 				.iter()
-				.filter(|(text, _)| matches!(text.as_str(), "3" | "/ 3"))
+				.filter(|(text, _)| matches!(text.as_str(), "1" | "2" | "3"))
 				.collect();
-			assert_eq!(pager.len(), 2, "page input and page total remain visible");
+			assert_eq!(pager.len(), 3, "every page stays visible: {labels:?}");
 			assert!(
 				pager.iter().all(|(_, rect)| rect.left() >= 0.0
 					&& rect.right() <= width

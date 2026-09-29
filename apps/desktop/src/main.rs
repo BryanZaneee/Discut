@@ -3527,11 +3527,17 @@ impl Desktop {
 						Ok(terms) => terms,
 						Err(_) => return,
 					};
+					// Fixture IDs repeat per channel, so an offline search reads one channel.
+					let source = filters
+						.iter()
+						.find_map(|(key, value)| (*key == "channel_id").then(|| value.parse().ok()))
+						.flatten()
+						.map_or(channel, model::Id);
 					for id in (1..=500)
 						.rev()
 						.filter(|id| before.is_none_or(|b| *id < b.0))
 					{
-						let message = test_support::message(id, channel);
+						let message = test_support::message(id, source);
 						if message
 							.content
 							.to_lowercase()
@@ -3540,6 +3546,7 @@ impl Desktop {
 								filters.iter().filter(|(key, _)| key == group).any(
 									|(key, value)| match *key {
 										"author_id" => message.author.id.to_string() == *value,
+										"channel_id" => source.to_string() == *value,
 										"mentions" => message
 											.mentions
 											.iter()
@@ -3551,7 +3558,7 @@ impl Desktop {
 											value.parse::<u64>().is_ok_and(|max| message.id.0 < max)
 										}
 										"pinned" => {
-											self.state.is_pinned(channel, message.id)
+											self.state.is_pinned(source, message.id)
 												== (value == "true")
 										}
 										"author_type" => match value.as_str() {
@@ -3587,7 +3594,7 @@ impl Desktop {
 							if total > u64::from(offset) && hits.len() < model::SEARCH_PAGE_SIZE {
 								hits.push(model::SearchHit {
 									id: message.id,
-									channel,
+									channel: source,
 									author: message.author,
 									mentions: message.mentions,
 									excerpt: message.content.clone(),

@@ -1119,6 +1119,10 @@ pub fn apply(ctx: &egui::Context) {
 	}
 	ctx.options_mut(|options| {
 		options.input_options.line_scroll_speed = crate::scroll::DISCORD_LINE_SCROLL_SPEED;
+		// egui times double clicks release to release with 0.3 s, shorter than the 0.5 s
+		// macOS and Windows default, so ordinary double clicks fell back to caret placement
+		// instead of selecting a word.
+		options.input_options.max_double_click_delay = 0.5;
 	});
 }
 /// Space reserved at the left of window strips for macOS traffic lights.

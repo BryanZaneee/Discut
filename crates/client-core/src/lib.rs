@@ -2639,9 +2639,22 @@ impl State {
 				Ok(())
 			}
 			Event::GuildChanged(patch) => {
+				if !matches!(patch.default_message_notifications, Patch::Absent)
+					&& self.server_settings.guild == Some(patch.id)
+					&& self.server_settings.pending
+				{
+					self.server_settings.notification_default_changed = true;
+				}
 				if let Some(index) = self.guilds.iter().position(|guild| guild.id == patch.id) {
 					let previous = self.guilds[index].clone();
 					let guild = &mut self.guilds[index];
+					match patch.default_message_notifications {
+						Patch::Value(level) => {
+							guild.default_message_notifications = (level <= 1).then_some(level)
+						}
+						Patch::Null => guild.default_message_notifications = None,
+						Patch::Absent => {}
+					}
 					match patch.name {
 						Patch::Value(name) => guild.name = name.chars().take(128).collect(),
 						Patch::Null => guild.name.clear(),
@@ -4019,6 +4032,7 @@ mod tests {
 		let state = State {
 			guilds: (1..=1_000)
 				.map(|id| Guild {
+					default_message_notifications: None,
 					stickers: None,
 					id: Id(id),
 					name: "Synthetic".into(),
@@ -4235,6 +4249,7 @@ mod tests {
 				user: Some(message(1).author),
 				guilds: (1..=2)
 					.map(|id| Guild {
+						default_message_notifications: None,
 						stickers: None,
 						id: Id(id),
 						name: "Synthetic".into(),
@@ -4405,6 +4420,7 @@ mod tests {
 		}
 		{
 			let guild = |id| Guild {
+				default_message_notifications: None,
 				stickers: None,
 				id: Id(id),
 				name: "Synthetic".into(),
@@ -4456,6 +4472,7 @@ mod tests {
 				user: Some(message(1).author),
 				channels: vec![channel.clone()],
 				guilds: vec![Guild {
+					default_message_notifications: None,
 					stickers: None,
 					id: Id(10),
 					name: "Synthetic".into(),
@@ -4831,6 +4848,7 @@ mod tests {
 			};
 			let mut state = State {
 				guilds: vec![Guild {
+					default_message_notifications: None,
 					stickers: None,
 					id: Id(2),
 					name: "Synthetic".into(),
@@ -4899,6 +4917,7 @@ mod tests {
 			let mut state = State::default();
 			let mut guilds: Vec<_> = (1..=700)
 				.map(|id| Guild {
+					default_message_notifications: None,
 					stickers: None,
 					id: Id(id),
 					name: "Synthetic".into(),
@@ -4941,6 +4960,7 @@ mod tests {
 	fn guild_identity_patches_preserve_omitted_fields_and_change_icon_keys() {
 		let mut state = State {
 			guilds: vec![Guild {
+				default_message_notifications: None,
 				stickers: None,
 				emojis: None,
 				id: Id(2),
@@ -4953,6 +4973,7 @@ mod tests {
 		apply(
 			&mut state,
 			Event::GuildChanged(GuildPatch {
+				default_message_notifications: model::Patch::Absent,
 				id: Id(2),
 				name: Patch::Value("Renamed".into()),
 				icon: Patch::Absent,
@@ -4963,6 +4984,7 @@ mod tests {
 		apply(
 			&mut state,
 			Event::GuildChanged(GuildPatch {
+				default_message_notifications: model::Patch::Absent,
 				id: Id(2),
 				name: Patch::Absent,
 				icon: Patch::Value("bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb".into()),
@@ -4973,6 +4995,7 @@ mod tests {
 		apply(
 			&mut state,
 			Event::GuildChanged(GuildPatch {
+				default_message_notifications: model::Patch::Absent,
 				id: Id(2),
 				name: Patch::Absent,
 				icon: Patch::Null,
@@ -4982,6 +5005,7 @@ mod tests {
 		apply(
 			&mut state,
 			Event::GuildChanged(GuildPatch {
+				default_message_notifications: model::Patch::Absent,
 				id: Id(2),
 				name: Patch::Value("x".repeat(1024)),
 				icon: Patch::Value("../../invalid".into()),
@@ -4992,6 +5016,7 @@ mod tests {
 		apply(
 			&mut state,
 			Event::GuildChanged(GuildPatch {
+				default_message_notifications: model::Patch::Absent,
 				id: Id(3),
 				name: Patch::Value("Unknown".into()),
 				icon: Patch::Absent,
@@ -5001,6 +5026,7 @@ mod tests {
 		state.apply(Envelope {
 			generation: state.generation + 1,
 			event: Event::GuildChanged(GuildPatch {
+				default_message_notifications: model::Patch::Absent,
 				id: Id(2),
 				name: Patch::Value("Late event".into()),
 				icon: Patch::Absent,
@@ -5015,6 +5041,7 @@ mod tests {
 			let mut state = State {
 				user: Some(message(1).author),
 				guilds: vec![Guild {
+					default_message_notifications: None,
 					stickers: None,
 					id: Id(1),
 					name: "Synthetic".into(),
@@ -5450,6 +5477,7 @@ mod tests {
 			message_count: None,
 		};
 		let guild = Guild {
+			default_message_notifications: None,
 			stickers: None,
 			id: Id(10),
 			name: "Synthetic".into(),

@@ -488,6 +488,8 @@ mod channel_tests {
 #[derive(Deserialize)]
 pub struct GuildDto {
 	#[serde(default)]
+	pub default_message_notifications: Patch<u8>,
+	#[serde(default)]
 	pub stickers: Option<stickers::Catalog>,
 	#[serde(default)]
 	pub emojis: Option<reactions::CustomEmojiList>,
@@ -509,8 +511,33 @@ pub struct GuildDto {
 	#[serde(default)]
 	pub members: Vec<VoiceMemberDto>,
 }
+impl GuildDto {
+	pub fn default_notification_level(&self) -> Option<u8> {
+		match self.default_notification_patch() {
+			Patch::Value(level) => Some(level),
+			Patch::Absent | Patch::Null => None,
+		}
+	}
+	pub fn default_notification_patch(&self) -> Patch<u8> {
+		let value = match self
+			.properties
+			.as_ref()
+			.map(|p| &p.default_message_notifications)
+		{
+			Some(Patch::Value(level)) => Patch::Value(*level),
+			Some(Patch::Null) => Patch::Null,
+			_ => self.default_message_notifications.clone(),
+		};
+		match value {
+			Patch::Value(level) if level > 1 => Patch::Null,
+			other => other,
+		}
+	}
+}
 #[derive(Deserialize)]
 pub struct GuildProperties {
+	#[serde(default)]
+	pub default_message_notifications: Patch<u8>,
 	#[serde(default)]
 	pub name: Patch<String>,
 	#[serde(default)]
@@ -525,6 +552,7 @@ pub struct GuildPatchDto {
 impl GuildPatchDto {
 	pub fn into_model(self) -> model::GuildPatch {
 		model::GuildPatch {
+			default_message_notifications: self.properties.default_message_notifications,
 			id: self.id,
 			name: self.properties.name,
 			icon: self.properties.icon,
@@ -610,6 +638,13 @@ impl Ready {
 				// Normal-user READY may wrap guild identity in `properties`; public bot objects
 				// are flat. The nested values override only fields actually present there.
 				if let Some(properties) = g.properties {
+					match properties.default_message_notifications {
+						Patch::Value(level) => {
+							g.default_message_notifications = Patch::Value(level)
+						}
+						Patch::Null => g.default_message_notifications = Patch::Null,
+						Patch::Absent => {}
+					}
 					match properties.name {
 						Patch::Value(name) => g.name = name,
 						Patch::Null => g.name.clear(),
@@ -664,6 +699,10 @@ impl Ready {
 					}
 				}
 				Guild {
+					default_message_notifications: match g.default_message_notifications {
+						Patch::Value(level) if level <= 1 => Some(level),
+						_ => None,
+					},
 					emojis: g.emojis.map(|emojis| emojis.0),
 					stickers: g.stickers.and_then(|list| {
 						let stickers = stickers::guild_catalog(list.0, g.id).ok();

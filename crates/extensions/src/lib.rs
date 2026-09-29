@@ -36,6 +36,8 @@ pub const MAX_STORAGE_BYTES: usize = 1024 * 1024;
 pub const MAX_PLUGINS: usize = 8;
 pub const MAX_PANEL_ELEMENTS: usize = 64;
 pub const MAX_CAPABILITIES: usize = 64;
+/// Minimum delay between completed host-scheduled appearance ticks.
+pub const TICK_MIN_INTERVAL_MS: u64 = 250;
 
 #[derive(Debug, thiserror::Error)]
 pub enum Error {
@@ -152,6 +154,8 @@ pub enum Surface {
 	Activation,
 	MessageEvent,
 	AppEvent,
+	/// Host-scheduled appearance update. Each call is a fresh Wasm invocation.
+	Tick,
 }
 
 #[derive(Clone, Debug, PartialEq, Eq, Serialize, Deserialize)]
@@ -385,6 +389,9 @@ pub struct Invocation {
 	pub messaging_settings: Option<Box<MessagingSettingsSnapshot>>,
 	#[serde(default, skip_serializing_if = "Option::is_none")]
 	pub guild_folders: Option<Box<GuildFoldersSnapshot>>,
+	/// Milliseconds elapsed since this plugin was enabled for the current session.
+	#[serde(default, skip_serializing_if = "Option::is_none")]
+	pub tick_ms: Option<u64>,
 }
 
 #[derive(Clone, Copy, Debug, PartialEq, Eq, Serialize, Deserialize)]
@@ -585,6 +592,7 @@ impl Manifest {
 			Surface::Activation,
 			Surface::MessageEvent,
 			Surface::AppEvent,
+			Surface::Tick,
 		] {
 			if self
 				.actions
@@ -612,6 +620,7 @@ impl Manifest {
 				Surface::Activation => None,
 				Surface::MessageEvent => Some(Capability::MessageEvents),
 				Surface::AppEvent => Some(Capability::AppEvents),
+				Surface::Tick => Some(Capability::Appearance),
 			};
 			if required.is_some_and(|c| !capabilities.contains(&c)) {
 				return Err(Error::Capability);
@@ -942,6 +951,20 @@ impl Invocation {
 		}
 		if self.selected_message.is_some() && action.surface != Surface::Message
 			|| self.composer.is_some() && action.surface != Surface::Composer
+			|| self.tick_ms.is_some() && action.surface != Surface::Tick
+			|| self.tick_ms.is_none() && action.surface == Surface::Tick
+		{
+			return Err(Error::Capability);
+		}
+		if action.surface == Surface::Tick
+			&& (!self.values.is_empty()
+				|| self.message_event.is_some()
+				|| self.app.is_some()
+				|| self.app_event.is_some()
+				|| self.action_result.is_some()
+				|| self.queries.is_some()
+				|| self.messaging_settings.is_some()
+				|| self.guild_folders.is_some())
 		{
 			return Err(Error::Capability);
 		}
@@ -965,6 +988,17 @@ impl Output {
 			.find(|action| action.id == input.action)
 			.ok_or(Error::Invalid)?
 			.surface;
+		if surface == Surface::Tick
+			&& (self.rich_presence.is_some()
+				|| self.image_sharing
+				|| self.preserve_deleted_messages
+				|| self.replacement.is_some()
+				|| !self.panel.is_empty()
+				|| self.storage.is_some()
+				|| !self.effects.is_empty())
+		{
+			return Err(Error::Capability);
+		}
 		if let Some(update) = &self.rich_presence {
 			if !manifest.capabilities.contains(&Capability::RichPresence)
 				|| !matches!(surface, Surface::Activation | Surface::Panel)

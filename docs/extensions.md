@@ -415,6 +415,11 @@ explicit value wins. The user's own accent color setting still takes precedence.
 Disabling a plugin removes its overrides; Ctrl+Shift+F12 resets community themes
 and appearance plugins.
 
+Preview `tick` actions can update that same appearance overlay on a host-controlled,
+completion-paced schedule. They run only while signed in and enabled, only when the
+shared worker is idle, and pause after failure until disable/re-enable. The host eases
+hex colors between results; plugins receive elapsed `tick_ms`, not a render callback.
+
 This supports app-wide palette changes and shared native control styling, not
 arbitrary code injection into egui, replacement of the app layout, custom fonts,
 network access, or automatic Discord actions. Fixed-size custom-painted components

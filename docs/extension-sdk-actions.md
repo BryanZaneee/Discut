@@ -72,7 +72,7 @@ The Rust paths below are relative to `AppOutput`. When using the original
 | `rich_presence` / `RichPresenceOutput.rich_presence` | Optional `RichPresenceUpdate`; `rich_presence` grant. | Explicit panel/activation Set or Clear updates the contribution; omission leaves it unchanged. See [Custom Rich Presence](#custom-rich-presence). |
 | `panel` / `output.panel` | Array of native `Element` values; no separate panel capability. | A foreground result displays it. Message/app event handlers must return no elements. Activation does not display returned panels. |
 | `storage` / `output.storage` | Optional opaque UTF-8 string; `storage`. | A valid foreground or event result replaces the plugin's saved value before result approval. Activation can read storage but this build does not persist its returned storage. |
-| `appearance` / `output.appearance` | Optional `Theme` object; `appearance`. | An accepted result updates the plugin's appearance overlay immediately, including activation and event results. No Apply button is involved. |
+| `appearance` / `output.appearance` | Optional `Theme` object; `appearance`. | An accepted result updates the plugin's appearance overlay immediately, including activation and event results. Preview `tick` results are eased from the currently displayed colors. No Apply button is involved. |
 | `preserve_deleted_messages` / `output.preserve_deleted_messages` | Boolean, default `false`; `deleted_messages` is required for `true`. | Only an `activation` action may enable host retention of already-loaded deleted messages. |
 | `image_sharing` / `output.image_sharing` | Boolean, default `false`; `image_sharing` is required for `true`. | Only an `activation` action may enable the host's fallback image attachment mode for emoji/stickers that cannot be sent natively. Enabling it does not send anything. |
 | `effects` / `effects` | Array containing at most one `HostEffect`; its capability is checked separately. | The native result describes the action. It runs only after its **Apply** button is clicked and current access is rechecked. |
@@ -97,6 +97,9 @@ it is not a patch to the plugin's old overlay. Omitted theme fields inherit from
 the underlying appearance. To save choices across account loads, store them in
 a normal action and restore the overlay from activation's storage input. See the
 [theme API](theme-api.md) for palette and style fields.
+
+The preview `tick` surface accepts only `appearance`; panels, storage writes,
+replacements, activation booleans, rich presence and host effects are rejected.
 
 A complete immediate appearance result with the `appearance` grant is:
 

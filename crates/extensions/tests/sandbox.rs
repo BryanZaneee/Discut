@@ -180,6 +180,30 @@ fn enforces_capabilities_and_restricts_context_to_action_surface() {
 }
 
 #[test]
+fn tick_requires_elapsed_time_and_only_returns_appearance() {
+	let mut package = returning(r#"{"appearance":{}}"#);
+	package.manifest.capabilities.push(Capability::Appearance);
+	package.manifest.actions[0].surface = Surface::Tick;
+	let mut request = Invocation {
+		action: "run".into(),
+		tick_ms: Some(250),
+		..Default::default()
+	};
+	assert!(invoke(&package, &request).is_ok());
+	request.tick_ms = None;
+	assert!(matches!(invoke(&package, &request), Err(Error::Capability)));
+	request.tick_ms = Some(250);
+	for response in [
+		r#"{"panel":[{"type":"text","text":"no"}]}"#,
+		r#"{"storage":"no"}"#,
+		r#"{"effects":[] ,"image_sharing":true}"#,
+	] {
+		package.wasm = returning(response).wasm;
+		assert!(matches!(invoke(&package, &request), Err(Error::Capability)));
+	}
+}
+
+#[test]
 fn rejects_panel_complexity_duplicate_ids_and_unknown_actions() {
 	let mut package = returning("{}");
 	package.manifest.actions.push(Action {
@@ -374,6 +398,25 @@ fn image_sharing_plugin_requires_activation_and_capability() {
 			"bundled protector package still executes through the ABI"
 		);
 	}
+}
+
+#[test]
+fn rgb_cycle_package_executes_through_the_real_abi() {
+	let package = parse_package(include_bytes!(
+		"../../../examples/extensions/packages/rgb-cycle.serein-extension"
+	))
+	.unwrap();
+	let output = invoke(
+		&package,
+		&Invocation {
+			action: "tick".into(),
+			storage: Some(r#"{"base":false}"#.into()),
+			tick_ms: Some(250),
+			..Default::default()
+		},
+	)
+	.unwrap();
+	assert!(!output.appearance.unwrap().dark.colors.contains_key("base"));
 }
 
 fn message_event() -> MessageEvent {

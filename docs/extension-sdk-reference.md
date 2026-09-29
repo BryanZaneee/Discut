@@ -20,6 +20,7 @@ instance. Local variables do not survive the call. Use the separately granted
 | `EventInvocation` | Those actions plus live message events | `input.invocation.action` |
 | `AppInvocation` | Those actions plus app snapshots and app change events | `input.invocation.action` |
 | `ExtendedAppInvocation` | `AppInvocation` plus queries, account settings, folders and tracked action results | `input.invocation.invocation.action` |
+| `TickInvocation` | Preview `tick` actions, or a mixed tick/panel handler | `input.invocation.action` |
 
 The wrappers keep the original `Invocation` fields unchanged. Their `invocation`
 field is a Rust convenience: JSON stays flat. There is no JSON object named
@@ -91,6 +92,12 @@ common optional fields above may instead be serialized as `null`.
 | `messaging_settings` | `Option<MessagingSettingsSnapshot>` / object or absent | Loaded account messaging privacy preferences; requires `messaging_settings`. | `input.messaging_settings.as_ref()` |
 | `guild_folders` | `Option<GuildFoldersSnapshot>` / object or absent | Loaded versioned server-folder layout; requires `guild_folders`. | `input.guild_folders.as_ref()` |
 | `action_result` | `Option<ActionResult>` / object or absent | Apply admission result for `tracked_app_action`; requires `action_feedback`. | `input.action_result.as_ref()` |
+| `tick_ms` | `Option<u64>` / integer or absent | Elapsed milliseconds since this plugin was enabled for the session. Present only on preview `tick` calls through `TickInvocation`. | `input.tick_ms` |
+
+A tick is completion-paced with a 250 ms minimum delay and runs only when the shared
+extension worker is idle. It receives the flattened base invocation plus `tick_ms`;
+granted storage may be read, but values, message/composer context and app snapshots are
+absent. Scheduling pauses after an invocation error until disable/re-enable.
 
 ### HostInfo: discover supported names
 

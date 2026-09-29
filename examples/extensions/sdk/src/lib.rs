@@ -57,6 +57,16 @@ pub struct Invocation {
 	pub values: BTreeMap<String, String>,
 }
 
+/// Opt-in scheduled appearance context, preserving the original `Invocation` API.
+#[derive(Clone, Debug, Default, PartialEq, Eq, Serialize, Deserialize)]
+pub struct TickInvocation {
+	#[serde(flatten)]
+	pub invocation: Invocation,
+	/// Set only for a `tick` action; panel actions decoded by the same handler receive `None`.
+	#[serde(default, skip_serializing_if = "Option::is_none")]
+	pub tick_ms: Option<u64>,
+}
+
 /// Opt-in message-event context, preserving the original `Invocation` struct literal API.
 /// Use this input type with `export!(handler)` and `dispatch_typed`.
 #[derive(Clone, Debug, Default, PartialEq, Eq, Serialize, Deserialize)]

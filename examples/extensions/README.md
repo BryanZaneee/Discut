@@ -60,6 +60,7 @@ may not be available in a released build.
 | [Message Counter](message-counter/src/lib.rs) | Reactive events, saved counters and a reset button |
 | [Message Delete Protector](message-delete-protector/src/lib.rs) | Opt-in activation enabling host-managed message retention |
 | [Emoji & Sticker Images](emoji-sticker-images/src/lib.rs) | Activation enabling image attachment fallback |
+| [RGB Cycle](rgb-cycle/src/lib.rs) | Host-scheduled, smoothly eased appearance updates with saved settings |
 | [Custom Rich Presence](https://github.com/ViceVerse-cz/Serein-extensions/tree/main/plugins/custom-rpc) | Native activity editor/preview, saved Apply/Stop controls and activation restore through the bounded `rich_presence` capability |
 
 For this tutorial, use `app-toolbox/` in a development copy. Keep its `Cargo.toml`,
@@ -136,10 +137,23 @@ as `con` and `nul` are reserved. Themes declare no actions or capabilities.
 | `activation` | Enable or account load | Each returned feature needs its own grant; used to restore appearance or enable activation features. |
 | `message_event` | Accepted live message change | `message_events`; receives one typed event. |
 | `app_event` | Supported app change | `app_events`; receives the reason and separately granted snapshots. |
+| `tick` | Host schedule while enabled and signed in | `appearance`; receives `tick_ms` through `TickInvocation`. |
 
 At most one action of **each** automatic surface is allowed: `activation`,
-`message_event` and `app_event`. A capability alone does not register a handler;
+`message_event`, `app_event` and `tick`. A capability alone does not register a handler;
 declare its action too.
+
+### Scheduled appearance ticks
+
+> **Preview — PR #286, not yet released.** Use a matching host build.
+
+A `tick` action runs only when the shared extension worker is otherwise idle, at most
+once every 250 ms after the previous call completes. Decode it with `TickInvocation`;
+`tick_ms` is elapsed session time, and granted storage may configure the result.
+The host accepts only `appearance` output, eases colors between accepted results,
+and pauses the schedule after an error until the plugin is disabled and re-enabled.
+There is no render callback, persistent Wasm instance, message/composer context, or
+guaranteed timer precision. See [RGB Cycle](rgb-cycle/src/lib.rs) for a complete handler.
 
 ### Generate and check a typed manifest
 

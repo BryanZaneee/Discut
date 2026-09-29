@@ -1,3 +1,45 @@
+# Custom Rich Presence - September 28, 2026
+
+Baseline `5dd38dde6432e7efe4484c450652a9c8849ec357`, compared with
+`dcbc431b75adb5f03ce717c792610e0b8457db0b` on Windows 11 Home 10.0.26200,
+Ryzen 7 7800X3D, 31.1 GiB RAM, pinned Rust 1.98.1. The updated revision includes
+main's merged artwork fallback PR #442, so this is the complete branch delta,
+not an isolated attribution of every byte to Custom RPC.
+
+Both standard voice-enabled `cargo xtask package` builds passed with locked
+dependencies and no demo/developer features. Baseline and changed `dist` folders
+were separate. Complete portable ZIPs use .NET `ZipFile`, `CompressionLevel.Optimal`.
+NSIS was unavailable, so installer executables were not generated.
+
+| Metric / method | Baseline | After | Delta |
+| --- | ---: | ---: | ---: |
+| Desktop executable bytes | 76,765,184 | 77,372,928 | +607,744 / +0.792% |
+| Installed package bytes | 80,868,500 | 81,476,244 | +607,744 / +0.752% |
+| Portable ZIP bytes | 44,197,608 | 44,345,286 | +147,678 / +0.334% |
+| Synthetic reducer 100,000 events, median | 142.9011 ms | 142.4239 ms | -0.4772 ms / -0.334%; noise |
+| Retained timeline estimate / rows | 331,992..332,477 bytes / 500 | 331,992..332,477 bytes / 500 | Unchanged |
+
+Reducer method: build `replay-bench` once per revision with `--release --locked`,
+then run the executable directly for one warmup and five measured samples.
+Baseline range: 134.9423..150.2501 ms; after: 132.1846..152.1863 ms. Other task
+builds ran on this machine; the distributions overlap and no speedup is claimed.
+This is not RSS, UI latency or live Discord interoperability. Native CPU/memory,
+startup/frame timing and scripted keyboard/scrolling verification remain
+unmeasured because the native automation helper is unavailable.
+
+The bundled plugin is 404,606 bytes (SHA-256
+`aa4ac3855855708e65430e73000eda62b176301b47cc79ecad10bc4889cb05b0`).
+The editor reuses native widgets and background artwork resolution. Configuration
+and resolved activity are each capped at 3 KiB; latest requests replace earlier
+ones. The combined Gateway event has a 4-KiB budget and omits secondary Spotify
+when necessary, retaining the existing rate limit. These are enforced bounds,
+not runtime measurements.
+
+Earlier builds hit disk/paging-file exhaustion and LLVM out-of-memory; serialized
+retries passed after resource pressure eased. A reused baseline extension artifact
+was invalidated before the changed release build. Final `cargo xtask check`
+passed with 1,159 passing test executions, strict Clippy and policy checks.
+
 # Native-first plugin artwork fallback - September 26, 2026
 
 Baseline `48e442715a0db51f54eedfabd99d1f8dba4369a3`, compared with `5f4dfdb` on
@@ -2270,6 +2312,31 @@ polling and preserve the one-request, 4 KiB response and 512-pixel media bounds.
 Native interaction screenshots and CPU/RSS measurements remain unavailable:
 the Computer Use module could not connect to its native pipe (`os error 2`).
 
+## Custom Rich Presence editor and catalog follow-up (September 28, 2026)
+
+Final source `e4a7c8c524a1e0f6eaf1b6b873284ccb8454d2d9` removes the shipped
+plugin from the client binary and uses the separately published Serein-extensions
+package. The standard voice-enabled release package passed on the same Windows
+machine/toolchain as above. NSIS remains unavailable; the complete portable ZIP
+uses .NET ZipFile with Optimal compression and no enclosing folder.
+
+| Package metric, bytes | Original baseline `5dd38dde` | Final | Delta |
+| --- | ---: | ---: | ---: |
+| Executable | 76,765,184 | 76,983,808 | +218,624 |
+| Installed directory | 80,868,500 | 81,087,124 | +218,624 |
+| Portable ZIP | 44,197,608 | 44,282,657 | +85,049 |
+
+Compared with the previous Custom RPC build `dcbc431b`, executable and installed
+size decrease by 389,120 bytes; ZIP size decreases by 62,629 bytes. This is a
+package-size measurement, not a runtime speed or memory claim. No new reducer
+measurement was needed for this UI/package-only follow-up.
+
+The native helper is now available: dark 1120x900 and light 800x760 synthetic
+windows were inspected, with section navigation, editable text, scrolling and
+composer-button absence checked. Captures are in `docs/pr-evidence/custom-rpc/`
+(`native-after.jpg`, `native-light.jpg`, `native-scrolled.jpg`). A matched native
+before capture was not collected. CPU/RSS/frame timing and live Discord
+interoperability remain unmeasured.
 ## RAM allocation audit — September 28, 2026
 
 This audit separates live application allocations, allocator retention, process RSS,

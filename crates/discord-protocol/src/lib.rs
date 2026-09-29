@@ -89,6 +89,10 @@ pub struct UserDto {
 	pub global_name: Option<String>,
 	#[serde(default, deserialize_with = "lossy::null_default")]
 	pub bot: bool,
+	#[serde(default, deserialize_with = "lossy::null_default")]
+	pub public_flags: u64,
+	#[serde(default, deserialize_with = "lossy::null_default")]
+	pub flags: u64,
 	#[serde(default)]
 	pub avatar: Option<String>,
 	#[serde(default, deserialize_with = "lossy::null_default")]
@@ -131,7 +135,9 @@ impl UserDto {
 			.or_else(|| self.clan.and_then(PrimaryGuildDto::into_model))
 			.map(Box::new);
 		User {
-			kind: if self.bot {
+			kind: if self.bot && (self.public_flags | self.flags) & (1 << 16) != 0 {
+				model::AccountKind::VerifiedBot
+			} else if self.bot {
 				model::AccountKind::Bot
 			} else {
 				model::AccountKind::Human
@@ -1191,6 +1197,11 @@ mod tests {
 			assert_eq!(label(&wire), None, "Names are not account metadata");
 			wire["author"]["bot"] = serde_json::json!(true);
 			assert_eq!(label(&wire), Some("BOT"));
+			wire["author"]["public_flags"] = serde_json::json!(1 << 16);
+			assert_eq!(label(&wire), Some("APP"));
+			wire["author"]["public_flags"] = serde_json::json!(0);
+			wire["author"]["flags"] = serde_json::json!(1 << 16);
+			assert_eq!(label(&wire), Some("APP"));
 			wire["webhook_id"] = serde_json::json!("3");
 			assert_eq!(label(&wire), Some("WEBHOOK"));
 			wire["application_id"] = serde_json::json!("4");

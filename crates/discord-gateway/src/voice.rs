@@ -962,6 +962,8 @@ mod tests {
 				username: name.into(),
 				global_name: None,
 				bot: false,
+				public_flags: 0,
+				flags: 0,
 				avatar: None,
 				discriminator: String::new(),
 			};

@@ -376,8 +376,16 @@ fn result_jump_and_numeric_pager_keep_scope_and_allow_explicit_retry() {
 			.center()
 	};
 	let labels = frame(&ctx, &mut view, &mut state, vec![], true, false).1;
+	let loaded = page_button(&labels, "1");
 	let commands = click(&ctx, &mut view, &mut state, page_button(&labels, "3"));
 	assert!(commands.iter().any(|command| matches!(command, Command::Search { channel: Id(10), query, before: None, offset: 50, .. } if query == "needle")));
+	// The next page has no results yet; the pager must stay at the pane's foot.
+	let labels = frame(&ctx, &mut view, &mut state, vec![], true, false).1;
+	let loading = page_button(&labels, "1");
+	assert!(
+		(loading.y - loaded.y).abs() < 1.0 && loaded.y > 600.0,
+		"pager moved from {loaded:?} to {loading:?} while the page loaded"
+	);
 	let loading_request = state.search.as_ref().unwrap().request;
 	let commands = frame(
 		&ctx,

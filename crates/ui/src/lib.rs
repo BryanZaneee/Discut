@@ -4364,6 +4364,7 @@ impl MessagingUi {
 			self.timeline.mark_read = None;
 			if !settings_open && let Some(command) = state.prepare_mark_unread(message) {
 				self.timeline.browse_away();
+				self.timeline.reset_unread_divider();
 				commands.push(command);
 			}
 		} else if let Some(message) = self.timeline.mark_read.take() {

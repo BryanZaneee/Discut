@@ -4107,3 +4107,5 @@ search-page-previous-short = Précédent
 search-page-next-short = Suivant
 search-result-today-at = Aujourd’hui à { $time }
 search-result-yesterday-at = Hier à { $time }
+timeline-unread-banner-one-new-since = 1 nouveau message depuis { $time }
+timeline-unread-banner-many-new-since = { $count } nouveaux messages depuis { $time }

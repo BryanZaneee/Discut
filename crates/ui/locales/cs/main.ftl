@@ -4123,3 +4123,5 @@ search-page-previous-short = Předchozí
 search-page-next-short = Další
 search-result-today-at = Dnes v { $time }
 search-result-yesterday-at = Včera v { $time }
+timeline-unread-banner-one-new-since = 1 nová zpráva od { $time }
+timeline-unread-banner-many-new-since = Nové zprávy od { $time }: { $count }

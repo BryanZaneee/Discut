@@ -4107,3 +4107,5 @@ search-page-previous-short = Назад
 search-page-next-short = Далее
 search-result-today-at = Сегодня в { $time }
 search-result-yesterday-at = Вчера в { $time }
+timeline-unread-banner-one-new-since = 1 новое сообщение с { $time }
+timeline-unread-banner-many-new-since = Новые сообщения с { $time }: { $count }

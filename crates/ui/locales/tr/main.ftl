@@ -4107,3 +4107,5 @@ search-page-previous-short = Önceki
 search-page-next-short = Sonraki
 search-result-today-at = Bugün { $time }
 search-result-yesterday-at = Dün { $time }
+timeline-unread-banner-one-new-since = { $time } itibarıyla 1 yeni mesaj
+timeline-unread-banner-many-new-since = { $time } itibarıyla { $count } yeni mesaj

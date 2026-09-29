@@ -1108,7 +1108,13 @@ fn banner_rect(area: egui::Rect) -> egui::Rect {
 }
 
 /// Returns whether the reader asked to jump to unread or mark the channel read.
-fn unread_banner(ui: &mut egui::Ui, rect: egui::Rect, jump: bool) -> (bool, bool) {
+/// Discord's unread bar; `summary` is "N new messages since HH:MM" once the divider is loaded.
+fn unread_banner(
+	ui: &mut egui::Ui,
+	rect: egui::Rect,
+	jump: bool,
+	summary: Option<&str>,
+) -> (bool, bool) {
 	let colors = crate::design::palette(ui);
 	let mut jump_unread = false;
 	let mut mark_read = false;
@@ -1124,14 +1130,7 @@ fn unread_banner(ui: &mut egui::Ui, rect: egui::Rect, jump: bool) -> (bool, bool
 			se: 8,
 		},
 		|ui| {
-			ui.label(
-				crate::design::medium(
-					ui,
-					crate::i18n::translate("timeline-unread-banner-unread-messages"),
-					13.0,
-				)
-				.color(text),
-			);
+			// Buttons first, so a long summary truncates into the space they leave.
 			ui.with_layout(egui::Layout::right_to_left(egui::Align::Center), |ui| {
 				if bar_button(ui, "Mark as read", crate::icons::Icon::Check, text).clicked() {
 					mark_read = true;
@@ -1141,6 +1140,26 @@ fn unread_banner(ui: &mut egui::Ui, rect: egui::Rect, jump: bool) -> (bool, bool
 				{
 					jump_unread = true;
 				}
+				ui.with_layout(egui::Layout::left_to_right(egui::Align::Center), |ui| {
+					ui.add(
+						egui::Label::new(
+							crate::design::medium(
+								ui,
+								summary.map_or_else(
+									|| {
+										crate::i18n::translate(
+											"timeline-unread-banner-unread-messages",
+										)
+									},
+									str::to_owned,
+								),
+								13.0,
+							)
+							.color(text),
+						)
+						.truncate(),
+					);
+				});
 			});
 		},
 	);
@@ -1317,6 +1336,46 @@ impl TimelineView {
 	pub(super) fn viewing_latest(&self, channel: Id) -> bool {
 		self.channel == Some(channel) && self.following && self.at_current_latest
 	}
+	/// An explicit "Mark unread" starts a new section at the chosen message.
+	pub(super) fn reset_unread_divider(&mut self) {
+		self.unread_boundary = None;
+		self.unread_session = false;
+		self.unread_dismissed = None;
+		self.revision = u64::MAX;
+	}
+	/// "12 new messages since 14:05" for the divider's section; "50+" when older unread
+	/// messages are not loaded yet.
+	fn unread_summary(&self, state: &State) -> Option<String> {
+		let boundary = self.unread_boundary?;
+		let count = state.timeline.iter().filter(|m| m.id >= boundary).count();
+		let first_loaded = state.timeline.iter().next().map(|m| m.id) == Some(boundary);
+		let marker_loaded = state
+			.selected
+			.and_then(|channel| state.read_marker(channel))
+			.flatten()
+			.is_some_and(|read| state.timeline.get(read).is_some());
+		let more = first_loaded && !marker_loaded && !state.older_exhausted;
+		let at = timestamp(boundary);
+		let clock = format!("{:02}:{:02}", at.hour(), at.minute());
+		let time = if at.date() == crate::local_time::now().date() {
+			clock
+		} else {
+			format!("{} {}, {clock}", at.month(), at.day())
+		};
+		let count = if more {
+			format!("{count}+")
+		} else {
+			count.to_string()
+		};
+		Some(crate::i18n::translate_args(
+			if count == "1" {
+				"timeline-unread-banner-one-new-since"
+			} else {
+				"timeline-unread-banner-many-new-since"
+			},
+			&[("count", &count), ("time", &time)],
+		))
+	}
 	/// Leaving the latest page is deliberate reading; nothing is acknowledged automatically.
 	pub(super) fn browse_away(&mut self) {
 		self.target_browsing = true;
@@ -1465,7 +1524,7 @@ impl TimelineView {
 			&& self.at_current_latest
 			&& state.live_edge_latest().is_some()
 			&& ui.input(|input| input.focused);
-		let boundary = state
+		let first_unread = state
 			.selected
 			.and_then(|channel| state.read_marker(channel))
 			.and_then(|read| {
@@ -1474,12 +1533,17 @@ impl TimelineView {
 					.iter()
 					.find(|m| read.is_none_or(|id| m.id > id))
 					.map(|m| m.id)
-			})
-			.filter(|_| !watching_latest || self.unread_boundary.is_some())
-			// Acknowledging the section keeps its divider in place until the reader leaves.
-			.or(self
-				.unread_boundary
-				.filter(|id| state.timeline.get(*id).is_some()));
+			});
+		let kept = self
+			.unread_boundary
+			.filter(|id| state.timeline.get(*id).is_some());
+		// The divider is fixed for the visit. Acknowledging moves the read marker to the latest
+		// message, so the next arrival would otherwise look like a new first unread message;
+		// only older unread history loading above it may move the divider up.
+		let boundary = match kept {
+			Some(kept) => Some(first_unread.map_or(kept, |first| first.min(kept))),
+			None => first_unread.filter(|_| !watching_latest),
+		};
 		if self.unread_boundary != boundary {
 			self.unread_boundary = boundary;
 			self.revision = u64::MAX;
@@ -1656,7 +1720,7 @@ impl TimelineView {
 				.and_then(|channel| channel.last_message);
 			if state.show_missed_banner() && self.unread_dismissed != Some(latest) {
 				let (jump_unread, mark_read) =
-					unread_banner(ui, banner_rect(area), state.can_jump_unread());
+					unread_banner(ui, banner_rect(area), state.can_jump_unread(), None);
 				if jump_unread {
 					self.unread_jump = true;
 					self.browse_away();
@@ -3555,7 +3619,9 @@ impl TimelineView {
 				|| kept_unread)
 		{
 			self.unread_session |= self.unread_boundary.is_some();
-			let (jump_unread, mark_read) = unread_banner(ui, banner_rect(area), can_jump_unread);
+			let summary = self.unread_summary(state);
+			let (jump_unread, mark_read) =
+				unread_banner(ui, banner_rect(area), can_jump_unread, summary.as_deref());
 			if jump_unread {
 				if state.can_jump_unread() {
 					self.unread_jump = true;
@@ -3960,7 +4026,7 @@ mod tests {
 			let mut view = TimelineView::default();
 			let labels = banner_frame(&ctx, &mut view, &mut state, vec![], false);
 			assert!(
-				labels.iter().any(|(text, _)| text == "Unread messages"),
+				labels.iter().any(|(text, _)| text == "Mark as read"),
 				"cached reply {cached_reply} while history is still loading showed {labels:?}"
 			);
 			assert!(
@@ -4030,14 +4096,14 @@ mod tests {
 						view.scroll_offset
 					);
 					assert!(
-						labels.iter().any(|(text, _)| text == "Unread messages"),
+						labels.iter().any(|(text, _)| text == "Mark as read"),
 						"unread join at the bottom hid the banner: {labels:?}"
 					);
 					continue;
 				}
 				if count == 0 {
 					for forbidden in [
-						"Unread messages",
+						"Mark as read",
 						"Viewing older messages",
 						"Jump to unread",
 						"New messages below",
@@ -4051,7 +4117,7 @@ mod tests {
 					assert!(!view.hold_read_ack && view.following);
 				} else {
 					assert!(
-						labels.iter().any(|(text, _)| text == "Unread messages"),
+						labels.iter().any(|(text, _)| text == "Mark as read"),
 						"unacked short join hid the banner: {labels:?}"
 					);
 					assert!(view.following && view.hold_read_ack && view.mark_read.is_none());
@@ -4084,7 +4150,7 @@ mod tests {
 				assert!(view.following && !view.target_browsing);
 				assert_eq!(view.mark_read.take(), Some(Id(21)));
 				for forbidden in [
-					"Unread messages",
+					"Mark as read",
 					"Next messages",
 					"New messages below",
 					"Jump to present",
@@ -4123,7 +4189,7 @@ mod tests {
 				assert_eq!(view.mark_channel_read.take(), Some(Id(20)));
 				let labels = banner_frame(&ctx, &mut view, &mut state, vec![], false);
 				assert!(
-					!labels.iter().any(|(text, _)| text == "Unread messages"),
+					!labels.iter().any(|(text, _)| text == "Mark as read"),
 					"Mark as read left the banner up: {labels:?}"
 				);
 			}
@@ -6040,7 +6106,7 @@ mod tests {
 			view.mark_read
 		);
 		assert!(
-			labels.iter().any(|(text, _)| text == "Unread messages"),
+			labels.iter().any(|(text, _)| text == "Mark as read"),
 			"{step} removed the unread banner: {labels:?}"
 		);
 	}
@@ -6222,6 +6288,98 @@ mod tests {
 				"A downward reach at the live edge acknowledges the unread join"
 			);
 		}
+	}
+
+	#[test]
+	fn divider_and_dismissed_banner_stay_put_when_messages_arrive_at_the_live_edge() {
+		let mut state = State {
+			auth: client_core::auth::AuthState::Authenticated,
+			gateway_connected: true,
+			freshness: model::Freshness::Fresh,
+			older_exhausted: true,
+			selected: Some(Id(20)),
+			channels: vec![model::Channel {
+				id: Id(20),
+				guild: None,
+				parent_id: None,
+				position: 0,
+				name: "Synthetic unread conversation".into(),
+				kind: 1,
+				recipients: vec![],
+				member_list_id: None,
+				tags: None,
+				message_count: None,
+				icon: None,
+				last_message: Some(Id(40)),
+			}],
+			..Default::default()
+		};
+		for id in 11..=40 {
+			state
+				.timeline
+				.insert(text_message(id), false, false)
+				.unwrap();
+		}
+		let marker = |state: &mut State, read: u64, version: u64| {
+			state
+				.apply_read_state(client_core::read_state::Event::Snapshot {
+					entries: Some(vec![(Id(20), Some(Id(read)), 0)]),
+					version: Some(version),
+					partial: false,
+				})
+				.unwrap();
+		};
+		marker(&mut state, 32, 1);
+		let ctx = egui::Context::default();
+		let mut view = TimelineView::default();
+		let mut labels = Vec::new();
+		for _ in 0..3 {
+			labels = banner_frame(&ctx, &mut view, &mut state, vec![], false);
+		}
+		assert_eq!(view.unread_boundary, Some(Id(33)));
+		assert!(
+			labels.iter().any(|(text, _)| text
+				.replace(['\u{2068}', '\u{2069}'], "")
+				.starts_with("8 new messages since")),
+			"the banner counts the unread section: {labels:?}"
+		);
+		// Reading down to the live edge acknowledges the section and dismisses its banner.
+		banner_frame(
+			&ctx,
+			&mut view,
+			&mut state,
+			vec![
+				egui::Event::PointerMoved(egui::pos2(450.0, 300.0)),
+				egui::Event::MouseWheel {
+					unit: egui::MouseWheelUnit::Point,
+					delta: egui::vec2(0.0, -80.0),
+					modifiers: egui::Modifiers::NONE,
+					phase: egui::TouchPhase::Move,
+				},
+			],
+			false,
+		);
+		assert_eq!(view.mark_read.take(), Some(Id(40)));
+		marker(&mut state, 40, 2);
+		// Someone else posts while the reader watches the latest message.
+		state
+			.timeline
+			.insert(text_message(41), false, false)
+			.unwrap();
+		state.channels[0].last_message = Some(Id(41));
+		for _ in 0..3 {
+			labels = banner_frame(&ctx, &mut view, &mut state, vec![], false);
+		}
+		assert_eq!(
+			view.unread_boundary,
+			Some(Id(33)),
+			"the divider stays at the first message that was unread on arrival"
+		);
+		assert!(
+			!labels.iter().any(|(text, _)| text.contains("new message")),
+			"a seen arrival must not revive the dismissed banner: {labels:?}"
+		);
+		assert_eq!(view.mark_read.take(), Some(Id(41)));
 	}
 
 	#[test]

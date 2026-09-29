@@ -4107,3 +4107,5 @@ search-page-previous-short = 前へ
 search-page-next-short = 次へ
 search-result-today-at = 今日 { $time }
 search-result-yesterday-at = 昨日 { $time }
+timeline-unread-banner-one-new-since = { $time } 以降の新着メッセージ 1 件
+timeline-unread-banner-many-new-since = { $time } 以降の新着メッセージ { $count } 件

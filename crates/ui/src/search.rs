@@ -1019,7 +1019,7 @@ impl SearchUi {
 				let content_query = model::search_terms(&view.query)
 					.map(|(content, _)| content)
 					.unwrap_or_default();
-				let footer_height = CHIP_HEIGHT + 20.0;
+				let footer_height = PAGER_HEIGHT;
 				egui::ScrollArea::vertical()
 					.id_salt(("search-results", view.request))
 					.auto_shrink([false, false])
@@ -1082,6 +1082,11 @@ impl SearchUi {
 						ui.add_space(4.0);
 					});
 			}
+		}
+		// Loading or failed pages have no result list; keep the pager at the pane's foot anyway.
+		if state.search.is_some() {
+			let gap = ui.spacing().item_spacing.y;
+			ui.add_space((ui.available_height() - PAGER_HEIGHT + gap).max(0.0));
 		}
 		let requested_page = state
 			.search
@@ -1580,6 +1585,8 @@ impl SearchUi {
 }
 
 const CHIP_HEIGHT: f32 = 30.0;
+/// Space the pager claims below the results: hairline, spacing and one row of page buttons.
+const PAGER_HEIGHT: f32 = 50.0;
 
 /// Discord-style send time: "Today at 14:18", "Yesterday at 23:17", or the full date.
 fn sent_at(utc: time::OffsetDateTime) -> String {

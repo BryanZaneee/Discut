@@ -343,7 +343,10 @@ fn main() -> eframe::Result {
 				.with_icon(eframe::icon_data::from_png_bytes(icon).expect("bundled app icon"));
 			if cfg!(target_os = "macos") {
 				// Discord-style inline title bar: traffic lights sit over the app's own strip.
+				// eframe swaps in the egui logo when no icon is set; an empty icon keeps the
+				// bundle's Serein.icns in the Dock and app switcher.
 				builder
+					.with_icon(egui::IconData::default())
 					.with_title_shown(false)
 					.with_titlebar_shown(false)
 					.with_fullsize_content_view(true)

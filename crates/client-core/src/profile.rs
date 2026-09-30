@@ -684,10 +684,12 @@ mod tests {
 	}
 	#[test]
 	fn own_profile_does_not_request_mutuals() {
-		let mut state = State::default();
-		state.auth = AuthState::Authenticated;
-		state.gateway_connected = true;
-		state.user = Some(own_data("Self").user.clone());
+		let mut state = State {
+			auth: AuthState::Authenticated,
+			gateway_connected: true,
+			user: Some(own_data("Self").user.clone()),
+			..State::default()
+		};
 		for (user, expected) in [(Id(1), false), (Id(2), true)] {
 			let Some(Command::Profile { with_mutuals, .. }) = state.request_profile(user, None)
 			else {

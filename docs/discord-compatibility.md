@@ -2006,7 +2006,7 @@ this warning for HTTP endpoints; HTTPS proxies encrypt the proxy connection.
 Poll messages now retain bounded questions, up to ten answers, optional emoji, expiry,
 single/multiple choice and supplied results. Native cards use Serein surfaces and accent
 colors with Discord-style answer rows, selection checkmarks, result fills and a vote footer.
-The composer Poll button opens a creation dialog (300-character question, 55-character
+The composer `+` menu's Create a poll option opens a creation dialog (300-character question, 55-character
 answers, Unicode emoji and the usual 1h/4h/8h/1d/3d/1w durations). Readers can vote,
 remove their vote, explicitly refresh results, and confirm ending their own poll.
 

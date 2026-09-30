@@ -2870,6 +2870,8 @@ impl MessagingUi {
 			&& state.can_attach(channel)
 			&& !self.upload_busy
 			&& self.attachment_files.len() < 10;
+		let can_create_poll =
+			!editing_here && self.slash_commands.active.is_none() && state.can_create_poll(channel);
 		let application_command = !editing_here && self.slash_commands.active.is_some();
 		let can_send = if let Some((edit_channel, message)) = editing_key {
 			state.freshness == Freshness::Fresh
@@ -2911,7 +2913,7 @@ impl MessagingUi {
                         None
                     } else {
                         Some(ui
-                            .add_enabled_ui(can_attach, |ui| {
+                            .add_enabled_ui(can_attach || can_create_poll, |ui| {
                                 icons::button(ui, icons::Icon::Attach, 28.0, &crate::i18n::translate("lib-ime-updates-text-attach-files"))
                             })
                             .inner
@@ -2919,10 +2921,20 @@ impl MessagingUi {
                     };
                     if !editing_here {
                         self.extensions.composer_menu(ui, state);
-                        if ui.add_enabled(state.can_create_poll(channel),egui::Button::new("Poll").small()).on_hover_text("Create a poll").clicked() { self.poll_creator.open(state,channel); }
                     }
-                    if attach.is_some_and(|attach| attach.clicked()) {
-                        self.attach_requested = true;
+                    if let Some(attach) = attach {
+                        egui::Popup::menu(&attach)
+                            .id(attach.id.with(("composer-add", state.generation, channel)))
+                            .show(|ui| {
+                                if ui.add_enabled(can_attach, egui::Button::new(crate::i18n::translate("lib-ime-updates-text-attach-files"))).clicked() {
+                                    self.attach_requested = true;
+                                    ui.close();
+                                }
+                                if ui.add_enabled(can_create_poll, egui::Button::new("Create a poll")).clicked() {
+                                    self.poll_creator.open(state, channel);
+                                    ui.close();
+                                }
+                            });
                     }
                     ui.with_layout(egui::Layout::right_to_left(egui::Align::Center), |ui| {
                         ui.spacing_mut().item_spacing.x = 4.0;

@@ -147,6 +147,7 @@ footer. The card spans up to 472px including padding. Long answers wrap while
 their selection markers stay aligned; narrow result rows put tallies beneath the
 answer. Colors continue to resolve from the active Serein palette.
 
+Open poll creation from Create a poll in the composer's `+` menu.
 The creation dialog uses uppercase field labels, inset question/answer fields,
 answer removal icons, a duration row and a separate footer with multiple-choice
 and Post controls. Its content scrolls while the footer remains available. Escape,

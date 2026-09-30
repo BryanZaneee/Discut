@@ -1502,7 +1502,7 @@ join-server-show-join-enter-an-invite-below-to-join-an-existing-server = Enter a
 # Context: show_join
 join-server-show-join-join-a-server = Join a Server
 # Context: body
-join-server-status-invite-accepted = Invite accepted. Waiting for server access; complete any server rules in Discord.
+join-server-status-invite-accepted = Invite accepted. Waiting for server access.
 # Context: body
 join-server-status-offline-preview = Offline preview — joining servers is disabled.
 
@@ -4127,3 +4127,49 @@ search-result-today-at = Today at { $time }
 search-result-yesterday-at = Yesterday at { $time }
 timeline-unread-banner-one-new-since = 1 new message since { $time }
 timeline-unread-banner-many-new-since = { $count } new messages since { $time }
+
+## crates/ui/src/onboarding.rs
+# Context: show
+onboarding-show-title = Welcome to { $server }
+# Context: show
+onboarding-show-subtitle = Answer a few questions and accept the rules to start chatting.
+# Context: show
+onboarding-show-try-again = Try Again
+# Context: show
+onboarding-show-close = Close
+# Context: show
+onboarding-show-please-wait = Please wait…
+# Context: show
+onboarding-show-finish = Finish
+# Context: show
+onboarding-show-not-now = Not Now
+# Context: show
+onboarding-show-this-server = this server
+# Context: body
+onboarding-body-submitted = Application submitted. A moderator will review it; you can chat once it is approved.
+# Context: body
+onboarding-body-rejected = This server declined the application.
+# Context: body
+onboarding-body-loading = Loading server onboarding…
+# Context: body
+onboarding-body-all-set = You're all set. Nothing is left to complete here.
+# Context: prompt
+onboarding-prompt-pick-one = Pick one
+# Context: prompt
+onboarding-prompt-pick-any = Pick any that apply
+# Context: rules
+onboarding-rules-heading = Server rules
+# Context: rules
+onboarding-rules-review = A moderator reviews these answers before you can chat.
+# Context: field
+onboarding-field-unsupported = This server asks a question Serein can't show yet. Finish joining in the Discord app.
+# Context: field
+onboarding-field-agree = I have read and agree to the rules
+
+## crates/ui/src/lib.rs
+# Context: composer
+lib-composer-onboarding-rules-pending = Accept this server's rules to start chatting.
+# Context: composer
+lib-composer-onboarding-incomplete = Finish joining this server to unlock more channels.
+# Context: composer
+lib-composer-onboarding-complete = Complete Onboarding

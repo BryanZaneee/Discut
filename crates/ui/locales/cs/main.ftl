@@ -1501,7 +1501,7 @@ join-server-show-join-enter-an-invite-below-to-join-an-existing-server = Níže 
 # Context: show_join
 join-server-show-join-join-a-server = Připojte se k serveru
 # Context: body
-join-server-status-invite-accepted = Pozvánka přijata. Čekání na přístup k serveru; vyplňte všechna pravidla serveru v Discordu.
+join-server-status-invite-accepted = Pozvánka přijata. Čekání na přístup k serveru.
 # Context: body
 join-server-status-offline-preview = Offline náhled — připojení k serverům je zakázáno.
 
@@ -4126,3 +4126,49 @@ search-result-today-at = Dnes v { $time }
 search-result-yesterday-at = Včera v { $time }
 timeline-unread-banner-one-new-since = 1 nová zpráva od { $time }
 timeline-unread-banner-many-new-since = Nové zprávy od { $time }: { $count }
+
+## crates/ui/src/onboarding.rs
+# Context: show
+onboarding-show-title = Vítej na serveru { $server }
+# Context: show
+onboarding-show-subtitle = Odpověz na pár otázek a přijmi pravidla, abys mohl(a) začít psát.
+# Context: show
+onboarding-show-try-again = Zkusit znovu
+# Context: show
+onboarding-show-close = Zavřít
+# Context: show
+onboarding-show-please-wait = Počkej prosím…
+# Context: show
+onboarding-show-finish = Dokončit
+# Context: show
+onboarding-show-not-now = Teď ne
+# Context: show
+onboarding-show-this-server = tento server
+# Context: body
+onboarding-body-submitted = Žádost odeslána. Moderátor ji posoudí; psát budeš moct po schválení.
+# Context: body
+onboarding-body-rejected = Tento server žádost zamítl.
+# Context: body
+onboarding-body-loading = Načítání uvítání serveru…
+# Context: body
+onboarding-body-all-set = Vše hotovo. Tady už nic nezbývá doplnit.
+# Context: prompt
+onboarding-prompt-pick-one = Vyber jednu možnost
+# Context: prompt
+onboarding-prompt-pick-any = Vyber všechny, které platí
+# Context: rules
+onboarding-rules-heading = Pravidla serveru
+# Context: rules
+onboarding-rules-review = Než budeš moct psát, moderátor tyto odpovědi zkontroluje.
+# Context: field
+onboarding-field-unsupported = Tento server klade otázku, kterou Serein zatím neumí zobrazit. Dokonči připojení v aplikaci Discord.
+# Context: field
+onboarding-field-agree = Přečetl(a) jsem si pravidla a souhlasím s nimi
+
+## crates/ui/src/lib.rs
+# Context: composer
+lib-composer-onboarding-rules-pending = Přijmi pravidla tohoto serveru, abys mohl(a) začít psát.
+# Context: composer
+lib-composer-onboarding-incomplete = Dokonči připojení k serveru a odemkni další kanály.
+# Context: composer
+lib-composer-onboarding-complete = Dokončit uvítání

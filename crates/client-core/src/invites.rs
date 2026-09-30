@@ -261,11 +261,12 @@ impl State {
 		self.invite_join.challenge = None;
 		self.invite_join.result = Some(result);
 		self.status = match result {
-			Ok(_) => {
-				"Invite accepted · waiting for server access; complete any server rules in Discord"
-			}
+			Ok(_) => "Invite accepted · waiting for server access",
 			Err(f) => f.label(),
 		};
+		if let Ok(guild) = result {
+			self.watch_onboarding(guild);
+		}
 		if let Err(f) = result
 			&& f.ends_session()
 		{

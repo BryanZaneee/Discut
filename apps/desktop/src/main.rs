@@ -32,6 +32,8 @@ mod group_icon;
 mod interaction_uploads;
 mod notification_runtime;
 mod notification_sounds;
+#[cfg(feature = "demo")]
+mod onboarding_demo;
 mod pointer;
 #[cfg(feature = "demo")]
 mod post_menu_demo;
@@ -1907,6 +1909,10 @@ impl Desktop {
 			}
 		}
 		#[cfg(feature = "demo")]
+		if demo && std::env::args().any(|arg| arg.starts_with("--demo-onboarding")) {
+			onboarding_demo::open(&mut state);
+		}
+		#[cfg(feature = "demo")]
 		if demo && std::env::args().any(|arg| arg == "--demo-server-settings") {
 			server_settings_demo::open(&mut state, &mut messaging);
 		}
@@ -2926,6 +2932,12 @@ impl Desktop {
 			self.state.command_rejected(command);
 			return;
 		}
+		if let Command::Onboarding { guild, request, .. } = &command
+			&& !self.state.onboarding_command_allowed(*guild, *request)
+		{
+			self.state.command_rejected(command);
+			return;
+		}
 		if let Command::ServerSettings {
 			guild,
 			request,
@@ -3196,6 +3208,11 @@ impl Desktop {
 					request,
 					edit,
 				} => server_settings_demo::execute(&self.state, guild, request, edit),
+				Command::Onboarding {
+					guild,
+					request,
+					action,
+				} => onboarding_demo::execute(guild, request, action),
 				Command::GuildFolders(settings) => Event::GuildFolders(Ok(settings
 					.map(|(_, settings)| settings)
 					.unwrap_or_default())),

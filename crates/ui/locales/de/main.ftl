@@ -1501,7 +1501,7 @@ join-server-show-join-enter-an-invite-below-to-join-an-existing-server = Geben S
 # Context: show_join
 join-server-show-join-join-a-server = Treten Sie einem Server bei
 # Context: body
-join-server-status-invite-accepted = Einladung angenommen. Warten auf Serverzugriff; Vervollständigen Sie alle Serverregeln in Discord.
+join-server-status-invite-accepted = Einladung angenommen. Warten auf Serverzugriff.
 # Context: body
 join-server-status-offline-preview = Offline-Vorschau – Das Beitreten zu Servern ist deaktiviert.
 
@@ -4110,3 +4110,49 @@ search-result-today-at = Heute um { $time }
 search-result-yesterday-at = Gestern um { $time }
 timeline-unread-banner-one-new-since = 1 neue Nachricht seit { $time }
 timeline-unread-banner-many-new-since = { $count } neue Nachrichten seit { $time }
+
+## crates/ui/src/onboarding.rs
+# Context: show
+onboarding-show-title = Willkommen auf { $server }
+# Context: show
+onboarding-show-subtitle = Beantworte ein paar Fragen und akzeptiere die Regeln, um loszuschreiben.
+# Context: show
+onboarding-show-try-again = Erneut versuchen
+# Context: show
+onboarding-show-close = Schließen
+# Context: show
+onboarding-show-please-wait = Bitte warten…
+# Context: show
+onboarding-show-finish = Fertig
+# Context: show
+onboarding-show-not-now = Nicht jetzt
+# Context: show
+onboarding-show-this-server = diesem Server
+# Context: body
+onboarding-body-submitted = Bewerbung gesendet. Ein Moderator prüft sie; du kannst schreiben, sobald sie genehmigt ist.
+# Context: body
+onboarding-body-rejected = Dieser Server hat die Bewerbung abgelehnt.
+# Context: body
+onboarding-body-loading = Server-Einführung wird geladen…
+# Context: body
+onboarding-body-all-set = Alles erledigt. Hier ist nichts mehr zu tun.
+# Context: prompt
+onboarding-prompt-pick-one = Wähle eine Option
+# Context: prompt
+onboarding-prompt-pick-any = Wähle alle passenden aus
+# Context: rules
+onboarding-rules-heading = Serverregeln
+# Context: rules
+onboarding-rules-review = Ein Moderator prüft diese Antworten, bevor du schreiben kannst.
+# Context: field
+onboarding-field-unsupported = Dieser Server stellt eine Frage, die Serein noch nicht anzeigen kann. Schließe den Beitritt in der Discord-App ab.
+# Context: field
+onboarding-field-agree = Ich habe die Regeln gelesen und stimme ihnen zu
+
+## crates/ui/src/lib.rs
+# Context: composer
+lib-composer-onboarding-rules-pending = Akzeptiere die Regeln dieses Servers, um loszuschreiben.
+# Context: composer
+lib-composer-onboarding-incomplete = Schließe den Beitritt ab, um weitere Kanäle freizuschalten.
+# Context: composer
+lib-composer-onboarding-complete = Einführung abschließen

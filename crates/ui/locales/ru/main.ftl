@@ -1502,7 +1502,7 @@ join-server-show-join-enter-an-invite-below-to-join-an-existing-server = Вве�
 # Context: show_join
 join-server-show-join-join-a-server = Присоединиться к серверу
 # Context: body
-join-server-status-invite-accepted = Приглашение принято. Ожидание доступа к серверу; выполнить любые правила сервера в Discord.
+join-server-status-invite-accepted = Приглашение принято. Ожидание доступа к серверу.
 # Context: body
 join-server-status-offline-preview = Офлайн-просмотр — присоединение к серверам отключено.
 
@@ -4111,3 +4111,49 @@ search-result-today-at = Сегодня в { $time }
 search-result-yesterday-at = Вчера в { $time }
 timeline-unread-banner-one-new-since = 1 новое сообщение с { $time }
 timeline-unread-banner-many-new-since = Новые сообщения с { $time }: { $count }
+
+## crates/ui/src/onboarding.rs
+# Context: show
+onboarding-show-title = Добро пожаловать на { $server }
+# Context: show
+onboarding-show-subtitle = Ответьте на несколько вопросов и примите правила, чтобы начать общение.
+# Context: show
+onboarding-show-try-again = Повторить
+# Context: show
+onboarding-show-close = Закрыть
+# Context: show
+onboarding-show-please-wait = Подождите…
+# Context: show
+onboarding-show-finish = Готово
+# Context: show
+onboarding-show-not-now = Не сейчас
+# Context: show
+onboarding-show-this-server = этот сервер
+# Context: body
+onboarding-body-submitted = Заявка отправлена. Модератор её рассмотрит; вы сможете писать после одобрения.
+# Context: body
+onboarding-body-rejected = Сервер отклонил заявку.
+# Context: body
+onboarding-body-loading = Загрузка знакомства с сервером…
+# Context: body
+onboarding-body-all-set = Всё готово. Здесь больше нечего заполнять.
+# Context: prompt
+onboarding-prompt-pick-one = Выберите один вариант
+# Context: prompt
+onboarding-prompt-pick-any = Выберите все подходящие
+# Context: rules
+onboarding-rules-heading = Правила сервера
+# Context: rules
+onboarding-rules-review = Модератор проверит эти ответы, прежде чем вы сможете писать.
+# Context: field
+onboarding-field-unsupported = Сервер задаёт вопрос, который Serein пока не умеет показывать. Завершите вступление в приложении Discord.
+# Context: field
+onboarding-field-agree = Я прочитал(а) правила и согласен(на) с ними
+
+## crates/ui/src/lib.rs
+# Context: composer
+lib-composer-onboarding-rules-pending = Примите правила сервера, чтобы начать общение.
+# Context: composer
+lib-composer-onboarding-incomplete = Завершите вступление, чтобы открыть больше каналов.
+# Context: composer
+lib-composer-onboarding-complete = Завершить знакомство

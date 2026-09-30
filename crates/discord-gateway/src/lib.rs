@@ -1388,6 +1388,7 @@ async fn run_inner(
 										let envelope = ready::decode(packet.d.get().as_bytes()).map_err(|_| diagnosed(&emit, Failure::ProtocolAt("Gateway login: invalid READY identity or relationships"), ready::diagnose(packet.d.get().as_bytes())))?;
 										if envelope.user.bot { return Err(Failure::InvalidCredential); }
 										let permissions = envelope.permissions().map_err(|_| diagnosed(&emit, Failure::ProtocolAt("Gateway login: invalid permission metadata"), ready::diagnose(packet.d.get().as_bytes())))?;
+										let gates = envelope.onboarding();
 										let (mut ready, mut warnings) = envelope.navigation().map_err(|_| diagnosed(&emit, Failure::ProtocolAt("Gateway login: invalid READY guild or channel metadata"), ready::diagnose(packet.d.get().as_bytes())))?;
 										owner_id=Some(ready.user.id);
 										if ready.user.username.is_empty() || ready.user.username.len() > 128 || ready.user.username.chars().any(char::is_control) || ready.session_id.is_empty() || ready.session_id.chars().any(char::is_control) {
@@ -1448,6 +1449,7 @@ async fn run_inner(
 										// A new session does not replay settings changed while disconnected.
 										if was_ready { emit(Event::AccountSettings { status: true, folders: true })?; }
 										was_ready = true;
+										emit(Event::Onboarding(client_core::onboarding::Event::Gates { snapshot: true, gates }))?;
 
 										let nicknames = ready.relationships.as_ref().map(|s| s.nicknames());
 										let spam_requests = ready.relationships.as_ref().map(|s| s.spam_incoming_ids());
@@ -1687,6 +1689,7 @@ async fn run_inner(
 									emit(Event::GuildChanged(model::GuildPatch { id: guild.id, name: model::Patch::Absent, icon: model::Patch::Absent, default_message_notifications: guild.default_notification_patch() }))?;
 
 										if let Some(permissions)=permissions {emit(Event::Permissions(client_core::permissions::Event::Snapshot(permissions)))?;}
+										if let Some(gate)=owner_id.and_then(|owner|onboarding::guild(packet.d.get().as_bytes(),owner)) {emit(Event::Onboarding(client_core::onboarding::Event::Gates { snapshot: false, gates: vec![gate] }))?;}
 										let hidden:std::collections::BTreeSet<_>=guild.channels.iter().filter(|c|c.is_obfuscated()).map(|c|c.id).collect();
 										for mut channel in std::mem::take(&mut guild.channels) {
 											channel.guild_id = Some(guild.id);
@@ -1706,11 +1709,13 @@ async fn run_inner(
 										let owner=permissions::owner(packet.d.get().as_bytes()).map_err(|_|Failure::Protocol)?;
 										emit(Event::GuildChanged(decode::<GuildPatchDto>(packet.d.get().as_bytes()).map_err(|_| Failure::Protocol)?.into_model()))?;
 										if let Some((guild,owner))=owner {emit(Event::Permissions(client_core::permissions::Event::Owner {guild,owner}))?;}
+										if let Some(gate)=owner_id.and_then(|owner|onboarding::guild(packet.d.get().as_bytes(),owner)) {emit(Event::Onboarding(client_core::onboarding::Event::Gates { snapshot: false, gates: vec![gate] }))?;}
 									}
 									"GUILD_MEMBER_UPDATE" => {
 										if let Some(owner)=owner_id && let Some((guild,roles,timeout_until))=permissions::member(packet.d.get().as_bytes(),owner).map_err(|_|Failure::Protocol)? {
 											emit(Event::Permissions(client_core::permissions::Event::Member {guild,roles,timeout_until}))?;
 										}
+										if let Some(gate)=owner_id.and_then(|owner|onboarding::member(packet.d.get().as_bytes(),owner)) {emit(Event::Onboarding(client_core::onboarding::Event::Gates { snapshot: false, gates: vec![gate] }))?;}
 									}
 									"GUILD_DELETE" => {
 										let guild: GuildDto = decode(packet.d.get().as_bytes()).map_err(|_| Failure::Protocol)?;

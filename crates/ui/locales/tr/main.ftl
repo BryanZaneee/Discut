@@ -1502,7 +1502,7 @@ join-server-show-join-enter-an-invite-below-to-join-an-existing-server = Mevcut 
 # Context: show_join
 join-server-show-join-join-a-server = Bir Sunucuya Katılın
 # Context: body
-join-server-status-invite-accepted = Davet kabul edildi. Sunucu erişimi bekleniyor; Discord'daki tüm sunucu kurallarını tamamlayın.
+join-server-status-invite-accepted = Davet kabul edildi. Sunucu erişimi bekleniyor.
 # Context: body
 join-server-status-offline-preview = Çevrimdışı önizleme — sunuculara katılma devre dışı bırakıldı.
 
@@ -4111,3 +4111,49 @@ search-result-today-at = Bugün { $time }
 search-result-yesterday-at = Dün { $time }
 timeline-unread-banner-one-new-since = { $time } itibarıyla 1 yeni mesaj
 timeline-unread-banner-many-new-since = { $time } itibarıyla { $count } yeni mesaj
+
+## crates/ui/src/onboarding.rs
+# Context: show
+onboarding-show-title = { $server } sunucusuna hoş geldin
+# Context: show
+onboarding-show-subtitle = Sohbete başlamak için birkaç soruyu yanıtla ve kuralları kabul et.
+# Context: show
+onboarding-show-try-again = Tekrar dene
+# Context: show
+onboarding-show-close = Kapat
+# Context: show
+onboarding-show-please-wait = Lütfen bekle…
+# Context: show
+onboarding-show-finish = Bitir
+# Context: show
+onboarding-show-not-now = Şimdi değil
+# Context: show
+onboarding-show-this-server = bu sunucu
+# Context: body
+onboarding-body-submitted = Başvuru gönderildi. Bir moderatör inceleyecek; onaylandığında sohbet edebilirsin.
+# Context: body
+onboarding-body-rejected = Bu sunucu başvuruyu reddetti.
+# Context: body
+onboarding-body-loading = Sunucu tanıtımı yükleniyor…
+# Context: body
+onboarding-body-all-set = Her şey hazır. Burada tamamlanacak bir şey kalmadı.
+# Context: prompt
+onboarding-prompt-pick-one = Birini seç
+# Context: prompt
+onboarding-prompt-pick-any = Uygun olanların hepsini seç
+# Context: rules
+onboarding-rules-heading = Sunucu kuralları
+# Context: rules
+onboarding-rules-review = Sohbet edebilmen için bir moderatör bu yanıtları inceler.
+# Context: field
+onboarding-field-unsupported = Bu sunucu, Serein'in henüz gösteremediği bir soru soruyor. Katılımı Discord uygulamasında tamamla.
+# Context: field
+onboarding-field-agree = Kuralları okudum ve kabul ediyorum
+
+## crates/ui/src/lib.rs
+# Context: composer
+lib-composer-onboarding-rules-pending = Sohbete başlamak için bu sunucunun kurallarını kabul et.
+# Context: composer
+lib-composer-onboarding-incomplete = Daha fazla kanalın kilidini açmak için sunucuya katılımı tamamla.
+# Context: composer
+lib-composer-onboarding-complete = Tanıtımı tamamla

@@ -1501,7 +1501,7 @@ join-server-show-join-enter-an-invite-below-to-join-an-existing-server = Entrez 
 # Context: show_join
 join-server-show-join-join-a-server = Rejoindre un serveur
 # Context: body
-join-server-status-invite-accepted = Invitation acceptée. En attente d'accès au serveur ; complétez toutes les règles du serveur dans Discord.
+join-server-status-invite-accepted = Invitation acceptée. En attente d'accès au serveur.
 # Context: body
 join-server-status-offline-preview = Aperçu hors ligne : la connexion aux serveurs est désactivée.
 
@@ -4110,3 +4110,49 @@ search-result-today-at = Aujourd’hui à { $time }
 search-result-yesterday-at = Hier à { $time }
 timeline-unread-banner-one-new-since = 1 nouveau message depuis { $time }
 timeline-unread-banner-many-new-since = { $count } nouveaux messages depuis { $time }
+
+## crates/ui/src/onboarding.rs
+# Context: show
+onboarding-show-title = Bienvenue sur { $server }
+# Context: show
+onboarding-show-subtitle = Réponds à quelques questions et accepte les règles pour commencer à discuter.
+# Context: show
+onboarding-show-try-again = Réessayer
+# Context: show
+onboarding-show-close = Fermer
+# Context: show
+onboarding-show-please-wait = Patiente…
+# Context: show
+onboarding-show-finish = Terminer
+# Context: show
+onboarding-show-not-now = Plus tard
+# Context: show
+onboarding-show-this-server = ce serveur
+# Context: body
+onboarding-body-submitted = Candidature envoyée. Un modérateur va l'examiner ; tu pourras discuter une fois qu'elle sera approuvée.
+# Context: body
+onboarding-body-rejected = Ce serveur a refusé la candidature.
+# Context: body
+onboarding-body-loading = Chargement de l'accueil du serveur…
+# Context: body
+onboarding-body-all-set = Tout est prêt. Il ne reste rien à compléter ici.
+# Context: prompt
+onboarding-prompt-pick-one = Choisis une option
+# Context: prompt
+onboarding-prompt-pick-any = Choisis toutes celles qui s'appliquent
+# Context: rules
+onboarding-rules-heading = Règles du serveur
+# Context: rules
+onboarding-rules-review = Un modérateur examine ces réponses avant que tu puisses discuter.
+# Context: field
+onboarding-field-unsupported = Ce serveur pose une question que Serein ne peut pas encore afficher. Termine l'inscription dans l'application Discord.
+# Context: field
+onboarding-field-agree = J'ai lu et j'accepte les règles
+
+## crates/ui/src/lib.rs
+# Context: composer
+lib-composer-onboarding-rules-pending = Accepte les règles de ce serveur pour commencer à discuter.
+# Context: composer
+lib-composer-onboarding-incomplete = Termine de rejoindre ce serveur pour débloquer plus de salons.
+# Context: composer
+lib-composer-onboarding-complete = Terminer l'accueil

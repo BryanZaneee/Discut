@@ -15,6 +15,7 @@ pub mod invites;
 mod lossy;
 pub mod messaging_permissions;
 pub mod notifications;
+pub mod onboarding;
 pub mod permissions;
 pub mod pins;
 pub mod presence;

@@ -29,6 +29,7 @@ pub mod read_state;
 mod replies;
 pub use replies::{Reply, ReplyDeletions};
 pub mod group_actions;
+pub mod onboarding;
 pub mod resident;
 pub mod screen;
 pub mod search;
@@ -93,6 +94,11 @@ pub enum Command {
 		guild: Id,
 		request: u64,
 		edit: Option<Box<model::server_settings::Edit>>,
+	},
+	Onboarding {
+		guild: Id,
+		request: u64,
+		action: onboarding::Action,
 	},
 	SendServerInvite {
 		guild: Id,
@@ -434,6 +440,7 @@ pub enum Event {
 	ChannelAction(channel_actions::Event),
 	ServerAdmin(server_admin::Event),
 	ServerSettings(server_settings::Event),
+	Onboarding(onboarding::Event),
 	JoinInvite {
 		request: u64,
 		result: Result<Id, auth::Failure>,
@@ -650,6 +657,7 @@ pub struct State {
 	pub server_actions: server_actions::Actions,
 	pub channel_actions: channel_actions::Actions,
 	pub server_settings: server_settings::Editor,
+	pub onboarding: onboarding::Onboarding,
 	pub server_admin: server_admin::View,
 	pub server_members_shortcuts: BTreeMap<Id, bool>,
 	pub group_actions: group_actions::Actions,
@@ -862,6 +870,7 @@ impl Default for State {
 			server_actions: server_actions::Actions::default(),
 			channel_actions: channel_actions::Actions::default(),
 			server_settings: server_settings::Editor::default(),
+			onboarding: onboarding::Onboarding::default(),
 			server_admin: server_admin::View::default(),
 			server_members_shortcuts: BTreeMap::new(),
 			group_actions: group_actions::Actions::default(),
@@ -1790,6 +1799,23 @@ impl State {
 			});
 			return;
 		}
+		if let Command::Onboarding { guild, request, .. } = command {
+			let _ = self.apply_onboarding(onboarding::Event::Loaded {
+				guild,
+				request,
+				result: Err(auth::Failure::ProtocolAt(
+					"Server onboarding was not queued; try again",
+				)),
+			});
+			let _ = self.apply_onboarding(onboarding::Event::Submitted {
+				guild,
+				request,
+				result: Err(auth::Failure::ProtocolAt(
+					"Server onboarding was not queued; try again",
+				)),
+			});
+			return;
+		}
 		if let Command::ServerSettings { guild, request, .. } = command {
 			let _ = self.apply_server_settings(server_settings::Event {
 				guild,
@@ -2532,6 +2558,7 @@ impl State {
 			Event::ServerAction(event) => self.apply_server_action(event),
 			Event::ChannelAction(event) => self.apply_channel_action(event),
 			Event::ServerSettings(event) => self.apply_server_settings(event),
+			Event::Onboarding(event) => self.apply_onboarding(event),
 			Event::ServerAdmin(event) => self.apply_server_admin(event),
 			Event::GroupAction(event) => self.apply_group_action(event),
 			Event::ThreadsSync {
@@ -3051,6 +3078,7 @@ impl State {
 				self.cancel_server_action();
 				self.cancel_channel_action();
 				self.cancel_server_settings();
+				self.cancel_onboarding();
 				self.cancel_server_admin();
 				self.cancel_group_action();
 				self.cancel_invite_join();
@@ -3059,6 +3087,7 @@ impl State {
 				self.server_actions.reset();
 				self.channel_actions.reset();
 				self.server_settings.reset();
+				self.reset_onboarding();
 				self.server_admin.reset();
 				self.server_members_shortcuts.clear();
 				self.group_actions.reset();
@@ -3407,6 +3436,7 @@ impl State {
 				self.cancel_server_action();
 				self.cancel_channel_action();
 				self.cancel_server_settings();
+				self.cancel_onboarding();
 				self.cancel_server_admin();
 				self.cancel_group_action();
 				self.cancel_invite_join();
@@ -3436,6 +3466,7 @@ impl State {
 				self.cancel_server_action();
 				self.cancel_channel_action();
 				self.cancel_server_settings();
+				self.cancel_onboarding();
 				self.cancel_server_admin();
 				self.cancel_group_action();
 				self.cancel_invite_join();
@@ -3659,6 +3690,7 @@ impl State {
 			self.cancel_server_action();
 			self.cancel_channel_action();
 			self.cancel_server_settings();
+			self.cancel_onboarding();
 			self.cancel_server_admin();
 			self.cancel_group_action();
 			self.cancel_invite_join();
@@ -3786,6 +3818,7 @@ impl Event {
 						size_of::<model::server_settings::Settings>() + value.heap_bytes()
 					})
 				}
+				Self::Onboarding(event) => event.bytes(),
 				Self::ServerAdmin(event) => event
 					.result
 					.as_ref()

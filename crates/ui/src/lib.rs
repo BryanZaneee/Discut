@@ -78,6 +78,7 @@ mod contact_editor;
 pub mod dialog;
 mod join_server;
 mod keybinds;
+mod onboarding;
 mod profile_edit;
 mod reactions;
 mod reading;
@@ -196,6 +197,7 @@ pub struct MessagingUi {
 	pub interaction_file_request: Option<String>,
 	interaction_components: components::Components,
 	pub verification: VerificationUi,
+	onboarding: onboarding::OnboardingUi,
 	pub extensions: ExtensionUi,
 	friends: friends::Friends,
 	account_menu: account_menu::AccountMenu,
@@ -2396,6 +2398,46 @@ impl MessagingUi {
 			self.emoji_picker = emoji_picker::Picker::default();
 			self.ime_active = false;
 			self.focus_switched_composer = false;
+			let gated = state
+				.channel(channel)
+				.and_then(|c| c.guild)
+				.filter(|guild| state.needs_onboarding(*guild));
+			if let Some(guild) = gated {
+				design::glass_frame(ui, colors.raised, egui::Margin::same(12))
+					.corner_radius(8)
+					.show(ui, |ui| {
+						ui.with_layout(egui::Layout::right_to_left(egui::Align::Center), |ui| {
+							if dialog::action(
+								ui,
+								"lib-composer-onboarding-complete",
+								dialog::Action::Primary,
+							)
+							.clicked()
+							{
+								state.open_onboarding(guild);
+							}
+							let hint =
+								crate::i18n::translate(if state.verification_pending(guild) {
+									"lib-composer-onboarding-rules-pending"
+								} else {
+									"lib-composer-onboarding-incomplete"
+								});
+							ui.with_layout(
+								egui::Layout::left_to_right(egui::Align::Center),
+								|ui| {
+									ui.add(
+										egui::Label::new(
+											egui::RichText::new(&hint).color(colors.muted),
+										)
+										.truncate(),
+									)
+									.on_hover_text(&hint);
+								},
+							);
+						});
+					});
+				return;
+			}
 			design::glass_frame(ui, colors.raised, egui::Margin::same(12))
 				.corner_radius(8)
 				.show(ui, |ui| {
@@ -4657,6 +4699,7 @@ impl MessagingUi {
 		}
 		self.show_call_switch(&ctx, state, &mut commands);
 		self.verification.show(&ctx, state);
+		self.onboarding.show(&ctx, state, &mut commands);
 		self.scroll.clear_if_unbound(&ctx);
 		self.scroll.paint(&ctx);
 		// Clear the title bar and channel header so a notice never sits on the chrome.

@@ -677,6 +677,9 @@ impl State {
 					p::SEND_MESSAGES
 				};
 				self.permission(channel, p::VIEW_CHANNEL | send) == Some(true)
+					&& !c
+						.guild
+						.is_some_and(|guild| self.verification_pending(guild))
 			})
 	}
 

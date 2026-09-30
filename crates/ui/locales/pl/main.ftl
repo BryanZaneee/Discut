@@ -1501,7 +1501,7 @@ join-server-show-join-enter-an-invite-below-to-join-an-existing-server = Wpisz p
 # Context: show_join
 join-server-show-join-join-a-server = Dołącz do serwera
 # Context: body
-join-server-status-invite-accepted = Zaproszenie zaakceptowane. Oczekiwanie na dostęp do serwera; uzupełnij dowolne zasady serwera na Discordzie.
+join-server-status-invite-accepted = Zaproszenie zaakceptowane. Oczekiwanie na dostęp do serwera.
 # Context: body
 join-server-status-offline-preview = Podgląd offline — dołączanie do serwerów jest wyłączone.
 
@@ -4110,3 +4110,49 @@ search-result-today-at = Dzisiaj o { $time }
 search-result-yesterday-at = Wczoraj o { $time }
 timeline-unread-banner-one-new-since = 1 nowa wiadomość od { $time }
 timeline-unread-banner-many-new-since = Nowe wiadomości od { $time }: { $count }
+
+## crates/ui/src/onboarding.rs
+# Context: show
+onboarding-show-title = Witaj na { $server }
+# Context: show
+onboarding-show-subtitle = Odpowiedz na kilka pytań i zaakceptuj zasady, aby zacząć rozmawiać.
+# Context: show
+onboarding-show-try-again = Spróbuj ponownie
+# Context: show
+onboarding-show-close = Zamknij
+# Context: show
+onboarding-show-please-wait = Proszę czekać…
+# Context: show
+onboarding-show-finish = Zakończ
+# Context: show
+onboarding-show-not-now = Nie teraz
+# Context: show
+onboarding-show-this-server = ten serwer
+# Context: body
+onboarding-body-submitted = Zgłoszenie wysłane. Moderator je sprawdzi; po zatwierdzeniu będziesz mógł pisać.
+# Context: body
+onboarding-body-rejected = Ten serwer odrzucił zgłoszenie.
+# Context: body
+onboarding-body-loading = Wczytywanie wprowadzenia serwera…
+# Context: body
+onboarding-body-all-set = Wszystko gotowe. Nie ma tu już nic do uzupełnienia.
+# Context: prompt
+onboarding-prompt-pick-one = Wybierz jedną opcję
+# Context: prompt
+onboarding-prompt-pick-any = Wybierz wszystkie pasujące
+# Context: rules
+onboarding-rules-heading = Zasady serwera
+# Context: rules
+onboarding-rules-review = Moderator sprawdza te odpowiedzi, zanim będziesz mógł pisać.
+# Context: field
+onboarding-field-unsupported = Ten serwer zadaje pytanie, którego Serein nie potrafi jeszcze wyświetlić. Dokończ dołączanie w aplikacji Discord.
+# Context: field
+onboarding-field-agree = Przeczytałem(-am) i akceptuję zasady
+
+## crates/ui/src/lib.rs
+# Context: composer
+lib-composer-onboarding-rules-pending = Zaakceptuj zasady tego serwera, aby zacząć rozmawiać.
+# Context: composer
+lib-composer-onboarding-incomplete = Dokończ dołączanie do serwera, aby odblokować więcej kanałów.
+# Context: composer
+lib-composer-onboarding-complete = Dokończ wprowadzenie

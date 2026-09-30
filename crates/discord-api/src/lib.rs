@@ -9,6 +9,7 @@ mod group_actions;
 mod guild_folders;
 mod interactions;
 mod messaging_permissions;
+mod onboarding;
 mod profile_edit;
 pub mod proxy;
 #[cfg(test)]
@@ -666,6 +667,11 @@ impl DiscordApi {
 				request,
 				edit,
 			} => Event::ServerSettings(self.server_settings(guild, request, edit).await),
+			Command::Onboarding {
+				guild,
+				request,
+				action,
+			} => Event::Onboarding(self.onboarding(guild, request, action).await),
 			Command::SendServerInvite {
 				guild,
 				user,

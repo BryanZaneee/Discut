@@ -1502,7 +1502,7 @@ join-server-show-join-enter-an-invite-below-to-join-an-existing-server = 既存�
 # Context: show_join
 join-server-show-join-join-a-server = サーバーに参加する
 # Context: body
-join-server-status-invite-accepted = 招待が受け入れられました。サーバーアクセスを待機しています。 Discord のサーバー ルールを完了します。
+join-server-status-invite-accepted = 招待を承認しました。サーバーへのアクセスを待っています。
 # Context: body
 join-server-status-offline-preview = オフライン プレビュー — サーバーへの参加は無効になっています。
 
@@ -4111,3 +4111,49 @@ search-result-today-at = 今日 { $time }
 search-result-yesterday-at = 昨日 { $time }
 timeline-unread-banner-one-new-since = { $time } 以降の新着メッセージ 1 件
 timeline-unread-banner-many-new-since = { $time } 以降の新着メッセージ { $count } 件
+
+## crates/ui/src/onboarding.rs
+# Context: show
+onboarding-show-title = { $server } へようこそ
+# Context: show
+onboarding-show-subtitle = いくつかの質問に答えてルールに同意すると、チャットを始められます。
+# Context: show
+onboarding-show-try-again = 再試行
+# Context: show
+onboarding-show-close = 閉じる
+# Context: show
+onboarding-show-please-wait = お待ちください…
+# Context: show
+onboarding-show-finish = 完了
+# Context: show
+onboarding-show-not-now = あとで
+# Context: show
+onboarding-show-this-server = このサーバー
+# Context: body
+onboarding-body-submitted = 申請を送信しました。モデレーターの承認後にチャットできます。
+# Context: body
+onboarding-body-rejected = このサーバーは申請を却下しました。
+# Context: body
+onboarding-body-loading = サーバーのオンボーディングを読み込み中…
+# Context: body
+onboarding-body-all-set = 準備完了です。ここで完了することは残っていません。
+# Context: prompt
+onboarding-prompt-pick-one = 1つ選択
+# Context: prompt
+onboarding-prompt-pick-any = 当てはまるものをすべて選択
+# Context: rules
+onboarding-rules-heading = サーバールール
+# Context: rules
+onboarding-rules-review = チャットする前に、モデレーターがこれらの回答を確認します。
+# Context: field
+onboarding-field-unsupported = このサーバーには Serein がまだ表示できない質問があります。Discord アプリで参加を完了してください。
+# Context: field
+onboarding-field-agree = ルールを読み、同意します
+
+## crates/ui/src/lib.rs
+# Context: composer
+lib-composer-onboarding-rules-pending = チャットを始めるには、このサーバーのルールに同意してください。
+# Context: composer
+lib-composer-onboarding-incomplete = 参加を完了すると、さらにチャンネルが開放されます。
+# Context: composer
+lib-composer-onboarding-complete = オンボーディングを完了

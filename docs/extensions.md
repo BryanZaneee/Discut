@@ -12,7 +12,13 @@ Themes and plugins are published together in
 [Serein-extensions](https://github.com/ViceVerse-cz/Serein-extensions).
 Opening Settings > Themes or Extensions checks that repository's shared catalog
 on the existing worker. Normal builds embed no package payloads; bundled examples
-remain available only in offline demo/test builds.
+remain available only as demo/test fixtures. Demo catalog refresh, previews and
+selected catalog installs use the same public repository downloads as normal builds.
+An identical bundled fixture with the approved ID and hash is reused without a download.
+Catalog packages, source and previews have one canonical copy in the pinned
+`community-extensions` Git submodule, backed by `Serein-extensions`. Initialize it
+with `git submodule update --init` before running tests or building demos. Runtime
+catalog refresh still reads the external repository's current catalog.
 The last valid catalog and installed packages remain available offline. Refresh
 retries immediately. Catalog changes add/remove available choices and mark
 installed updates; they never install, update or delete packages automatically.
@@ -41,7 +47,7 @@ preference. There is no periodic background polling or automatic package update.
 ## Creator workflow
 
 1. Keep source and license in a public Git repository. Use the standalone Rust
-   example under `examples/extensions/message-delete-protector` and its small SDK.
+   [Message Delete Protector source](https://github.com/ViceVerse-cz/Serein-extensions/tree/main/plugins/message-delete-protector) and its small SDK.
    The [SDK authoring guide](../examples/extensions/README.md#test-and-develop-locally)
    covers native handler tests, typed panel values and JSON storage helpers; the v1
    exports and existing plugin source remain compatible. For reactive plugins,
@@ -53,7 +59,8 @@ preference. There is no periodic background polling or automatic package update.
    No native binary, installer, Git hook or build script runs on an end user's
    computer. Other languages can implement the same Wasm buffer/JSON contract.
 3. Package the manifest and Wasm bytes (or declarative theme) as a single JSON
-   file. Test through Import with an offline `--demo` build first.
+   file. Test through Import with synthetic `--demo` conversations first; catalog browsing
+   may download public GitHub content.
 4. Add the package and reproducible source/build instructions to `Serein-extensions`.
    Commit the package first, then regenerate that repository's `catalog.json` with
    the package commit. Its publishing script records immutable package URLs,

@@ -78,13 +78,10 @@ pub enum Job {
 	Load {
 		account: Option<String>,
 	},
-	RefreshCatalog {
-		demo: bool,
-	},
+	RefreshCatalog,
 	Preview {
 		id: String,
 		preview: Preview,
-		demo: bool,
 	},
 	InspectImport {
 		path: PathBuf,
@@ -122,60 +119,60 @@ pub(crate) fn starters() -> Result<Vec<Starter>, String> {
 		#[cfg(any(test, feature = "demo"))]
 		(
 			include_bytes!(
-				"../../../examples/extensions/packages/message-delete-protector.serein-extension"
+				"../../../community-extensions/plugins/packages/message-delete-protector.serein-extension"
 			),
 			"Keep messages already seen in this session visible in red after deletion. Cleared when disabled or signed out.",
 		),
 		#[cfg(any(test, feature = "demo"))]
 		(
 			include_bytes!(
-				"../../../examples/extensions/packages/emoji-sticker-images.serein-extension"
+				"../../../community-extensions/plugins/packages/emoji-sticker-images.serein-extension"
 			),
 			"While enabled, custom emoji and stickers fall back to image attachments only when native sending is unavailable.",
 		),
 		#[cfg(any(test, feature = "demo"))]
 		(
-			include_bytes!("../../../extensions/ocean.serein-extension"),
+			include_bytes!("../../../community-extensions/themes/ocean.serein-extension"),
 			"Deep blue surfaces with a bright ocean accent.",
 		),
 		#[cfg(any(test, feature = "demo"))]
 		(
-			include_bytes!("../../../extensions/midnight.serein-extension"),
+			include_bytes!("../../../community-extensions/themes/midnight.serein-extension"),
 			"Inky midnight surfaces with a vivid violet accent.",
 		),
 		#[cfg(any(test, feature = "demo"))]
 		(
-			include_bytes!("../../../extensions/rose.serein-extension"),
+			include_bytes!("../../../community-extensions/themes/rose.serein-extension"),
 			"Soft rose surfaces with a warm pink accent.",
 		),
 		#[cfg(any(test, feature = "demo"))]
 		(
-			include_bytes!("../../../extensions/forest.serein-extension"),
+			include_bytes!("../../../community-extensions/themes/forest.serein-extension"),
 			"Calm forest greens and fresh leafy accents.",
 		),
 		#[cfg(any(test, feature = "demo"))]
 		(
-			include_bytes!("../../../extensions/latte.serein-extension"),
+			include_bytes!("../../../community-extensions/themes/latte.serein-extension"),
 			"Warm coffee tones and a creamy caramel accent.",
 		),
 		#[cfg(any(test, feature = "demo"))]
 		(
-			include_bytes!("../../../extensions/golden.serein-extension"),
+			include_bytes!("../../../community-extensions/themes/golden.serein-extension"),
 			"Warm charcoal and gold, with rounded, roomy controls.",
 		),
 		#[cfg(any(test, feature = "demo"))]
 		(
-			include_bytes!("../../../extensions/katana.serein-extension"),
+			include_bytes!("../../../community-extensions/themes/katana.serein-extension"),
 			"Katana's dark charcoal surfaces and sharp red accents. Light mode uses built-in colors.",
 		),
 		#[cfg(any(test, feature = "demo"))]
 		(
-			include_bytes!("../../../extensions/obsidian.serein-extension"),
+			include_bytes!("../../../community-extensions/themes/obsidian.serein-extension"),
 			"Obsidian violet surfaces and lavender accents in light and dark.",
 		),
 		#[cfg(any(test, feature = "demo"))]
 		(
-			include_bytes!("../../../extensions/teal.serein-extension"),
+			include_bytes!("../../../community-extensions/themes/teal.serein-extension"),
 			"Cool blue-green surfaces with fresh teal accents.",
 		),
 	];
@@ -773,19 +770,12 @@ fn run(root: &Path, job: Job, gate: &Gate) -> Result<Event, String> {
 			starters: starters()?,
 			installed: load(root, account.as_deref(), gate)?,
 		}),
-		Job::RefreshCatalog { demo } => {
-			if demo {
-				return extensions::parse_catalog(include_bytes!(
-					"../../../extensions/catalog.json"
-				))
-				.map(Event::Catalog)
-				.map_err(|error| error.to_string());
-			}
+		Job::RefreshCatalog => {
 			let bytes = download(CATALOG_URL, MAX_CATALOG, gate, Duration::from_secs(15))?;
 			cache_catalog(root, &bytes, gate).map(Event::Catalog)
 		}
-		Job::Preview { id, preview, demo } => {
-			let image = load_preview(&id, &preview, demo, gate);
+		Job::Preview { id, preview } => {
+			let image = load_preview(&preview, gate);
 			Ok(Event::Preview { id, image })
 		}
 		Job::InspectImport { path } => {
@@ -1400,17 +1390,10 @@ fn remove_owned_directory(path: &Path) -> Result<(), String> {
 	fs::remove_dir_all(path).map_err(|_| "Extension cleanup failed; it will retry on launch".into())
 }
 
-fn load_preview(
-	id: &str,
-	preview: &Preview,
-	demo: bool,
-	gate: &Gate,
-) -> Option<eframe::egui::ColorImage> {
+fn load_preview(preview: &Preview, gate: &Gate) -> Option<eframe::egui::ColorImage> {
 	gate.check().ok()?;
 	preview.validate().ok()?;
-	let bytes = if demo {
-		demo_preview(id)?.to_vec()
-	} else if let Some(bytes) = cached_preview(&preview.sha256) {
+	let bytes = if let Some(bytes) = cached_preview(&preview.sha256) {
 		bytes
 	} else {
 		download(
@@ -1424,9 +1407,7 @@ fn load_preview(
 	gate.check().ok()?;
 	let image = decode_preview(&bytes, preview)?;
 	gate.check().ok()?;
-	if !demo {
-		remember_preview(&preview.sha256, bytes);
-	}
+	remember_preview(&preview.sha256, bytes);
 	Some(image)
 }
 
@@ -1462,21 +1443,6 @@ fn remember_preview(sha256: &str, bytes: Vec<u8>) {
 		|| cache.iter().map(|(_, bytes)| bytes.len()).sum::<usize>() > MAX_CACHED_PREVIEW_BYTES
 	{
 		cache.pop_front();
-	}
-}
-
-fn demo_preview(id: &str) -> Option<&'static [u8]> {
-	#[cfg(feature = "demo")]
-	{
-		match id {
-			"serein-ocean" => Some(include_bytes!("../../../extensions/previews/ocean.png")),
-			_ => None,
-		}
-	}
-	#[cfg(not(feature = "demo"))]
-	{
-		let _ = id;
-		None
 	}
 }
 
@@ -1898,9 +1864,10 @@ mod tests {
 			}
 		}
 		assert!(!root.exists(), "preview must not install a theme");
-		let original =
-			extensions::parse_package(include_bytes!("../../../extensions/ocean.serein-extension"))
-				.unwrap();
+		let original = extensions::parse_package(include_bytes!(
+			"../../../community-extensions/themes/ocean.serein-extension"
+		))
+		.unwrap();
 		let directory = root.join("themes").join(&original.manifest.id);
 		fs::create_dir_all(&directory).unwrap();
 		fs::write(directory.join("package.json"), b"invalid").unwrap();
@@ -2013,7 +1980,8 @@ mod tests {
 		let profile = Profile::new();
 		let root = profile.0.join("extensions");
 		let mut package = theme("local-cover");
-		package.cover_image = include_bytes!("../../../extensions/previews/ocean.png").to_vec();
+		package.cover_image =
+			include_bytes!("../../../community-extensions/previews/ocean.png").to_vec();
 		let Event::Enabled(first) = run(
 			&root,
 			Job::SaveTheme {
@@ -2071,9 +2039,7 @@ mod tests {
 	#[ignore = "Downloads public GitHub catalog/packages; no Discord account or traffic"]
 	fn public_repository_catalog_and_packages_match_pins() {
 		let profile = Profile::new();
-		let Event::Catalog(catalog) =
-			run(&profile.0, Job::RefreshCatalog { demo: false }, &gate()).unwrap()
-		else {
+		let Event::Catalog(catalog) = run(&profile.0, Job::RefreshCatalog, &gate()).unwrap() else {
 			panic!("expected catalog")
 		};
 		assert!(
@@ -2114,9 +2080,10 @@ mod tests {
 	#[test]
 	fn catalog_cache_is_bounded_and_does_not_change_installed_themes() {
 		let profile = Profile::new();
-		let bytes = include_bytes!("../../../extensions/catalog.json");
+		let bytes = include_bytes!("../../../community-extensions/catalog.json");
 		let catalog = cache_catalog(&profile.0, bytes, &gate()).unwrap();
-		assert_eq!(catalog.entries.len(), 1);
+		let entries = catalog.entries.len();
+		assert!(entries > 0);
 		atomic_write(
 			&profile.0.join("catalog.json"),
 			&serde_json::to_vec(&catalog).unwrap(),
@@ -2139,7 +2106,7 @@ mod tests {
 		else {
 			panic!("expected load")
 		};
-		assert_eq!(catalog.unwrap().entries.len(), 1);
+		assert_eq!(catalog.unwrap().entries.len(), entries);
 		assert_eq!(reloaded[0].sha256, installed.sha256);
 		assert!(reloaded[0].active_theme);
 		cache_catalog(&profile.0, br#"{"api_version":1,"entries":[]}"#, &gate()).unwrap();
@@ -2347,8 +2314,7 @@ mod tests {
 		assert!(loaded[0].error.is_some());
 		disable(&directory, "broken", &gate()).unwrap();
 		let mut host = ExtensionHost::new(root);
-		host.queue
-			.push_back((0, Job::RefreshCatalog { demo: false }));
+		host.queue.push_back((0, Job::RefreshCatalog));
 		host.queue.push_back((
 			1,
 			Job::Logout {
@@ -2424,7 +2390,7 @@ mod tests {
 		assert!(decode_preview(&too_large, &metadata(&too_large)).is_none());
 		let cancelled = gate();
 		cancelled.generation.fetch_add(1, Ordering::Release);
-		assert!(load_preview("synthetic", &metadata(b"bad"), false, &cancelled).is_none());
+		assert!(load_preview(&metadata(b"bad"), &cancelled).is_none());
 	}
 
 	#[test]

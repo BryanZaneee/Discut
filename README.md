@@ -1,5 +1,9 @@
 # Serein
 
+Development checkouts need `git submodule update --init` before tests or demo
+builds. The pinned `community-extensions` submodule supplies canonical catalog
+packages and previews from `Serein-extensions` without maintaining local copies.
+
 <p align="center">
   <a href="https://github.com/ViceVerse-cz/rustcord">
     <img src="docs/preview.png" alt="Serein Native Discord Client" width="900" style="max-width: 100%; height: auto; border-radius: 8px; box-shadow: 0 4px 20px rgba(0,0,0,0.3);" />
@@ -223,7 +227,7 @@ Rust **1.98.1** is pinned. Ensure you have the standard C/C++ toolchain and CMak
 ### Running Locally
 
 ```sh
-# 1. Opt in to the offline synthetic demo (no network, no storage)
+# 1. Run synthetic conversations; extension browsing uses public GitHub downloads
 cargo run --locked --features demo -- --demo
 
 # 2. Launch standard client with voice (uses saved login or official webview)

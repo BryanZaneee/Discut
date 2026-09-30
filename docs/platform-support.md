@@ -258,6 +258,12 @@ still depends on distribution packaging and drivers. The software fallback reuse
 OpenH264. Flatpak needs compatible plugins/GPU access inside its runtime; no extra sandbox
 permission or host socket access is added. Native Linux validation remains pending.
 
+Niri portal capture normalizes frame timestamps at arrival before frame-rate filtering,
+including on Niri 26.04 where presentation timestamps remain constant. This preserves
+the existing VA-API/NVENC/OpenH264 selection and bounded buffers. Other desktops and
+native X11 retain their existing timestamp handling. The offline `linux_screen --niri-timestamps` regression is synthetic; native capture and Discord delivery remain
+unverified. See [the screen-sharing checks](voice.md) for build/run commands.
+
 Screen sharing also tries the legacy `vaapih264enc` element when modern VA encoding
 fails. This optional system plugin uses CPU scaling and hardware H.264 encoding;
 it does not require `vaapipostproc`. Check availability with

@@ -6308,6 +6308,7 @@ version = "0.1.0"
 dependencies = [
  "serde",
  "serde_json",
+ "url",
 ]
 
 [[package]]
@@ -7476,6 +7477,7 @@ dependencies = [
  "unicode-bidi",
  "unicode-segmentation",
  "url",
+ "zeroize",
 ]
 
 [[package]]

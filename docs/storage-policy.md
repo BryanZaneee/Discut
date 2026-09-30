@@ -1417,3 +1417,43 @@ Guild notification defaults and mute deadlines add fixed-size scalar metadata
 to existing bounded navigation/settings records. Channel overrides stay in the
 existing count/byte budgets. Logout and session invalidation clear the editor's
 scope and discard pending results from old generations.
+
+## Connection-scoped API proxy plugin (preview)
+
+Only a plugin granted `api_proxy` (and optionally `storage`) uses the global
+`extensions/proxy-plugins` directory. These plugins have no account snapshot,
+message, file or networking grants and may run before authentication. Account
+plugins retain their existing account isolation; account logout does not erase a
+connection plugin. Explicit disable removes its package/data using the existing
+bounded cleanup path and restores the remaining selected route or Direct.
+
+One validated mode and at most 2,048 UTF-8 bytes of credential-free endpoint
+configuration are coalesced in a watch channel. The API task caches the current
+client pool and snapshots it for new requests; it never builds clients while
+rendering. Already-started requests can finish using the prior route, including
+across a configuration change. Global plugin package, invocation, storage and
+queue budgets remain the existing extension limits. Invalid initial configuration
+blocks REST routing rather than quietly using Direct; runtime failures retain
+an already selected route until repaired or explicitly disabled.
+
+Automatic mode reads bounded validated HTTP/HTTPS proxy environment values,
+including `NO_PROXY` selection. These values are never supplied to plugins,
+written to plugin data or included in errors. URL credentials are unsupported.
+The Gateway, media/CDN, updater, extension downloads, webviews and voice transport
+keep their existing routing. No new network listener or telemetry is introduced.
+
+Proxy authentication uses one device-wide, profile-scoped OS credential entry,
+containing one exact normalized HTTP/HTTPS origin, username (1-256 bytes without
+a colon), and password (0-1024 bytes), with no control characters. No plaintext
+fallback exists. Drafts and active secret fields use zeroizing containers with
+redacted debug output; transport shares their ownership without per-frame secret copies.
+Credential IO runs on a bounded single blocking job outside rendering. Clear the entry
+with Remove saved credentials; Direct/disable retain it without using it. Loading errors
+pause configured manual routing, rather than sending credentials to another endpoint.
+The plugin receives no proxy username/password fields. Demo neither reads nor writes
+proxy credentials.
+
+Accepting Save or Remove pauses new REST client acquisition immediately, before
+the credential-store job completes. A failed deletion leaves routing paused; it
+does not resume stored credentials. In-flight requests retain their earlier
+snapshot. Rejected saves retain the credential draft until a valid job can start.

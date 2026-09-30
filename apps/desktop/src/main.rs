@@ -35,6 +35,7 @@ mod notification_sounds;
 mod pointer;
 #[cfg(feature = "demo")]
 mod post_menu_demo;
+mod proxy_auth;
 mod reading_settings;
 #[cfg(feature = "demo")]
 mod rendering_demo;
@@ -768,6 +769,8 @@ impl SessionEnd {
 	}
 }
 struct Desktop {
+	proxy_auth: proxy_auth::Authentication,
+	api_proxy: tokio::sync::watch::Sender<Option<discord_api::proxy::ApiProxy>>,
 	extensions: extension_bridge::Bridge,
 	extension_close_pending: bool,
 	login: Option<platform::LoginView>,
@@ -1939,6 +1942,8 @@ impl Desktop {
 		// keep the same native/compositor path as builds without window effects.
 		let tray_window = tray_window::State::default();
 		Ok(Self {
+			proxy_auth: proxy_auth::Authentication::default(),
+			api_proxy: tokio::sync::watch::channel(None).0,
 			extensions: extension_bridge::Bridge::default(),
 			extension_close_pending: false,
 			login: None,
@@ -2122,6 +2127,7 @@ impl Desktop {
 			self.state.generation,
 			self.state.user.as_ref().map(|u| u.id),
 			self.account_presences.clone(),
+			self.api_proxy.subscribe(),
 			ctx.clone(),
 		));
 	}
@@ -5713,6 +5719,23 @@ impl eframe::App for Desktop {
 			&self.window,
 			self.fixture_only,
 		);
+		if self.extensions.api_proxy_ready() {
+			let route = self.proxy_auth.tick(
+				self.extensions.api_proxy(),
+				&mut self.messaging.extensions.proxy_auth,
+				&self.runtime,
+				ctx,
+				self.fixture_only,
+			);
+			self.api_proxy.send_if_modified(|current| {
+				if *current == route {
+					false
+				} else {
+					*current = route;
+					true
+				}
+			});
+		}
 		self.sync_customization(ctx);
 		#[cfg(feature = "demo")]
 		if self.demo_typing

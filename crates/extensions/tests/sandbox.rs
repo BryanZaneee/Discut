@@ -321,9 +321,11 @@ fn validates_themes_catalog_and_path_safe_identifiers() {
 
 #[test]
 fn catalog_preview_metadata_is_optional_and_bounded() {
-	let mut catalog: serde_json::Value =
-		serde_json::from_slice(include_bytes!("../../../community-extensions/catalog.json"))
-			.unwrap();
+	let mut catalog: serde_json::Value = serde_json::from_slice(include_bytes!(concat!(
+		env!("COMMUNITY_EXTENSIONS"),
+		"/catalog.json"
+	)))
+	.unwrap();
 	for entry in catalog["entries"].as_array_mut().unwrap() {
 		entry.as_object_mut().unwrap().remove("description");
 		entry.as_object_mut().unwrap().remove("preview");
@@ -367,9 +369,10 @@ fn catalog_preview_metadata_is_optional_and_bounded() {
 
 #[test]
 fn image_sharing_plugin_requires_activation_and_capability() {
-	let mut package = parse_package(include_bytes!(
-		"../../../community-extensions/plugins/packages/emoji-sticker-images.serein-extension"
-	))
+	let mut package = parse_package(include_bytes!(concat!(
+		env!("COMMUNITY_EXTENSIONS"),
+		"/plugins/packages/emoji-sticker-images.serein-extension"
+	)))
 	.unwrap();
 	let input = Invocation {
 		action: "activate".into(),
@@ -386,9 +389,10 @@ fn image_sharing_plugin_requires_activation_and_capability() {
 	assert!(!serde_json::from_str::<Output>("{}").unwrap().image_sharing);
 
 	{
-		let protector = parse_package(include_bytes!(
-			"../../../community-extensions/plugins/packages/message-delete-protector.serein-extension"
-		))
+		let protector = parse_package(include_bytes!(concat!(
+			env!("COMMUNITY_EXTENSIONS"),
+			"/plugins/packages/message-delete-protector.serein-extension"
+		)))
 		.unwrap();
 		let input = Invocation {
 			action: "activate".into(),

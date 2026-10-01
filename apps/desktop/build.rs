@@ -1,4 +1,7 @@
+include!("../../tools/community_extensions_build.rs");
+
 fn main() {
+	community_extensions();
 	if std::env::var("CARGO_CFG_TARGET_OS").as_deref() == Ok("windows") {
 		windows_icon();
 	}

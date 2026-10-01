@@ -505,13 +505,15 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
 	for (name, committed, manifest, wasm_file, expected) in [
 		(
 			"message-delete-protector",
-			include_bytes!(
-				"../../../community-extensions/plugins/packages/message-delete-protector.serein-extension"
-			)
+			include_bytes!(concat!(
+				env!("COMMUNITY_EXTENSIONS"),
+				"/plugins/packages/message-delete-protector.serein-extension"
+			))
 			.as_slice(),
-			include_str!(
-				"../../../community-extensions/plugins/message-delete-protector/manifest.json"
-			),
+			include_str!(concat!(
+				env!("COMMUNITY_EXTENSIONS"),
+				"/plugins/message-delete-protector/manifest.json"
+			)),
 			"message_delete_protector.wasm",
 			Output {
 				preserve_deleted_messages: true,
@@ -520,13 +522,15 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
 		),
 		(
 			"emoji-sticker-images",
-			include_bytes!(
-				"../../../community-extensions/plugins/packages/emoji-sticker-images.serein-extension"
-			)
+			include_bytes!(concat!(
+				env!("COMMUNITY_EXTENSIONS"),
+				"/plugins/packages/emoji-sticker-images.serein-extension"
+			))
 			.as_slice(),
-			include_str!(
-				"../../../community-extensions/plugins/emoji-sticker-images/manifest.json"
-			),
+			include_str!(concat!(
+				env!("COMMUNITY_EXTENSIONS"),
+				"/plugins/emoji-sticker-images/manifest.json"
+			)),
 			"emoji_sticker_images.wasm",
 			Output {
 				image_sharing: true,

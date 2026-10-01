@@ -3506,6 +3506,8 @@ impl MessagingUi {
 		self.timeline.video.seen = false;
 		let side = self.drain_side_press();
 		let mut commands = Vec::new();
+		// A server joined from an invite opens as soon as the Gateway delivers it.
+		commands.extend(state.navigate_after_join());
 		if let Some(action) = self.poll_creator.show(ui.ctx(), state)
 			&& let Some(command) = state.prepare_poll(None, action)
 		{

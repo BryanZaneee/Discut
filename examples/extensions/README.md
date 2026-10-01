@@ -70,9 +70,11 @@ For this tutorial, use `app-toolbox/` in a development copy. Keep its `Cargo.tom
 and replace `manifest.json` and `src/lib.rs` with the examples below. The Cargo
 package stays named `app-toolbox`; the manifest gives the installed plugin its identity.
 
-For a separate repository, also copy `sdk/`, `pack.py`, and this directory's
-workspace `Cargo.toml` and `Cargo.lock`. Keep the relative directory layout and
-remove unused plugin members. Dependencies inherit from that workspace.
+For a separate repository, also copy [`extensions/sdk`](../../extensions/sdk) as `sdk/`,
+[`extensions/pack.py`](../../extensions/pack.py) as `pack.py`, and this directory's
+workspace `Cargo.toml` and `Cargo.lock`. In the copied `Cargo.toml`, add `"sdk"` to
+`members` and set `serein-extension-sdk = { path = "sdk" }`. Remove unused plugin
+members. Dependencies inherit from that workspace.
 After changing workspace members or dependencies, run `cargo check --workspace`
 once in the copied workspace to update its lockfile. Review and commit that
 `Cargo.lock`, then use `--locked` for reproducible builds.
@@ -250,7 +252,7 @@ Step 3: open a terminal in `examples/extensions/` and run:
 ```powershell
 rustup target add wasm32-unknown-unknown
 cargo build --locked --release --target wasm32-unknown-unknown -p app-toolbox
-python pack.py app-toolbox/manifest.json target/wasm32-unknown-unknown/release/app_toolbox.wasm packages/hello-context.serein-extension
+python ../../extensions/pack.py app-toolbox/manifest.json target/wasm32-unknown-unknown/release/app_toolbox.wasm packages/hello-context.serein-extension
 ```
 
 The build creates `target/wasm32-unknown-unknown/release/app_toolbox.wasm`.
@@ -322,8 +324,8 @@ For the **unchanged repository examples**, also run:
 
 ```powershell
 cargo build --manifest-path examples/extensions/Cargo.toml --workspace --locked --release --target wasm32-unknown-unknown
-cargo build --manifest-path extensions/plugins/Cargo.toml --workspace --locked --release --target wasm32-unknown-unknown
-cargo run --locked --release -p extensions --example sdk_check -- examples/extensions/target/wasm32-unknown-unknown/release extensions/plugins/target/wasm32-unknown-unknown/release
+cargo build --manifest-path extensions/Cargo.toml --workspace --locked --release --target wasm32-unknown-unknown
+cargo run --locked --release -p extensions --example sdk_check -- examples/extensions/target/wasm32-unknown-unknown/release extensions/target/wasm32-unknown-unknown/release
 ```
 
 `sdk_check` runs committed packages and rebuilt modules through the offline host
@@ -373,7 +375,7 @@ From `examples/extensions`, build and package it:
 ```powershell
 cargo test --locked -p app-actions
 cargo build --locked --release --target wasm32-unknown-unknown -p app-actions
-python pack.py app-actions/manifest.json target/wasm32-unknown-unknown/release/app_actions.wasm packages/app-actions.serein-extension
+python ../../extensions/pack.py app-actions/manifest.json target/wasm32-unknown-unknown/release/app_actions.wasm packages/app-actions.serein-extension
 ```
 
 Use synthetic `--demo` data to check rendering and proposal validation. A demo
@@ -470,12 +472,12 @@ draft edits do not publish; Apply returns Set and saves the applied fields. Stop
 returns Clear and saves an inactive flag while keeping those fields. Activation
 restores only a saved active configuration. Extension Disable deletes its data.
 
-Build from `extensions/plugins`:
+Build from `extensions/`:
 
 ```sh
 cargo test --locked -p custom-rpc
 cargo build --locked --release --target wasm32-unknown-unknown -p custom-rpc
-python ../../examples/extensions/pack.py custom-rpc/manifest.json target/wasm32-unknown-unknown/release/custom_rpc.wasm packages/custom-rpc.serein-extension
+python pack.py plugins/custom-rpc/manifest.json target/wasm32-unknown-unknown/release/custom_rpc.wasm plugins/packages/custom-rpc.serein-extension
 ```
 
 Import the package into an offline `--demo` host first. A synthetic preview does

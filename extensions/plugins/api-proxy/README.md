@@ -33,10 +33,10 @@ Preview capability: requires the API Proxy host pull request; older clients reje
 this package. Native/real-proxy interoperability remains a separate verification
 from the synthetic checks.
 
-Build from `extensions/plugins`:
+Build from `extensions/`:
 
 ```sh
 cargo test --locked -p api-proxy
 cargo build --locked --release --target wasm32-unknown-unknown -p api-proxy
-python ../../examples/extensions/pack.py api-proxy/manifest.json target/wasm32-unknown-unknown/release/api_proxy.wasm packages/api-proxy.serein-extension
+python pack.py plugins/api-proxy/manifest.json target/wasm32-unknown-unknown/release/api_proxy.wasm plugins/packages/api-proxy.serein-extension
 ```

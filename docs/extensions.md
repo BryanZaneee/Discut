@@ -46,7 +46,7 @@ preference. There is no periodic background polling or automatic package update.
 
 1. Keep source and license in a public Git repository. Use the standalone Rust
    [Message Delete Protector source](../extensions/plugins/message-delete-protector/src/lib.rs) and the
-   [SDK](../examples/extensions/sdk).
+   [SDK](../extensions/sdk).
    The [SDK authoring guide](../examples/extensions/README.md#test-and-develop-locally)
    covers native handler tests, typed panel values and JSON storage helpers; the v1
    exports and existing plugin source remain compatible. For reactive plugins,

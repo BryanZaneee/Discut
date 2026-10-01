@@ -1,11 +1,13 @@
 # Serein extensions
 
-The official theme and plugin catalog for Serein. Plugins build against the one
-[SDK](../examples/extensions/sdk); the [authoring guide](../examples/extensions/README.md)
+The extension SDK and the official theme and plugin catalog for Serein. Plugins build
+against the one [SDK](sdk); the [authoring guide](../examples/extensions/README.md)
 covers writing your own.
 
 | Path | Contents |
 | --- | --- |
+| `sdk/` | The extension SDK every plugin builds against |
+| `pack.py` | Packages a manifest and a built Wasm module |
 | `themes/` | Declarative theme packages |
 | `plugins/<id>/` | Plugin source and manifest ([build instructions](plugins/README.md)) |
 | `plugins/packages/` | Reviewed plugin packages clients install |

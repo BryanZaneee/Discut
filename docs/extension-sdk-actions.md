@@ -1205,7 +1205,7 @@ and package this plugin from the same directory:
 
 ```powershell
 cargo build --locked --release --target wasm32-unknown-unknown -p panel-settings
-python pack.py panel-settings/manifest.json target/wasm32-unknown-unknown/release/panel_settings.wasm packages/panel-settings.serein-extension
+python ../../extensions/pack.py panel-settings/manifest.json target/wasm32-unknown-unknown/release/panel_settings.wasm packages/panel-settings.serein-extension
 ```
 
 For a larger working panel with app

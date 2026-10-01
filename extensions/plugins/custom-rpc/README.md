@@ -30,12 +30,12 @@ Requires a host with the `rich_presence` capability (Serein PR #465). It builds
 against the in-repository SDK; `crates/extensions/tests/sandbox.rs` runs the
 committed package through the real host sandbox.
 
-Build from `extensions/plugins`:
+Build from `extensions/`:
 
 ```sh
 cargo test --locked -p custom-rpc
 cargo build --locked --release --target wasm32-unknown-unknown -p custom-rpc
-python ../../examples/extensions/pack.py custom-rpc/manifest.json target/wasm32-unknown-unknown/release/custom_rpc.wasm packages/custom-rpc.serein-extension
+python pack.py plugins/custom-rpc/manifest.json target/wasm32-unknown-unknown/release/custom_rpc.wasm plugins/packages/custom-rpc.serein-extension
 ```
 
 The capability contributes one bounded activity through Serein's existing

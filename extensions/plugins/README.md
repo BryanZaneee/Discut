@@ -1,17 +1,17 @@
 # Catalog plugins
 
-The published plugins, built against the one [SDK](../../examples/extensions/sdk) that
+The published plugins, built against the one [SDK](../sdk) that
 the [authoring guide](../../examples/extensions/README.md) documents. Any language
 producing compatible WebAssembly can use this ABI; Rust authors can call
 `serein_extension_sdk::export!(handler)`.
 
-Build and package from this directory (Python 3 is used only by the author):
+Build and package from `extensions/`, the workspace root (Python 3 is used only by the author):
 
 ```powershell
 rustup target add wasm32-unknown-unknown
 cargo build --locked --release --target wasm32-unknown-unknown
-python ../../examples/extensions/pack.py message-delete-protector/manifest.json target/wasm32-unknown-unknown/release/message_delete_protector.wasm packages/message-delete-protector.serein-extension
-python ../../examples/extensions/pack.py emoji-sticker-images/manifest.json target/wasm32-unknown-unknown/release/emoji_sticker_images.wasm packages/emoji-sticker-images.serein-extension
+python pack.py plugins/message-delete-protector/manifest.json target/wasm32-unknown-unknown/release/message_delete_protector.wasm plugins/packages/message-delete-protector.serein-extension
+python pack.py plugins/emoji-sticker-images/manifest.json target/wasm32-unknown-unknown/release/emoji_sticker_images.wasm plugins/packages/emoji-sticker-images.serein-extension
 ```
 
 A rebuilt module is not a release by itself: committed packages are the reviewed bytes

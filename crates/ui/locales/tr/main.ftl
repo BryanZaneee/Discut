@@ -3596,9 +3596,11 @@ timeline-message-actions-unpin-message = Mesajın sabitlemesini kaldır
 # Context: message_actions
 timeline-message-actions-view-reactions = Tepkileri görüntüle
 # Context: present_control
-timeline-present-control-jump-to-present = Sunuma atla
+timeline-present-control-jump-to-present = En yeniye git
 # Context: present_control
-timeline-present-control-new-messages-below-jump-to-present = Yeni mesajlar aşağıda · sunuma atla
+timeline-present-control-new-messages-below-jump-to-present = Yeni mesajlar aşağıda · en yeniye git
+# Context: present_control
+timeline-present-control-new-messages = { $count } yeni mesaj
 # Context: show_system
 timeline-show-system-open-this-channels-threads = Bu kanalın konularını aç
 # Context: show_system
@@ -3645,6 +3647,10 @@ timeline-show-with-scroll-you-cannot-view-this-conversation = Bu konuşmayı gö
 timeline-starter-row-thread-started-from-this-message = Konu bu mesajdan başlatıldı
 # Context: unread_banner
 timeline-unread-banner-unread-messages = Okunmamış mesajlar
+# Context: unread_banner
+timeline-unread-banner-mark-as-read = Okundu olarak işaretle
+# Context: unread_banner
+timeline-unread-banner-jump-to-unread = Okunmamışlara git
 
 ## crates/ui/src/toasts.rs
 # Context: show
@@ -4111,8 +4117,8 @@ search-page-previous-short = Önceki
 search-page-next-short = Sonraki
 search-result-today-at = Bugün { $time }
 search-result-yesterday-at = Dün { $time }
-timeline-unread-banner-one-new-since = { $time } itibarıyla 1 yeni mesaj
-timeline-unread-banner-many-new-since = { $time } itibarıyla { $count } yeni mesaj
+timeline-unread-banner-new-since = { $time } itibarıyla { $count } yeni mesaj
+timeline-unread-banner-new-since-more = { $time } itibarıyla { $count }+ yeni mesaj
 
 ## crates/ui/src/onboarding.rs
 # Context: show

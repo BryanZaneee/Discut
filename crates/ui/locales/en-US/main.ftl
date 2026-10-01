@@ -3599,6 +3599,12 @@ timeline-message-actions-view-reactions = View reactions
 timeline-present-control-jump-to-present = Jump to present
 # Context: present_control
 timeline-present-control-new-messages-below-jump-to-present = New messages below · jump to present
+# Context: present_control
+timeline-present-control-new-messages =
+    { $count ->
+        [one] { $count } new message
+       *[other] { $count } new messages
+    }
 # Context: show_system
 timeline-show-system-open-this-channels-threads = Open this channel’s threads
 # Context: show_system
@@ -3645,6 +3651,10 @@ timeline-show-with-scroll-you-cannot-view-this-conversation = You cannot view th
 timeline-starter-row-thread-started-from-this-message = Thread started from this message
 # Context: unread_banner
 timeline-unread-banner-unread-messages = Unread messages
+# Context: unread_banner
+timeline-unread-banner-mark-as-read = Mark as read
+# Context: unread_banner
+timeline-unread-banner-jump-to-unread = Jump to unread
 
 ## crates/ui/src/toasts.rs
 # Context: show
@@ -4127,8 +4137,16 @@ search-page-previous-short = Previous
 search-page-next-short = Next
 search-result-today-at = Today at { $time }
 search-result-yesterday-at = Yesterday at { $time }
-timeline-unread-banner-one-new-since = 1 new message since { $time }
-timeline-unread-banner-many-new-since = { $count } new messages since { $time }
+timeline-unread-banner-new-since =
+    { $count ->
+        [one] { $count } new message since { $time }
+       *[other] { $count } new messages since { $time }
+    }
+timeline-unread-banner-new-since-more =
+    { $count ->
+        [one] { $count }+ new message since { $time }
+       *[other] { $count }+ new messages since { $time }
+    }
 
 ## crates/ui/src/onboarding.rs
 # Context: show

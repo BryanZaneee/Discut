@@ -3596,9 +3596,16 @@ timeline-message-actions-unpin-message = Открепить сообщение
 # Context: message_actions
 timeline-message-actions-view-reactions = Посмотреть реакции
 # Context: present_control
-timeline-present-control-jump-to-present = Перейти к презентации
+timeline-present-control-jump-to-present = Перейти к последним
 # Context: present_control
-timeline-present-control-new-messages-below-jump-to-present = Новые сообщения ниже · перейти к представлению
+timeline-present-control-new-messages-below-jump-to-present = Новые сообщения ниже · перейти к последним
+# Context: present_control
+timeline-present-control-new-messages =
+    { $count ->
+        [one] { $count } новое сообщение
+        [few] { $count } новых сообщения
+       *[other] { $count } новых сообщений
+    }
 # Context: show_system
 timeline-show-system-open-this-channels-threads = Откройте темы этого канала
 # Context: show_system
@@ -3645,6 +3652,10 @@ timeline-show-with-scroll-you-cannot-view-this-conversation = Вы не може
 timeline-starter-row-thread-started-from-this-message = Тема началась с этого сообщения
 # Context: unread_banner
 timeline-unread-banner-unread-messages = Непрочитанные сообщения
+# Context: unread_banner
+timeline-unread-banner-mark-as-read = Отметить как прочитанное
+# Context: unread_banner
+timeline-unread-banner-jump-to-unread = К непрочитанным
 
 ## crates/ui/src/toasts.rs
 # Context: show
@@ -4111,8 +4122,18 @@ search-page-previous-short = Назад
 search-page-next-short = Далее
 search-result-today-at = Сегодня в { $time }
 search-result-yesterday-at = Вчера в { $time }
-timeline-unread-banner-one-new-since = 1 новое сообщение с { $time }
-timeline-unread-banner-many-new-since = Новые сообщения с { $time }: { $count }
+timeline-unread-banner-new-since =
+    { $count ->
+        [one] { $count } новое сообщение с { $time }
+        [few] { $count } новых сообщения с { $time }
+       *[other] { $count } новых сообщений с { $time }
+    }
+timeline-unread-banner-new-since-more =
+    { $count ->
+        [one] { $count }+ новое сообщение с { $time }
+        [few] { $count }+ новых сообщения с { $time }
+       *[other] { $count }+ новых сообщений с { $time }
+    }
 
 ## crates/ui/src/onboarding.rs
 # Context: show

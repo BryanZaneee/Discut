@@ -3598,6 +3598,13 @@ timeline-message-actions-view-reactions = Zobrazit reakce
 timeline-present-control-jump-to-present = Přejít do současnosti
 # Context: present_control
 timeline-present-control-new-messages-below-jump-to-present = Níže jsou nové zprávy · přejít na nejnovější
+# Context: present_control
+timeline-present-control-new-messages =
+    { $count ->
+        [one] { $count } nová zpráva
+        [few] { $count } nové zprávy
+       *[other] { $count } nových zpráv
+    }
 # Context: show_system
 timeline-show-system-open-this-channels-threads = Otevřít vlákna tohoto kanálu
 # Context: show_system
@@ -3644,6 +3651,10 @@ timeline-show-with-scroll-you-cannot-view-this-conversation = Tuto konverzaci ne
 timeline-starter-row-thread-started-from-this-message = Vlákno začalo od této zprávy
 # Context: unread_banner
 timeline-unread-banner-unread-messages = Nepřečtené zprávy
+# Context: unread_banner
+timeline-unread-banner-mark-as-read = Označit jako přečtené
+# Context: unread_banner
+timeline-unread-banner-jump-to-unread = Přejít na nepřečtené
 
 ## crates/ui/src/toasts.rs
 # Context: show
@@ -4126,8 +4137,18 @@ search-page-previous-short = Předchozí
 search-page-next-short = Další
 search-result-today-at = Dnes v { $time }
 search-result-yesterday-at = Včera v { $time }
-timeline-unread-banner-one-new-since = 1 nová zpráva od { $time }
-timeline-unread-banner-many-new-since = Nové zprávy od { $time }: { $count }
+timeline-unread-banner-new-since =
+    { $count ->
+        [one] { $count } nová zpráva od { $time }
+        [few] { $count } nové zprávy od { $time }
+       *[other] { $count } nových zpráv od { $time }
+    }
+timeline-unread-banner-new-since-more =
+    { $count ->
+        [one] { $count }+ nová zpráva od { $time }
+        [few] { $count }+ nové zprávy od { $time }
+       *[other] { $count }+ nových zpráv od { $time }
+    }
 
 ## crates/ui/src/onboarding.rs
 # Context: show

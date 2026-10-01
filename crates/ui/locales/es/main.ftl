@@ -3598,6 +3598,12 @@ timeline-message-actions-view-reactions = Ver reacciones
 timeline-present-control-jump-to-present = Saltar al presente
 # Context: present_control
 timeline-present-control-new-messages-below-jump-to-present = Nuevos mensajes a continuación · saltar al presente
+# Context: present_control
+timeline-present-control-new-messages =
+    { $count ->
+        [one] { $count } mensaje nuevo
+       *[other] { $count } mensajes nuevos
+    }
 # Context: show_system
 timeline-show-system-open-this-channels-threads = Abrir los hilos de este canal.
 # Context: show_system
@@ -3644,6 +3650,10 @@ timeline-show-with-scroll-you-cannot-view-this-conversation = No puedes ver esta
 timeline-starter-row-thread-started-from-this-message = Hilo iniciado con este mensaje.
 # Context: unread_banner
 timeline-unread-banner-unread-messages = Mensajes no leídos
+# Context: unread_banner
+timeline-unread-banner-mark-as-read = Marcar como leído
+# Context: unread_banner
+timeline-unread-banner-jump-to-unread = Ir a no leídos
 
 ## crates/ui/src/toasts.rs
 # Context: show
@@ -4110,8 +4120,16 @@ search-page-previous-short = Anterior
 search-page-next-short = Siguiente
 search-result-today-at = Hoy a las { $time }
 search-result-yesterday-at = Ayer a las { $time }
-timeline-unread-banner-one-new-since = 1 mensaje nuevo desde las { $time }
-timeline-unread-banner-many-new-since = { $count } mensajes nuevos desde las { $time }
+timeline-unread-banner-new-since =
+    { $count ->
+        [one] { $count } mensaje nuevo desde las { $time }
+       *[other] { $count } mensajes nuevos desde las { $time }
+    }
+timeline-unread-banner-new-since-more =
+    { $count ->
+        [one] { $count }+ mensaje nuevo desde las { $time }
+       *[other] { $count }+ mensajes nuevos desde las { $time }
+    }
 
 ## crates/ui/src/onboarding.rs
 # Context: show

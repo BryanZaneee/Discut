@@ -3595,9 +3595,16 @@ timeline-message-actions-unpin-message = Odepnij wiadomość
 # Context: message_actions
 timeline-message-actions-view-reactions = Zobacz reakcje
 # Context: present_control
-timeline-present-control-jump-to-present = Przejdź do teraźniejszości
+timeline-present-control-jump-to-present = Przejdź do najnowszych
 # Context: present_control
-timeline-present-control-new-messages-below-jump-to-present = Nowe wiadomości poniżej · przejdź do prezentacji
+timeline-present-control-new-messages-below-jump-to-present = Nowe wiadomości poniżej · przejdź do najnowszych
+# Context: present_control
+timeline-present-control-new-messages =
+    { $count ->
+        [one] { $count } nowa wiadomość
+        [few] { $count } nowe wiadomości
+       *[other] { $count } nowych wiadomości
+    }
 # Context: show_system
 timeline-show-system-open-this-channels-threads = Otwórz wątki tego kanału
 # Context: show_system
@@ -3644,6 +3651,10 @@ timeline-show-with-scroll-you-cannot-view-this-conversation = Nie możesz wyświ
 timeline-starter-row-thread-started-from-this-message = Wątek rozpoczął się od tej wiadomości
 # Context: unread_banner
 timeline-unread-banner-unread-messages = Nieprzeczytane wiadomości
+# Context: unread_banner
+timeline-unread-banner-mark-as-read = Oznacz jako przeczytane
+# Context: unread_banner
+timeline-unread-banner-jump-to-unread = Przejdź do nieprzeczytanych
 
 ## crates/ui/src/toasts.rs
 # Context: show
@@ -4110,8 +4121,18 @@ search-page-previous-short = Poprzednia
 search-page-next-short = Następna
 search-result-today-at = Dzisiaj o { $time }
 search-result-yesterday-at = Wczoraj o { $time }
-timeline-unread-banner-one-new-since = 1 nowa wiadomość od { $time }
-timeline-unread-banner-many-new-since = Nowe wiadomości od { $time }: { $count }
+timeline-unread-banner-new-since =
+    { $count ->
+        [one] { $count } nowa wiadomość od { $time }
+        [few] { $count } nowe wiadomości od { $time }
+       *[other] { $count } nowych wiadomości od { $time }
+    }
+timeline-unread-banner-new-since-more =
+    { $count ->
+        [one] { $count }+ nowa wiadomość od { $time }
+        [few] { $count }+ nowe wiadomości od { $time }
+       *[other] { $count }+ nowych wiadomości od { $time }
+    }
 
 ## crates/ui/src/onboarding.rs
 # Context: show

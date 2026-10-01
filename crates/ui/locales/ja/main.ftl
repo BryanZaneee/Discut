@@ -3598,7 +3598,9 @@ timeline-message-actions-view-reactions = 反応を見る
 # Context: present_control
 timeline-present-control-jump-to-present = 現在へジャンプ
 # Context: present_control
-timeline-present-control-new-messages-below-jump-to-present = 新しいメッセージは以下にあります · 現在のメッセージにジャンプします
+timeline-present-control-new-messages-below-jump-to-present = 新しいメッセージがあります · 現在へジャンプ
+# Context: present_control
+timeline-present-control-new-messages = 新着メッセージ { $count } 件
 # Context: show_system
 timeline-show-system-open-this-channels-threads = このチャンネルのスレッドを開く
 # Context: show_system
@@ -3645,6 +3647,10 @@ timeline-show-with-scroll-you-cannot-view-this-conversation = この会話は表
 timeline-starter-row-thread-started-from-this-message = このメッセージからスレッドが開始されました
 # Context: unread_banner
 timeline-unread-banner-unread-messages = 未読メッセージ
+# Context: unread_banner
+timeline-unread-banner-mark-as-read = 既読にする
+# Context: unread_banner
+timeline-unread-banner-jump-to-unread = 未読へジャンプ
 
 ## crates/ui/src/toasts.rs
 # Context: show
@@ -4111,8 +4117,8 @@ search-page-previous-short = 前へ
 search-page-next-short = 次へ
 search-result-today-at = 今日 { $time }
 search-result-yesterday-at = 昨日 { $time }
-timeline-unread-banner-one-new-since = { $time } 以降の新着メッセージ 1 件
-timeline-unread-banner-many-new-since = { $time } 以降の新着メッセージ { $count } 件
+timeline-unread-banner-new-since = { $time } 以降の新着メッセージ { $count } 件
+timeline-unread-banner-new-since-more = { $time } 以降の新着メッセージ { $count }+ 件
 
 ## crates/ui/src/onboarding.rs
 # Context: show

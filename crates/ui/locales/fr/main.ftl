@@ -14,7 +14,6 @@ page-appearance = Apparence
 page-chat = Chat
 page-messaging-permissions = Autorisations de messagerie
 page-notifications = Notifications
-page-activity = Activité de jeu
 page-registered-games = Jeux enregistrés
 page-voice = Voix et vidéo
 page-keybinds = Raccourcis clavier
@@ -29,8 +28,7 @@ description-appearance = Thème, couleurs, effets de fenêtres et mise en page.
 description-chat = Comment se comportent les messages, les médias, les liens et le défilement.
 description-messaging-permissions = Contrôlez qui peut vous contacter et comment les messages sont filtrés.
 description-notifications = Choisissez les notifications que vous recevez et comment elles apparaissent.
-description-activity = Montrez aux autres à quoi vous jouez.
-description-registered-games = Corrigez les jeux détectés et ajoutez ceux que Serein ne trouve pas.
+description-registered-games = Partagez ce à quoi vous jouez, et corrigez ou ajoutez les jeux détectés par Serein.
 description-voice = Microphone, haut-parleurs, caméra et traitement vocal.
 description-keybinds = Raccourcis clavier pour Serein.
 description-storage = Ce que Serein conserve sur cet appareil.
@@ -3234,6 +3232,92 @@ settings-account-page-signed-in-with-your-discord-account = Connectez-vous avec 
 settings-activity-settings-detect-running-games-and-ask-discord-to-share-them-as = Détectez les jeux en cours et demandez à Discord de les partager en tant qu'activité.
 # Context: activity_settings
 settings-activity-settings-share-game-activity = Partager l'activité du jeu
+# Context: activity_settings
+settings-activity-enable-on-discord = Activer sur Discord
+# Context: activity_settings
+settings-activity-check-again = Vérifier à nouveau
+# Context: activity_settings
+settings-activity-sharing-is-off = Le partage d'activité est désactivé
+# Context: activity_settings
+settings-activity-sharing-your-game = Votre jeu est partagé
+# Context: activity_settings
+settings-activity-looking = Recherche d'un jeu en cours
+# Context: activity_settings
+settings-activity-demo-detail = Activité synthétique, jamais partagée ni enregistrée.
+# Context: activity_settings
+settings-activity-status-offline-preview = Aperçu hors ligne : activité synthétique, jamais partagée ni enregistrée.
+# Context: activity_settings
+settings-activity-status-unconfirmed = Aperçu local uniquement. En attente de la confirmation du partage par Discord.
+# Context: activity_settings
+settings-activity-status-received = Discord a reçu votre jeu, mais ne l'affiche pas publiquement.
+# Context: activity_settings
+settings-activity-status-listed = Discord affiche votre jeu. Les paramètres de confidentialité des serveurs et des amis s'appliquent toujours.
+# Context: activity_settings
+settings-activity-status-hidden = Discord masque votre jeu. Vérifiez Jeux enregistrés et Partage d'activité dans Discord.
+# Context: activity_settings
+settings-activity-status-missing = Discord n'a pas affiché votre jeu publiquement. Vérifiez ses Jeux enregistrés et les options de partage des serveurs.
+# Context: activity_settings
+settings-activity-status-sharing-off = Le partage d'activité de tout le compte Discord est désactivé.
+# Context: activity_settings
+settings-activity-status-checking = Vérification du paramètre de partage d'activité de Discord…
+# Context: activity_settings
+settings-activity-status-check-failed = Impossible de vérifier ou de modifier le paramètre de partage d'activité de Discord.
+# Context: activity_settings
+settings-activity-status-updating = Mise à jour du paramètre de partage d'activité de Discord…
+# Context: activity_settings
+settings-activity-status-request-failed = Impossible de demander la modification. Réessayez.
+# Context: activity_settings
+settings-activity-current-game = Jeu actuel
+# Context: activity_settings
+settings-activity-now-playing = En train de jouer !
+# Context: activity_settings
+settings-activity-stop-detecting-current = Ce n'est pas ce jeu ? Arrêtez de le détecter.
+# Context: activity_settings
+settings-activity-reported-by-game = Signalé par le jeu via Rich Presence.
+# Context: activity_settings
+settings-activity-no-game-detected = Aucun jeu détecté
+# Context: activity_settings
+settings-activity-turn-on-sharing = Activez Partager l'activité du jeu ci-dessus pour détecter les jeux.
+# Context: activity_settings
+settings-activity-not-seeing-your-game = Vous ne voyez pas votre jeu ?
+# Context: activity_settings
+settings-activity-add-it = Ajoutez-le !
+# Context: activity_settings
+settings-activity-added-games = Jeux ajoutés
+# Context: activity_settings
+settings-activity-no-games-added = Aucun jeu ajouté
+# Context: activity_settings
+settings-activity-hidden = Masqué. Serein ne détectera plus ce jeu.
+# Context: activity_settings
+settings-activity-detected = Détecté automatiquement
+# Context: activity_settings
+settings-activity-last-played-today = Joué pour la dernière fois aujourd'hui
+# Context: activity_settings
+settings-activity-last-played-yesterday = Joué pour la dernière fois hier
+# Context: activity_settings
+settings-activity-last-played = Joué pour la dernière fois le { $date }
+# Context: activity_settings
+settings-activity-restore = Restaurer
+# Context: activity_settings
+settings-activity-restore-hint = Détecter à nouveau ce jeu.
+# Context: activity_settings
+settings-activity-stop-detecting = Ne plus détecter ce jeu
+# Context: activity_settings
+settings-activity-remove-game = Retirer ce jeu
+# Context: activity_settings
+settings-activity-click-to-rename = Cliquez pour renommer
+# Context: activity_settings
+settings-activity-add-a-game = Ajouter un jeu
+# Context: activity_settings
+settings-activity-choose-program = Choisissez un programme en cours d'exécution. Serein l'affichera comme votre jeu chaque fois qu'il tourne.
+# Context: activity_settings
+settings-activity-search-programs = Rechercher des programmes en cours
+# Context: activity_settings
+settings-activity-reading-programs = Lecture des programmes en cours…
+# Context: activity_settings
+settings-activity-no-matching-programs = Aucun programme correspondant n'est en cours d'exécution.
+# Context: activity_settings
+settings-activity-add-game = Ajouter le jeu
 # Context: appearance_menu
 settings-appearance-menu-display = Afficher
 # Context: appearance_menu

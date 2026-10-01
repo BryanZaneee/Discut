@@ -140,3 +140,62 @@ fn current_game_can_be_renamed_and_running_programs_added() {
 	find(&texts, "Intel service");
 	find(&texts, "opt/my game/mygame.x86_64");
 }
+
+#[test]
+fn one_page_shares_activity_and_lists_detected_games_that_can_be_hidden() {
+	let ctx = egui::Context::default();
+	ui::design::apply(&ctx);
+	let mut state = test_support::demo_state();
+	state.demo = false;
+	state.gateway_connected = true;
+	let mut view = MessagingUi::default();
+	view.share_game_activity = true;
+	view.discord_activity_sharing = Some(false);
+	let now = std::time::SystemTime::now()
+		.duration_since(std::time::UNIX_EPOCH)
+		.unwrap()
+		.as_millis() as u64;
+	let game = |executable: &str, name: &str, application: Option<u64>, last_played| {
+		model::registered_games::RegisteredGame {
+			executable: executable.into(),
+			name: name.into(),
+			application: application.map(model::Id),
+			hidden: false,
+			last_played,
+		}
+	};
+	view.registered_games = vec![
+		game("opt/manual/game", "Manual game", None, None),
+		game("opt/scanned/game", "Scanned game", Some(7), Some(now)),
+	];
+	// The former Game Activity search term still opens the merged page.
+	view.preview_settings("activity");
+	let mut texts = Vec::new();
+	for _ in 0..3 {
+		texts = frame(&ctx, &mut view, &mut state, vec![]);
+	}
+	for label in [
+		"Registered Games",
+		"Share game activity",
+		"Enable on Discord",
+		"Current Game",
+		"Added Games",
+		"Scanned game",
+		"Detected automatically · Last played today",
+		"Manual game",
+		"opt/manual/game",
+	] {
+		find(&texts, label);
+	}
+	assert!(texts.iter().all(|(text, _)| text != "Game Activity"));
+	// The most recently played game is listed first.
+	assert!(find(&texts, "Scanned game").y < find(&texts, "Manual game").y);
+
+	// A hidden detection stays listed so it can be restored.
+	view.registered_games[1].hidden = true;
+	let texts = frame(&ctx, &mut view, &mut state, vec![]);
+	find(&texts, "Hidden. Serein will not detect this game.");
+	frame(&ctx, &mut view, &mut state, click(find(&texts, "Restore")));
+	assert!(!view.registered_games[1].hidden);
+	assert_eq!(view.registered_games.len(), 2);
+}

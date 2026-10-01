@@ -1,6 +1,7 @@
-//! Discord's "Registered Games" settings page: the game detection currently sees, games the
-//! user added from running processes, inline renaming and removal of wrong detections.
-use crate::{MessagingUi, design, icons};
+//! Discord's "Registered Games" settings page: activity sharing, the game detection currently
+//! sees, and Added Games — detected and user-added games with their last-played time, inline
+//! renaming, and hiding or restoring wrong detections.
+use crate::{MessagingUi, design, i18n::translate as tr, icons};
 use egui::RichText;
 use model::registered_games::{self as games, RegisteredGame};
 
@@ -20,8 +21,7 @@ const MAX_PICKER_ROWS: usize = 200;
 impl MessagingUi {
 	pub(super) fn registered_games_settings(&mut self, ui: &mut egui::Ui, demo: bool) {
 		let p = design::palette(ui);
-		ui.add_space(8.0);
-		heading(ui, "Current Game");
+		heading(ui, "settings-activity-current-game");
 		ui.add_space(4.0);
 		let running = self.running_game.clone();
 		design::card(ui, |ui| {
@@ -36,13 +36,13 @@ impl MessagingUi {
 						ui.spacing_mut().item_spacing.y = 2.0;
 						self.editable_name(ui, &game.executable, &game.name, game.application);
 						ui.label(
-							RichText::new(crate::i18n::translate_if_key("Now Playing!"))
+							RichText::new(tr("settings-activity-now-playing"))
 								.size(13.0)
 								.color(p.positive),
 						);
 					});
 					ui.with_layout(egui::Layout::right_to_left(egui::Align::Center), |ui| {
-						if remove_button(ui, "Not this game? Stop detecting it.").clicked() {
+						if remove_button(ui, "settings-activity-stop-detecting-current").clicked() {
 							hide(&mut self.registered_games, game);
 							self.running_game = None;
 						}
@@ -56,80 +56,81 @@ impl MessagingUi {
 				// A game speaking Rich Presence names itself; there is nothing to rename.
 				ui.label(design::semibold(ui, own, 16.0).color(p.text_strong));
 				ui.label(
-					RichText::new(crate::i18n::translate_if_key(
-						"Reported by the game through Rich Presence.",
-					))
-					.size(13.0)
-					.color(p.muted),
+					RichText::new(tr("settings-activity-reported-by-game"))
+						.size(13.0)
+						.color(p.muted),
 				);
 			} else {
 				ui.label(
-					design::semibold(ui, crate::i18n::translate_if_key("No game detected"), 16.0)
+					design::semibold(ui, tr("settings-activity-no-game-detected"), 16.0)
 						.color(p.text_strong),
 				);
 				if !self.share_game_activity {
 					ui.label(
-						RichText::new(crate::i18n::translate_if_key(
-							"Turn on Share game activity on the Game Activity page to detect games.",
-						))
-						.size(13.0)
-						.color(p.muted),
+						RichText::new(tr("settings-activity-turn-on-sharing"))
+							.size(13.0)
+							.color(p.muted),
 					);
 				}
 			}
-			if !self.settings.games.adding {
-				ui.horizontal(|ui| {
-					ui.spacing_mut().item_spacing.x = 4.0;
-					ui.label(
-						RichText::new(crate::i18n::translate_if_key("Not seeing your game?"))
-							.size(14.0)
-							.color(p.muted),
-					);
-					let add = ui.add(
-						egui::Label::new(
-							design::medium(ui, crate::i18n::translate_if_key("Add it!"), 14.0)
-								.color(p.link),
-						)
-						.sense(egui::Sense::click()),
-					);
-					if add
-						.on_hover_cursor(egui::CursorIcon::PointingHand)
-						.clicked()
-					{
-						let games = &mut self.settings.games;
-						games.adding = true;
-						games.query.clear();
-						games.selected = None;
-						self.running_processes = None;
-						self.running_processes_request = !demo;
-						if demo {
-							self.running_processes = Some(
-								[
-									"/opt/synthetic/My Game/game.x86_64",
-									"/usr/bin/synthetic-tool",
-								]
-								.map(str::to_owned)
-								.to_vec(),
-							);
-						}
+			ui.horizontal(|ui| {
+				ui.spacing_mut().item_spacing.x = 4.0;
+				ui.label(
+					RichText::new(tr("settings-activity-not-seeing-your-game"))
+						.size(14.0)
+						.color(p.muted),
+				);
+				let add = ui.add(
+					egui::Label::new(
+						design::medium(ui, tr("settings-activity-add-it"), 14.0).color(p.link),
+					)
+					.sense(egui::Sense::click()),
+				);
+				if add
+					.on_hover_cursor(egui::CursorIcon::PointingHand)
+					.clicked()
+				{
+					let games = &mut self.settings.games;
+					games.adding = true;
+					games.query.clear();
+					games.selected = None;
+					self.running_processes = None;
+					self.running_processes_request = !demo;
+					if demo {
+						self.running_processes = Some(
+							[
+								"/opt/synthetic/My Game/game.x86_64",
+								"/usr/bin/synthetic-tool",
+							]
+							.map(str::to_owned)
+							.to_vec(),
+						);
 					}
-				});
-			}
+				}
+			});
 		});
 		design::divider(ui);
-		heading(ui, "Added Games");
+		heading(ui, "settings-activity-added-games");
 		if self.registered_games.is_empty() {
 			ui.label(
-				RichText::new(crate::i18n::translate_if_key("No games added"))
+				RichText::new(tr("settings-activity-no-games-added"))
 					.size(14.0)
 					.color(p.muted),
 			);
 			return;
 		}
 		ui.add_space(4.0);
+		let today = crate::local_time::now().date();
 		let mut remove = None;
 		let mut restore = None;
-		for (index, game) in self.registered_games.clone().iter().enumerate() {
+		// Discord lists the most recently played first; never-played entries keep their order.
+		let mut order: Vec<usize> = (0..self.registered_games.len()).collect();
+		order.sort_by_key(|&index| std::cmp::Reverse(self.registered_games[index].last_played));
+		for index in order {
+			let game = self.registered_games[index].clone();
+			let playing = running
+				.as_ref()
+				.is_some_and(|r| r.executable == game.executable);
 			design::card(ui, |ui| {
 				ui.horizontal(|ui| {
 					ui.vertical(|ui| {
@@ -140,34 +141,41 @@ impl MessagingUi {
 						} else {
 							self.editable_name(ui, &game.executable, &game.name, game.application);
 						}
-						let detail = if game.hidden {
-							crate::i18n::translate_if_key(
-								"Removed. Serein will not detect this game.",
-							)
-						} else if running
-							.as_ref()
-							.is_some_and(|r| r.executable == game.executable)
-						{
-							crate::i18n::translate_if_key("Now Playing!")
+						let (detail, color) = if game.hidden {
+							(tr("settings-activity-hidden"), p.muted)
+						} else if playing {
+							(tr("settings-activity-now-playing"), p.positive)
 						} else {
-							game.executable.clone()
+							(game_detail(&game, today), p.muted)
 						};
 						ui.add(
-							egui::Label::new(RichText::new(detail).size(12.0).color(p.muted))
+							egui::Label::new(RichText::new(detail).size(12.0).color(color))
 								.truncate(),
-						);
+						)
+						.on_hover_text(&game.executable);
 					});
 					ui.with_layout(egui::Layout::right_to_left(egui::Align::Center), |ui| {
 						if game.hidden {
-							if design::button(ui, "Restore", design::ButtonKind::Outline)
-								.on_hover_text(crate::i18n::translate_if_key(
-									"Detect this game again.",
-								))
-								.clicked()
+							if design::button(
+								ui,
+								"settings-activity-restore",
+								design::ButtonKind::Outline,
+							)
+							.on_hover_text(tr("settings-activity-restore-hint"))
+							.clicked()
 							{
 								restore = Some(index);
 							}
-						} else if remove_button(ui, "Remove this game").clicked() {
+						} else if remove_button(
+							ui,
+							if game.detected() {
+								"settings-activity-stop-detecting"
+							} else {
+								"settings-activity-remove-game"
+							},
+						)
+						.clicked()
+						{
 							remove = Some(index);
 						}
 					});
@@ -175,12 +183,12 @@ impl MessagingUi {
 			});
 		}
 		if let Some(index) = restore {
-			self.registered_games.remove(index);
+			self.registered_games[index].hidden = false;
 		}
 		if let Some(index) = remove {
-			// A game Discord knows would be detected right back, so it stays as removed.
+			// A game Discord knows would be detected right back, so it stays as hidden.
 			let game = &mut self.registered_games[index];
-			if game.application.is_some() {
+			if game.detected() {
 				game.hidden = true;
 			} else {
 				self.registered_games.remove(index);
@@ -226,7 +234,7 @@ impl MessagingUi {
 					.sense(egui::Sense::click()),
 			)
 			.on_hover_cursor(egui::CursorIcon::Text)
-			.on_hover_text(crate::i18n::translate_if_key("Click to rename"));
+			.on_hover_text(tr("settings-activity-click-to-rename"));
 		if label.hovered() {
 			let rect = egui::Rect::from_min_size(
 				egui::pos2(label.rect.right() + 6.0, label.rect.center().y - 7.0),
@@ -242,22 +250,19 @@ impl MessagingUi {
 	fn process_picker(&mut self, ui: &mut egui::Ui, demo: bool) {
 		let p = design::palette(ui);
 		ui.label(
-			design::semibold(ui, crate::i18n::translate_if_key("Add a game"), 16.0)
-				.color(p.text_strong),
+			design::semibold(ui, tr("settings-activity-add-a-game"), 16.0).color(p.text_strong),
 		);
 		ui.label(
-			RichText::new(crate::i18n::translate_if_key(
-				"Choose a running program. Serein shows it as your game whenever it runs.",
-			))
-			.size(13.0)
-			.color(p.muted),
+			RichText::new(tr("settings-activity-choose-program"))
+				.size(13.0)
+				.color(p.muted),
 		);
 		ui.add_space(6.0);
 		let picker = &mut self.settings.games;
 		design::input(
 			ui,
 			egui::TextEdit::singleline(&mut picker.query)
-				.hint_text(crate::i18n::translate_if_key("Search running programs"))
+				.hint_text(tr("settings-activity-search-programs"))
 				.char_limit(64),
 		);
 		ui.add_space(4.0);
@@ -266,8 +271,7 @@ impl MessagingUi {
 				ui.horizontal(|ui| {
 					ui.spinner();
 					ui.label(
-						RichText::new(crate::i18n::translate_if_key("Reading running programs…"))
-							.color(p.muted),
+						RichText::new(tr("settings-activity-reading-programs")).color(p.muted),
 					);
 				});
 			}
@@ -286,7 +290,7 @@ impl MessagingUi {
 					.take(MAX_PICKER_ROWS)
 					.collect();
 				if candidates.is_empty() {
-					design::hint(ui, "No matching programs are running.");
+					design::hint(ui, "settings-activity-no-matching-programs");
 				}
 				egui::ScrollArea::vertical()
 					.id_salt("registered-games-picker")
@@ -313,9 +317,15 @@ impl MessagingUi {
 		ui.horizontal(|ui| {
 			ui.with_layout(egui::Layout::right_to_left(egui::Align::Center), |ui| {
 				ui.add_enabled_ui(picker.selected.is_some(), |ui| {
-					add = design::button(ui, "Add Game", design::ButtonKind::Primary).clicked();
+					add = design::button(
+						ui,
+						"settings-activity-add-game",
+						design::ButtonKind::Primary,
+					)
+					.clicked();
 				});
-				cancel = design::button(ui, "Cancel", design::ButtonKind::Neutral).clicked();
+				cancel = design::button(ui, "dialog-module-cancel", design::ButtonKind::Neutral)
+					.clicked();
 			});
 		});
 		if add
@@ -330,6 +340,7 @@ impl MessagingUi {
 					name,
 					application: None,
 					hidden: false,
+					last_played: None,
 				});
 			}
 			cancel = true;
@@ -345,9 +356,46 @@ impl MessagingUi {
 	}
 }
 
-fn heading(ui: &mut egui::Ui, text: &str) {
+fn heading(ui: &mut egui::Ui, key: &str) {
 	let p = design::palette(ui);
-	ui.label(design::medium(ui, crate::i18n::translate_if_key(text), 22.0).color(p.text_strong));
+	ui.label(design::medium(ui, tr(key), 22.0).color(p.text_strong));
+}
+
+/// How an entry got here and when it last ran: "Detected · Last played today".
+fn game_detail(game: &RegisteredGame, today: time::Date) -> String {
+	let source = if game.detected() {
+		tr("settings-activity-detected")
+	} else {
+		game.executable.clone()
+	};
+	let played = game
+		.last_played
+		.and_then(|ms| time::OffsetDateTime::from_unix_timestamp((ms / 1000) as i64).ok())
+		.map(|at| {
+			let date = crate::local_time::local(at).date();
+			if date == today {
+				tr("settings-activity-last-played-today")
+			} else if today.previous_day() == Some(date) {
+				tr("settings-activity-last-played-yesterday")
+			} else {
+				crate::i18n::translate_args(
+					"settings-activity-last-played",
+					&[(
+						"date",
+						&format!(
+							"{}-{:02}-{:02}",
+							date.year(),
+							u8::from(date.month()),
+							date.day()
+						),
+					)],
+				)
+			}
+		});
+	match played {
+		Some(played) => format!("{source} · {played}"),
+		None => source,
+	}
 }
 
 fn process_row(ui: &mut egui::Ui, path: &str, selected: bool) -> egui::Response {
@@ -411,7 +459,7 @@ fn remove_button(ui: &mut egui::Ui, hint: &str) -> egui::Response {
 		rect.shrink(8.0),
 		if over { p.danger } else { p.muted },
 	);
-	let hint = crate::i18n::translate_if_key(hint);
+	let hint = tr(hint);
 	response.widget_info(|| egui::WidgetInfo::labeled(egui::Role::Button, true, &hint));
 	response.on_hover_text(hint)
 }
@@ -439,6 +487,7 @@ fn rename(
 			name,
 			application,
 			hidden: false,
+			last_played: None,
 		});
 	}
 }
@@ -453,6 +502,7 @@ fn hide(list: &mut Vec<RegisteredGame>, game: &games::RunningGame) {
 			name: game.name.clone(),
 			application: game.application,
 			hidden: true,
+			last_played: None,
 		});
 	}
 }

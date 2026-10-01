@@ -14,7 +14,6 @@ page-appearance = Dış görünüş
 page-chat = Sohbet
 page-messaging-permissions = Mesajlaşma İzinleri
 page-notifications = Bildirimler
-page-activity = Oyun Etkinliği
 page-registered-games = Kayıtlı Oyunlar
 page-voice = Ses ve Video
 page-keybinds = Tuş bağlantıları
@@ -29,8 +28,7 @@ description-appearance = Tema, renkler, pencere efektleri ve düzen.
 description-chat = Mesajların, medyanın, bağlantıların ve kaydırmanın nasıl davrandığı.
 description-messaging-permissions = Sizinle kimlerin iletişim kurabileceğini ve mesajların nasıl filtreleneceğini kontrol edin.
 description-notifications = Hangi bildirimleri alacağınızı ve bunların nasıl görüneceğini seçin.
-description-activity = Başkalarına ne oynadığınızı gösterin.
-description-registered-games = Algılanan oyunları düzeltin ve Serein'in bulamadıklarını ekleyin.
+description-registered-games = Ne oynadığınızı paylaşın, Serein'in algıladığı oyunları düzeltin veya ekleyin.
 description-voice = Mikrofon, hoparlörler, kamera ve ses işleme.
 description-keybinds = Serein için klavye kısayolları.
 description-storage = Serein'in bu cihazda sakladıkları.
@@ -3235,6 +3233,92 @@ settings-account-page-signed-in-with-your-discord-account = Discord hesabınızl
 settings-activity-settings-detect-running-games-and-ask-discord-to-share-them-as = Çalışan oyunları tespit edin ve Discord'dan bunları etkinlik olarak paylaşmasını isteyin.
 # Context: activity_settings
 settings-activity-settings-share-game-activity = Oyun etkinliğini paylaş
+# Context: activity_settings
+settings-activity-enable-on-discord = Discord'da etkinleştir
+# Context: activity_settings
+settings-activity-check-again = Tekrar kontrol et
+# Context: activity_settings
+settings-activity-sharing-is-off = Etkinlik paylaşımı kapalı
+# Context: activity_settings
+settings-activity-sharing-your-game = Oyununuz paylaşılıyor
+# Context: activity_settings
+settings-activity-looking = Çalışan bir oyun aranıyor
+# Context: activity_settings
+settings-activity-demo-detail = Sentetik etkinlik; asla paylaşılmaz veya kaydedilmez.
+# Context: activity_settings
+settings-activity-status-offline-preview = Çevrimdışı önizleme: sentetik etkinlik; asla paylaşılmaz veya kaydedilmez.
+# Context: activity_settings
+settings-activity-status-unconfirmed = Yalnızca yerel önizleme. Discord'un paylaşımı onaylaması bekleniyor.
+# Context: activity_settings
+settings-activity-status-received = Discord oyununuzu aldı ancak herkese açık olarak listelemedi.
+# Context: activity_settings
+settings-activity-status-listed = Discord oyununuzu listeliyor. Sunucu ve arkadaş gizlilik ayarları yine geçerlidir.
+# Context: activity_settings
+settings-activity-status-hidden = Discord oyununuzu gizliyor. Discord'da Kayıtlı Oyunlar ve Etkinlik Paylaşımı ayarlarını kontrol edin.
+# Context: activity_settings
+settings-activity-status-missing = Discord oyununuzu herkese açık olarak listelemedi. Oradaki Kayıtlı Oyunlar ve sunucu paylaşım ayarlarını kontrol edin.
+# Context: activity_settings
+settings-activity-status-sharing-off = Discord'un hesap genelindeki etkinlik paylaşımı kapalı.
+# Context: activity_settings
+settings-activity-status-checking = Discord'un etkinlik paylaşımı ayarı kontrol ediliyor…
+# Context: activity_settings
+settings-activity-status-check-failed = Discord'un etkinlik paylaşımı ayarı kontrol edilemedi veya değiştirilemedi.
+# Context: activity_settings
+settings-activity-status-updating = Discord'un etkinlik paylaşımı ayarı güncelleniyor…
+# Context: activity_settings
+settings-activity-status-request-failed = Ayar değişikliği istenemedi. Tekrar deneyin.
+# Context: activity_settings
+settings-activity-current-game = Mevcut Oyun
+# Context: activity_settings
+settings-activity-now-playing = Şimdi Oynuyor!
+# Context: activity_settings
+settings-activity-stop-detecting-current = Bu oyun değil mi? Algılamayı durdurun.
+# Context: activity_settings
+settings-activity-reported-by-game = Oyun tarafından Rich Presence ile bildirildi.
+# Context: activity_settings
+settings-activity-no-game-detected = Oyun algılanmadı
+# Context: activity_settings
+settings-activity-turn-on-sharing = Oyunları algılamak için yukarıdan Oyun etkinliğini paylaş seçeneğini açın.
+# Context: activity_settings
+settings-activity-not-seeing-your-game = Oyununuzu göremiyor musunuz?
+# Context: activity_settings
+settings-activity-add-it = Ekleyin!
+# Context: activity_settings
+settings-activity-added-games = Eklenen Oyunlar
+# Context: activity_settings
+settings-activity-no-games-added = Eklenmiş oyun yok
+# Context: activity_settings
+settings-activity-hidden = Gizlendi. Serein bu oyunu algılamayacak.
+# Context: activity_settings
+settings-activity-detected = Otomatik algılandı
+# Context: activity_settings
+settings-activity-last-played-today = Son oynama: bugün
+# Context: activity_settings
+settings-activity-last-played-yesterday = Son oynama: dün
+# Context: activity_settings
+settings-activity-last-played = Son oynama: { $date }
+# Context: activity_settings
+settings-activity-restore = Geri yükle
+# Context: activity_settings
+settings-activity-restore-hint = Bu oyunu yeniden algıla.
+# Context: activity_settings
+settings-activity-stop-detecting = Bu oyunu algılamayı durdur
+# Context: activity_settings
+settings-activity-remove-game = Bu oyunu kaldır
+# Context: activity_settings
+settings-activity-click-to-rename = Yeniden adlandırmak için tıklayın
+# Context: activity_settings
+settings-activity-add-a-game = Oyun ekle
+# Context: activity_settings
+settings-activity-choose-program = Çalışan bir program seçin. Serein, çalıştığı her zaman onu oyununuz olarak gösterir.
+# Context: activity_settings
+settings-activity-search-programs = Çalışan programlarda ara
+# Context: activity_settings
+settings-activity-reading-programs = Çalışan programlar okunuyor…
+# Context: activity_settings
+settings-activity-no-matching-programs = Eşleşen çalışan program yok.
+# Context: activity_settings
+settings-activity-add-game = Oyun Ekle
 # Context: appearance_menu
 settings-appearance-menu-display = Görüntülemek
 # Context: appearance_menu

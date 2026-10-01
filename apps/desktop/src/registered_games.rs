@@ -16,6 +16,9 @@ pub struct Registered {
 	loaded: bool,
 	writer: Option<mpsc::Sender<Vec<RegisteredGame>>>,
 	programs: Option<mpsc::Receiver<Vec<String>>>,
+	/// Executable the scan reported last, so a play session writes the file only as it
+	/// starts and stops.
+	playing: Option<String>,
 }
 
 impl Registered {
@@ -76,6 +79,26 @@ impl Registered {
 
 	pub fn games(&self) -> &[RegisteredGame] {
 		&self.saved
+	}
+
+	/// Adds detected games to the Added Games list and keeps their last-played time, as
+	/// Discord does. Edits land in `messaging` and are written by the next [`Self::sync`].
+	pub fn record(&mut self, messaging: &mut ui::MessagingUi, now_ms: u64) {
+		// The stored list replaces the page's list when it loads; recording waits for it.
+		if !self.loaded {
+			return;
+		}
+		let running = messaging.running_game.as_ref();
+		if running.map(|game| &game.executable) == self.playing.as_ref() {
+			return;
+		}
+		if let Some(previous) = self.playing.take() {
+			games::stopped(&mut messaging.registered_games, &previous, now_ms);
+		}
+		if let Some(game) = running {
+			games::record(&mut messaging.registered_games, game, now_ms);
+			self.playing = Some(game.executable.clone());
+		}
 	}
 }
 
@@ -181,6 +204,35 @@ mod tests {
 	}
 
 	#[test]
+	fn detected_games_are_recorded_once_per_play_session() {
+		let mut registered = Registered {
+			loaded: true,
+			..Registered::default()
+		};
+		let mut messaging = ui::MessagingUi::default();
+		messaging.running_game = Some(games::RunningGame {
+			executable: "opt/scanned".into(),
+			name: "Scanned game".into(),
+			application: Some(model::Id(7)),
+			renamed: false,
+		});
+		registered.record(&mut messaging, 10);
+		registered.record(&mut messaging, 11);
+		assert_eq!(messaging.registered_games.len(), 1);
+		assert_eq!(messaging.registered_games[0].last_played, Some(10));
+		assert!(messaging.registered_games[0].detected());
+		let running = messaging.running_game.take();
+		registered.record(&mut messaging, 20);
+		assert_eq!(messaging.registered_games[0].last_played, Some(20));
+		// Nothing is recorded before the stored list has loaded.
+		let mut loading = Registered::default();
+		let mut fresh = ui::MessagingUi::default();
+		fresh.running_game = running;
+		loading.record(&mut fresh, 30);
+		assert!(fresh.registered_games.is_empty());
+	}
+
+	#[test]
 	fn stored_list_round_trips_and_rejects_oversize_files() {
 		let directory = std::env::temp_dir().join(format!("serein-games-{}", std::process::id()));
 		let path = directory.join("registered_games.json");
@@ -189,9 +241,19 @@ mod tests {
 			name: "My game".into(),
 			application: None,
 			hidden: false,
+			last_played: Some(1_700_000_000_000),
 		}];
 		write(&path, &list).unwrap();
 		assert_eq!(read(path.clone()).unwrap(), list);
+		// Lists written before detections were recorded still load.
+		std::fs::write(
+			&path,
+			br#"[{"executable":"a.exe","name":"A","application":"7","hidden":true}]"#,
+		)
+		.unwrap();
+		let legacy = read(path.clone()).unwrap();
+		assert_eq!(legacy[0].last_played, None);
+		assert!(legacy[0].detected() && legacy[0].hidden);
 		std::fs::write(&path, vec![b' '; MAX_FILE as usize + 1]).unwrap();
 		assert!(read(path).is_none());
 		let _ = std::fs::remove_dir_all(directory);

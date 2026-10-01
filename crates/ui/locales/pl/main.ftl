@@ -14,7 +14,6 @@ page-appearance = Wygląd
 page-chat = Pogawędzić
 page-messaging-permissions = Uprawnienia do przesyłania wiadomości
 page-notifications = Powiadomienia
-page-activity = Aktywność w grze
 page-registered-games = Zarejestrowane gry
 page-voice = Głos i wideo
 page-keybinds = Skróty klawiszowe
@@ -29,8 +28,7 @@ description-appearance = Motyw, kolory, efekty okienne i układ.
 description-chat = Jak zachowują się wiadomości, multimedia, linki i przewijanie.
 description-messaging-permissions = Kontroluj, kto może się z Tobą kontaktować i w jaki sposób wiadomości są filtrowane.
 description-notifications = Wybierz, jakie powiadomienia chcesz otrzymywać i jak mają się wyświetlać.
-description-activity = Pokaż innym w co grasz.
-description-registered-games = Popraw wykryte gry i dodaj te, których Serein nie znalazł.
+description-registered-games = Udostępniaj, w co grasz, oraz poprawiaj lub dodawaj gry wykryte przez Serein.
 description-voice = Mikrofon, głośniki, kamera i przetwarzanie głosu.
 description-keybinds = Skróty klawiaturowe dla Serein.
 description-storage = Co Serein przechowuje na tym urządzeniu.
@@ -3234,6 +3232,92 @@ settings-account-page-signed-in-with-your-discord-account = Zalogowano się na s
 settings-activity-settings-detect-running-games-and-ask-discord-to-share-them-as = Wykryj uruchomione gry i poproś Discorda o udostępnienie ich jako aktywności.
 # Context: activity_settings
 settings-activity-settings-share-game-activity = Udostępnij aktywność w grze
+# Context: activity_settings
+settings-activity-enable-on-discord = Włącz na Discordzie
+# Context: activity_settings
+settings-activity-check-again = Sprawdź ponownie
+# Context: activity_settings
+settings-activity-sharing-is-off = Udostępnianie aktywności jest wyłączone
+# Context: activity_settings
+settings-activity-sharing-your-game = Udostępniasz swoją grę
+# Context: activity_settings
+settings-activity-looking = Szukanie uruchomionej gry
+# Context: activity_settings
+settings-activity-demo-detail = Przykładowa aktywność, nigdy nie jest udostępniana ani zapisywana.
+# Context: activity_settings
+settings-activity-status-offline-preview = Podgląd offline: przykładowa aktywność, nigdy nie jest udostępniana ani zapisywana.
+# Context: activity_settings
+settings-activity-status-unconfirmed = Tylko podgląd lokalny. Oczekiwanie na potwierdzenie udostępniania przez Discorda.
+# Context: activity_settings
+settings-activity-status-received = Discord otrzymał Twoją grę, ale nie pokazuje jej publicznie.
+# Context: activity_settings
+settings-activity-status-listed = Discord pokazuje Twoją grę. Ustawienia prywatności serwerów i znajomych nadal obowiązują.
+# Context: activity_settings
+settings-activity-status-hidden = Discord ukrywa Twoją grę. Sprawdź w Discordzie Zarejestrowane gry i Udostępnianie aktywności.
+# Context: activity_settings
+settings-activity-status-missing = Discord nie pokazał Twojej gry publicznie. Sprawdź tam Zarejestrowane gry i ustawienia udostępniania na serwerach.
+# Context: activity_settings
+settings-activity-status-sharing-off = Udostępnianie aktywności dla całego konta Discord jest wyłączone.
+# Context: activity_settings
+settings-activity-status-checking = Sprawdzanie ustawienia udostępniania aktywności na Discordzie…
+# Context: activity_settings
+settings-activity-status-check-failed = Nie udało się sprawdzić ani zmienić ustawienia udostępniania aktywności na Discordzie.
+# Context: activity_settings
+settings-activity-status-updating = Aktualizowanie ustawienia udostępniania aktywności na Discordzie…
+# Context: activity_settings
+settings-activity-status-request-failed = Nie udało się zażądać zmiany ustawienia. Spróbuj ponownie.
+# Context: activity_settings
+settings-activity-current-game = Bieżąca gra
+# Context: activity_settings
+settings-activity-now-playing = Grasz teraz!
+# Context: activity_settings
+settings-activity-stop-detecting-current = To nie ta gra? Przestań ją wykrywać.
+# Context: activity_settings
+settings-activity-reported-by-game = Zgłoszone przez grę przez Rich Presence.
+# Context: activity_settings
+settings-activity-no-game-detected = Nie wykryto żadnej gry
+# Context: activity_settings
+settings-activity-turn-on-sharing = Włącz powyżej Udostępnij aktywność w grze, aby wykrywać gry.
+# Context: activity_settings
+settings-activity-not-seeing-your-game = Nie widzisz swojej gry?
+# Context: activity_settings
+settings-activity-add-it = Dodaj ją!
+# Context: activity_settings
+settings-activity-added-games = Dodane gry
+# Context: activity_settings
+settings-activity-no-games-added = Brak dodanych gier
+# Context: activity_settings
+settings-activity-hidden = Ukryta. Serein nie będzie wykrywać tej gry.
+# Context: activity_settings
+settings-activity-detected = Wykryto automatycznie
+# Context: activity_settings
+settings-activity-last-played-today = Ostatnio grano dzisiaj
+# Context: activity_settings
+settings-activity-last-played-yesterday = Ostatnio grano wczoraj
+# Context: activity_settings
+settings-activity-last-played = Ostatnio grano { $date }
+# Context: activity_settings
+settings-activity-restore = Przywróć
+# Context: activity_settings
+settings-activity-restore-hint = Ponownie wykrywaj tę grę.
+# Context: activity_settings
+settings-activity-stop-detecting = Przestań wykrywać tę grę
+# Context: activity_settings
+settings-activity-remove-game = Usuń tę grę
+# Context: activity_settings
+settings-activity-click-to-rename = Kliknij, aby zmienić nazwę
+# Context: activity_settings
+settings-activity-add-a-game = Dodaj grę
+# Context: activity_settings
+settings-activity-choose-program = Wybierz uruchomiony program. Serein pokaże go jako Twoją grę, gdy tylko będzie działać.
+# Context: activity_settings
+settings-activity-search-programs = Szukaj uruchomionych programów
+# Context: activity_settings
+settings-activity-reading-programs = Odczytywanie uruchomionych programów…
+# Context: activity_settings
+settings-activity-no-matching-programs = Nie działają żadne pasujące programy.
+# Context: activity_settings
+settings-activity-add-game = Dodaj grę
 # Context: appearance_menu
 settings-appearance-menu-display = Wyświetlacz
 # Context: appearance_menu

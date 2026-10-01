@@ -14,7 +14,6 @@ page-appearance = Appearance
 page-chat = Chat
 page-messaging-permissions = Messaging Permissions
 page-notifications = Notifications
-page-activity = Game Activity
 page-registered-games = Registered Games
 page-voice = Voice & Video
 page-keybinds = Keybinds
@@ -29,8 +28,7 @@ description-appearance = Theme, colours, window effects and layout.
 description-chat = How messages, media, links and scrolling behave.
 description-messaging-permissions = Control who can contact you and how messages are filtered.
 description-notifications = Choose which notifications you receive and how they appear.
-description-activity = Show others what you are playing.
-description-registered-games = Fix detected games and add the ones Serein misses.
+description-registered-games = Share what you play, and fix or add the games Serein detects.
 description-voice = Microphone, speakers, camera and voice processing.
 description-keybinds = Keyboard shortcuts for Serein.
 description-storage = What Serein keeps on this device.
@@ -3235,6 +3233,92 @@ settings-account-page-signed-in-with-your-discord-account = Signed in with your 
 settings-activity-settings-detect-running-games-and-ask-discord-to-share-them-as = Detect running games and ask Discord to share them as activity.
 # Context: activity_settings
 settings-activity-settings-share-game-activity = Share game activity
+# Context: activity_settings
+settings-activity-enable-on-discord = Enable on Discord
+# Context: activity_settings
+settings-activity-check-again = Check again
+# Context: activity_settings
+settings-activity-sharing-is-off = Activity sharing is off
+# Context: activity_settings
+settings-activity-sharing-your-game = Sharing your game
+# Context: activity_settings
+settings-activity-looking = Looking for a running game
+# Context: activity_settings
+settings-activity-demo-detail = Synthetic activity, never shared or saved.
+# Context: activity_settings
+settings-activity-status-offline-preview = Offline preview: synthetic activity, never shared or saved.
+# Context: activity_settings
+settings-activity-status-unconfirmed = Local preview only. Waiting for Discord to confirm sharing.
+# Context: activity_settings
+settings-activity-status-received = Discord received your game, but has not listed it publicly.
+# Context: activity_settings
+settings-activity-status-listed = Discord lists your game. Server and friend privacy settings still apply.
+# Context: activity_settings
+settings-activity-status-hidden = Discord is hiding your game. Check Registered Games and Activity Sharing in Discord.
+# Context: activity_settings
+settings-activity-status-missing = Discord did not list your game publicly. Check its Registered Games and server sharing controls.
+# Context: activity_settings
+settings-activity-status-sharing-off = Discord's account-wide activity sharing is off.
+# Context: activity_settings
+settings-activity-status-checking = Checking Discord's activity sharing setting…
+# Context: activity_settings
+settings-activity-status-check-failed = Could not check or change Discord's activity sharing setting.
+# Context: activity_settings
+settings-activity-status-updating = Updating Discord's activity sharing setting…
+# Context: activity_settings
+settings-activity-status-request-failed = Could not request the setting change. Try again.
+# Context: activity_settings
+settings-activity-current-game = Current Game
+# Context: activity_settings
+settings-activity-now-playing = Now Playing!
+# Context: activity_settings
+settings-activity-stop-detecting-current = Not this game? Stop detecting it.
+# Context: activity_settings
+settings-activity-reported-by-game = Reported by the game through Rich Presence.
+# Context: activity_settings
+settings-activity-no-game-detected = No game detected
+# Context: activity_settings
+settings-activity-turn-on-sharing = Turn on Share game activity above to detect games.
+# Context: activity_settings
+settings-activity-not-seeing-your-game = Not seeing your game?
+# Context: activity_settings
+settings-activity-add-it = Add it!
+# Context: activity_settings
+settings-activity-added-games = Added Games
+# Context: activity_settings
+settings-activity-no-games-added = No games added
+# Context: activity_settings
+settings-activity-hidden = Hidden. Serein will not detect this game.
+# Context: activity_settings
+settings-activity-detected = Detected automatically
+# Context: activity_settings
+settings-activity-last-played-today = Last played today
+# Context: activity_settings
+settings-activity-last-played-yesterday = Last played yesterday
+# Context: activity_settings
+settings-activity-last-played = Last played { $date }
+# Context: activity_settings
+settings-activity-restore = Restore
+# Context: activity_settings
+settings-activity-restore-hint = Detect this game again.
+# Context: activity_settings
+settings-activity-stop-detecting = Stop detecting this game
+# Context: activity_settings
+settings-activity-remove-game = Remove this game
+# Context: activity_settings
+settings-activity-click-to-rename = Click to rename
+# Context: activity_settings
+settings-activity-add-a-game = Add a game
+# Context: activity_settings
+settings-activity-choose-program = Choose a running program. Serein shows it as your game whenever it runs.
+# Context: activity_settings
+settings-activity-search-programs = Search running programs
+# Context: activity_settings
+settings-activity-reading-programs = Reading running programs…
+# Context: activity_settings
+settings-activity-no-matching-programs = No matching programs are running.
+# Context: activity_settings
+settings-activity-add-game = Add Game
 # Context: appearance_menu
 settings-appearance-menu-display = Display
 # Context: appearance_menu

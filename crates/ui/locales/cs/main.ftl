@@ -14,7 +14,6 @@ page-appearance = Vzhled
 page-chat = Chat
 page-messaging-permissions = Oprávnění zpráv
 page-notifications = Oznámení
-page-activity = Herní aktivita
 page-registered-games = Registrované hry
 page-voice = Hlas a video
 page-keybinds = Klávesové zkratky
@@ -29,8 +28,7 @@ description-appearance = Motiv, barvy, efekty okna a rozvržení.
 description-chat = Chování zpráv, médií, odkazů a posouvání.
 description-messaging-permissions = Určete, kdo vás může kontaktovat a jak se filtrují zprávy.
 description-notifications = Zvolte, která oznámení dostáváte a jak se zobrazují.
-description-activity = Ukažte ostatním, co hrajete.
-description-registered-games = Opravte rozpoznané hry a přidejte ty, které Serein nenašel.
+description-registered-games = Sdílejte, co hrajete, a opravte nebo přidejte hry, které Serein rozpozná.
 description-voice = Mikrofon, reproduktory, kamera a zpracování hlasu.
 description-keybinds = Klávesové zkratky aplikace Serein.
 description-storage = Co Serein uchovává na tomto zařízení.
@@ -3234,6 +3232,92 @@ settings-account-page-signed-in-with-your-discord-account = Přihlášeni pomoc�
 settings-activity-settings-detect-running-games-and-ask-discord-to-share-them-as = Zjistěte běžící hry a požádejte Discord, aby je sdílel jako aktivitu.
 # Context: activity_settings
 settings-activity-settings-share-game-activity = Sdílejte herní aktivitu
+# Context: activity_settings
+settings-activity-enable-on-discord = Zapnout na Discordu
+# Context: activity_settings
+settings-activity-check-again = Zkontrolovat znovu
+# Context: activity_settings
+settings-activity-sharing-is-off = Sdílení aktivity je vypnuté
+# Context: activity_settings
+settings-activity-sharing-your-game = Sdílíte svou hru
+# Context: activity_settings
+settings-activity-looking = Hledání spuštěné hry
+# Context: activity_settings
+settings-activity-demo-detail = Ukázková aktivita, nikdy se nesdílí ani neukládá.
+# Context: activity_settings
+settings-activity-status-offline-preview = Offline náhled: ukázková aktivita, nikdy se nesdílí ani neukládá.
+# Context: activity_settings
+settings-activity-status-unconfirmed = Pouze místní náhled. Čeká se, až Discord sdílení potvrdí.
+# Context: activity_settings
+settings-activity-status-received = Discord vaši hru přijal, ale veřejně ji nezobrazuje.
+# Context: activity_settings
+settings-activity-status-listed = Discord vaši hru zobrazuje. Nastavení soukromí serverů a přátel stále platí.
+# Context: activity_settings
+settings-activity-status-hidden = Discord vaši hru skrývá. Zkontrolujte v Discordu Registrované hry a Sdílení aktivity.
+# Context: activity_settings
+settings-activity-status-missing = Discord vaši hru veřejně nezobrazil. Zkontrolujte jeho Registrované hry a nastavení sdílení na serverech.
+# Context: activity_settings
+settings-activity-status-sharing-off = Sdílení aktivity pro celý účet Discord je vypnuté.
+# Context: activity_settings
+settings-activity-status-checking = Kontroluje se nastavení sdílení aktivity na Discordu…
+# Context: activity_settings
+settings-activity-status-check-failed = Nastavení sdílení aktivity na Discordu se nepodařilo zkontrolovat ani změnit.
+# Context: activity_settings
+settings-activity-status-updating = Aktualizuje se nastavení sdílení aktivity na Discordu…
+# Context: activity_settings
+settings-activity-status-request-failed = Změnu nastavení se nepodařilo vyžádat. Zkuste to znovu.
+# Context: activity_settings
+settings-activity-current-game = Aktuální hra
+# Context: activity_settings
+settings-activity-now-playing = Právě hrajete!
+# Context: activity_settings
+settings-activity-stop-detecting-current = Není to tato hra? Přestaňte ji rozpoznávat.
+# Context: activity_settings
+settings-activity-reported-by-game = Hlášeno hrou přes Rich Presence.
+# Context: activity_settings
+settings-activity-no-game-detected = Žádná hra nebyla rozpoznána
+# Context: activity_settings
+settings-activity-turn-on-sharing = Pro rozpoznávání her zapněte výše Sdílet herní aktivitu.
+# Context: activity_settings
+settings-activity-not-seeing-your-game = Nevidíte svou hru?
+# Context: activity_settings
+settings-activity-add-it = Přidejte ji!
+# Context: activity_settings
+settings-activity-added-games = Přidané hry
+# Context: activity_settings
+settings-activity-no-games-added = Žádné přidané hry
+# Context: activity_settings
+settings-activity-hidden = Skryto. Serein tuto hru nebude rozpoznávat.
+# Context: activity_settings
+settings-activity-detected = Rozpoznáno automaticky
+# Context: activity_settings
+settings-activity-last-played-today = Naposledy hráno dnes
+# Context: activity_settings
+settings-activity-last-played-yesterday = Naposledy hráno včera
+# Context: activity_settings
+settings-activity-last-played = Naposledy hráno { $date }
+# Context: activity_settings
+settings-activity-restore = Obnovit
+# Context: activity_settings
+settings-activity-restore-hint = Znovu tuto hru rozpoznávat.
+# Context: activity_settings
+settings-activity-stop-detecting = Přestat rozpoznávat tuto hru
+# Context: activity_settings
+settings-activity-remove-game = Odebrat tuto hru
+# Context: activity_settings
+settings-activity-click-to-rename = Kliknutím přejmenujete
+# Context: activity_settings
+settings-activity-add-a-game = Přidat hru
+# Context: activity_settings
+settings-activity-choose-program = Vyberte spuštěný program. Serein ho zobrazí jako vaši hru, kdykoli poběží.
+# Context: activity_settings
+settings-activity-search-programs = Hledat spuštěné programy
+# Context: activity_settings
+settings-activity-reading-programs = Načítání spuštěných programů…
+# Context: activity_settings
+settings-activity-no-matching-programs = Neběží žádné odpovídající programy.
+# Context: activity_settings
+settings-activity-add-game = Přidat hru
 # Context: appearance_menu
 settings-appearance-menu-display = Zobrazit
 # Context: appearance_menu

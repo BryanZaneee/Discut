@@ -630,7 +630,7 @@ settings. Other views have the extra conditions described here.
 | `appearance` / `Appearance` | Appearance | Opens appearance and reading controls. |
 | `messaging_permissions` / `MessagingPermissions` | Messaging Permissions | Opens messaging privacy controls. |
 | `notifications` / `Notifications` | Notifications | Opens notification preferences. |
-| `activity` / `Activity` | Game Activity | Opens activity settings. |
+| `activity` / `Activity` | Registered Games | Opens activity sharing and Registered Games settings. |
 | `voice_settings` / `VoiceSettings` | Voice & Video | Opens device and voice settings; does not join a call or start media. |
 | `keybinds` / `Keybinds` | Keybinds | Opens keyboard shortcuts. |
 | `storage` / `Storage` | Data & Privacy | Opens local storage controls; does not clear data. |

@@ -2728,8 +2728,7 @@ impl Desktop {
 						.any(|game| game.executable == "osu!.exe" && game.hidden)
 				});
 			let changed = self.state.set_local_game_activity(activity);
-			self.messaging.game_activity_status =
-				"Offline preview: synthetic activity, never shared or saved.";
+			self.messaging.game_activity_status = "settings-activity-status-offline-preview";
 			if changed
 				|| previous
 					!= (
@@ -2814,22 +2813,14 @@ impl Desktop {
 								.activity_observation
 								.borrow()
 							{
-								Observation::Unconfirmed => {
-									"Local preview only. Waiting for Discord to confirm sharing."
-								}
-								Observation::ServerReceived => {
-									"Discord received your game, but has not listed it publicly."
-								}
-								Observation::ServerListed => {
-									"Discord lists your game. Server and friend privacy settings still apply."
-								}
+								Observation::Unconfirmed => "settings-activity-status-unconfirmed",
+								Observation::ServerReceived => "settings-activity-status-received",
+								Observation::ServerListed => "settings-activity-status-listed",
 								Observation::ServerHidden => {
 									self.messaging.discord_activity_sharing_retry = true;
-									"Discord is hiding your game. Check Registered Games and Activity Sharing in Discord."
+									"settings-activity-status-hidden"
 								}
-								Observation::ServerMissing => {
-									"Discord did not list your game publicly. Check its Registered Games and server sharing controls."
-								}
+								Observation::ServerMissing => "settings-activity-status-missing",
 							};
 						}
 					}
@@ -2845,11 +2836,11 @@ impl Desktop {
 							match value {
 								Some(false) => {
 									self.messaging.game_activity_status =
-										"Discord's account-wide activity sharing is off."
+										"settings-activity-status-sharing-off"
 								}
 								None => {
 									self.messaging.game_activity_status =
-										"Checking Discord's activity sharing setting..."
+										"settings-activity-status-checking"
 								}
 								Some(true) => {}
 							}
@@ -2859,23 +2850,29 @@ impl Desktop {
 						self.messaging.discord_activity_sharing_retry = true;
 						if !self.game_activity.needs_attention() {
 							self.messaging.game_activity_status =
-								"Could not check or change Discord's activity sharing setting.";
+								"settings-activity-status-check-failed";
 						}
 					}
 				}
 				if let Some(enable) = sharing_request {
 					if connection.activity_sharing_request.try_send(enable).is_ok() {
 						self.messaging.discord_activity_sharing_busy = true;
-						self.messaging.game_activity_status =
-							"Updating Discord's activity sharing setting...";
+						self.messaging.game_activity_status = "settings-activity-status-updating";
 					} else {
 						self.messaging.discord_activity_sharing_retry = true;
 						self.messaging.game_activity_status =
-							"Could not request the setting change. Try again.";
+							"settings-activity-status-request-failed";
 					}
 				}
 			}
 		}
+		// Detected games join Added Games so a wrong detection can be hidden later.
+		let now_ms = std::time::SystemTime::now()
+			.duration_since(std::time::UNIX_EPOCH)
+			.unwrap_or_default()
+			.as_millis()
+			.min(u128::from(u64::MAX)) as u64;
+		self.registered_games.record(&mut self.messaging, now_ms);
 		// Keep the existing game preview; Spotify fills the activity card while no game is active.
 		if own_activity.is_none() && self.state.gateway_connected {
 			own_activity = self.connection.as_ref().and_then(|connection| {

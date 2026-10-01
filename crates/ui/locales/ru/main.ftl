@@ -14,7 +14,6 @@ page-appearance = Появление
 page-chat = Чат
 page-messaging-permissions = Разрешения на обмен сообщениями
 page-notifications = Уведомления
-page-activity = Игровая активность
 page-registered-games = Зарегистрированные игры
 page-voice = Голос и видео
 page-keybinds = Сочетания клавиш
@@ -29,8 +28,7 @@ description-appearance = Тема, цвета, оконные эффекты и 
 description-chat = Как ведут себя сообщения, медиа, ссылки и прокрутка.
 description-messaging-permissions = Контролируйте, кто может связаться с вами и как фильтруются сообщения.
 description-notifications = Выберите, какие уведомления вы будете получать и как они будут отображаться.
-description-activity = Покажите другим, во что вы играете.
-description-registered-games = Исправьте найденные игры и добавьте те, которые Serein не нашёл.
+description-registered-games = Делитесь тем, во что играете, и исправляйте или добавляйте игры, найденные Serein.
 description-voice = Микрофон, динамики, камера и обработка голоса.
 description-keybinds = Сочетания клавиш для Серейн.
 description-storage = Что Серейн хранит на этом устройстве.
@@ -3235,6 +3233,92 @@ settings-account-page-signed-in-with-your-discord-account = Вошли в сво
 settings-activity-settings-detect-running-games-and-ask-discord-to-share-them-as = Обнаруживайте запущенные игры и попросите Discord поделиться ими как активностью.
 # Context: activity_settings
 settings-activity-settings-share-game-activity = Делитесь игровой активностью
+# Context: activity_settings
+settings-activity-enable-on-discord = Включить в Discord
+# Context: activity_settings
+settings-activity-check-again = Проверить снова
+# Context: activity_settings
+settings-activity-sharing-is-off = Показ активности выключен
+# Context: activity_settings
+settings-activity-sharing-your-game = Ваша игра показывается
+# Context: activity_settings
+settings-activity-looking = Поиск запущенной игры
+# Context: activity_settings
+settings-activity-demo-detail = Синтетическая активность, никогда не публикуется и не сохраняется.
+# Context: activity_settings
+settings-activity-status-offline-preview = Офлайн-просмотр: синтетическая активность, никогда не публикуется и не сохраняется.
+# Context: activity_settings
+settings-activity-status-unconfirmed = Только локальный просмотр. Ожидание подтверждения от Discord.
+# Context: activity_settings
+settings-activity-status-received = Discord получил вашу игру, но не показывает её публично.
+# Context: activity_settings
+settings-activity-status-listed = Discord показывает вашу игру. Настройки приватности серверов и друзей по-прежнему действуют.
+# Context: activity_settings
+settings-activity-status-hidden = Discord скрывает вашу игру. Проверьте в Discord «Зарегистрированные игры» и «Показ активности».
+# Context: activity_settings
+settings-activity-status-missing = Discord не показал вашу игру публично. Проверьте там «Зарегистрированные игры» и настройки показа на серверах.
+# Context: activity_settings
+settings-activity-status-sharing-off = Показ активности для всего аккаунта Discord выключен.
+# Context: activity_settings
+settings-activity-status-checking = Проверка настройки показа активности в Discord…
+# Context: activity_settings
+settings-activity-status-check-failed = Не удалось проверить или изменить настройку показа активности в Discord.
+# Context: activity_settings
+settings-activity-status-updating = Обновление настройки показа активности в Discord…
+# Context: activity_settings
+settings-activity-status-request-failed = Не удалось запросить изменение настройки. Попробуйте ещё раз.
+# Context: activity_settings
+settings-activity-current-game = Текущая игра
+# Context: activity_settings
+settings-activity-now-playing = Сейчас играете!
+# Context: activity_settings
+settings-activity-stop-detecting-current = Не та игра? Перестаньте её обнаруживать.
+# Context: activity_settings
+settings-activity-reported-by-game = Сообщено игрой через Rich Presence.
+# Context: activity_settings
+settings-activity-no-game-detected = Игра не обнаружена
+# Context: activity_settings
+settings-activity-turn-on-sharing = Включите выше «Делитесь игровой активностью», чтобы обнаруживать игры.
+# Context: activity_settings
+settings-activity-not-seeing-your-game = Не видите свою игру?
+# Context: activity_settings
+settings-activity-add-it = Добавьте её!
+# Context: activity_settings
+settings-activity-added-games = Добавленные игры
+# Context: activity_settings
+settings-activity-no-games-added = Нет добавленных игр
+# Context: activity_settings
+settings-activity-hidden = Скрыто. Serein не будет обнаруживать эту игру.
+# Context: activity_settings
+settings-activity-detected = Обнаружено автоматически
+# Context: activity_settings
+settings-activity-last-played-today = Последний запуск сегодня
+# Context: activity_settings
+settings-activity-last-played-yesterday = Последний запуск вчера
+# Context: activity_settings
+settings-activity-last-played = Последний запуск { $date }
+# Context: activity_settings
+settings-activity-restore = Восстановить
+# Context: activity_settings
+settings-activity-restore-hint = Снова обнаруживать эту игру.
+# Context: activity_settings
+settings-activity-stop-detecting = Не обнаруживать эту игру
+# Context: activity_settings
+settings-activity-remove-game = Удалить эту игру
+# Context: activity_settings
+settings-activity-click-to-rename = Нажмите, чтобы переименовать
+# Context: activity_settings
+settings-activity-add-a-game = Добавить игру
+# Context: activity_settings
+settings-activity-choose-program = Выберите запущенную программу. Serein будет показывать её как вашу игру, когда она запущена.
+# Context: activity_settings
+settings-activity-search-programs = Поиск запущенных программ
+# Context: activity_settings
+settings-activity-reading-programs = Чтение запущенных программ…
+# Context: activity_settings
+settings-activity-no-matching-programs = Подходящие программы не запущены.
+# Context: activity_settings
+settings-activity-add-game = Добавить игру
 # Context: appearance_menu
 settings-appearance-menu-display = Отображать
 # Context: appearance_menu

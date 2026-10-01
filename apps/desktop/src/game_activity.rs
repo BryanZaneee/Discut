@@ -856,11 +856,13 @@ fn choose(
 		let own = registered.iter().find(|game| game.executable == executable);
 		let found = match own {
 			Some(game) if game.hidden => continue,
+			// Recorded detections are registered too; only a changed name counts as renamed.
 			Some(game) => RunningGame {
+				renamed: game.application.is_none()
+					|| games.find(path).is_none_or(|(_, name)| name != game.name),
 				executable,
 				name: game.name.clone(),
 				application: game.application,
-				renamed: true,
 			},
 			None => {
 				let Some((id, name)) = games.find(path) else {
@@ -1395,6 +1397,7 @@ mod tests {
 			name: name.into(),
 			application,
 			hidden,
+			last_played: None,
 		};
 		let hidden = [own("usr/bin/other", "Other game", Some(model::Id(8)), true)];
 		assert_eq!(
@@ -1409,6 +1412,14 @@ mod tests {
 		)];
 		let found = choose(&games, &renamed, &paths[1..], None).unwrap();
 		assert_eq!((found.name.as_str(), found.renamed), ("Renamed", true));
+		// A recorded detection keeps Discord's name and is still not "renamed".
+		let mut recorded = vec![];
+		let scanned = choose(&games, &recorded, &paths[1..], None).unwrap();
+		model::registered_games::record(&mut recorded, &scanned, 1);
+		let found = choose(&games, &recorded, &paths[1..], None).unwrap();
+		assert_eq!(found, scanned);
+		recorded[0].hidden = true;
+		assert!(choose(&games, &recorded, &paths[1..], None).is_none());
 		// A manually added executable is detected under its own name, without an application.
 		let added = [own("opt/tools/mine.x86_64", "My game", None, false)];
 		let found = choose(&games, &added, &["/opt/tools/Mine.x86_64".to_owned()], None).unwrap();

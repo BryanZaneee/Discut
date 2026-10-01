@@ -3717,6 +3717,8 @@ updates-update-settings-restart-to-update = Restart to update
 updates-update-settings-serein-was-installed-via-your-distribution-run-this-in-a = Serein was installed via your distribution. Run this in a terminal to update.
 # Context: update_settings
 updates-update-settings-support-diagnostics = Support & diagnostics
+# Context: update_log
+updates-update-log = Update log
 # Context: update_settings
 updates-update-settings-update-checks-are-disabled-in-debug-builds = Update checks are disabled in debug builds.
 

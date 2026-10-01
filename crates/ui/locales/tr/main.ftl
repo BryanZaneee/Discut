@@ -3713,6 +3713,8 @@ updates-update-settings-restart-to-update = Güncellemek için yeniden başlatı
 updates-update-settings-serein-was-installed-via-your-distribution-run-this-in-a = Serein dağıtımınız aracılığıyla kuruldu. Güncellemek için bunu bir terminalde çalıştırın.
 # Context: update_settings
 updates-update-settings-support-diagnostics = Destek ve teşhis
+# Context: update_log
+updates-update-log = Güncelleme günlüğü
 # Context: update_settings
 updates-update-settings-update-checks-are-disabled-in-debug-builds = Hata ayıklama yapılarında güncelleme kontrolleri devre dışı bırakılır.
 

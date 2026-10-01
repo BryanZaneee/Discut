@@ -3718,6 +3718,8 @@ updates-update-settings-restart-to-update = Перезапустите, чтоб
 updates-update-settings-serein-was-installed-via-your-distribution-run-this-in-a = Serein был установлен через ваш дистрибутив. Запустите это в терминале для обновления.
 # Context: update_settings
 updates-update-settings-support-diagnostics = Поддержка и диагностика
+# Context: update_log
+updates-update-log = Журнал обновлений
 # Context: update_settings
 updates-update-settings-update-checks-are-disabled-in-debug-builds = Проверки обновлений отключены в отладочных сборках.
 

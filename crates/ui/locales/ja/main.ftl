@@ -3713,6 +3713,8 @@ updates-update-settings-restart-to-update = 更新するには再起動してく
 updates-update-settings-serein-was-installed-via-your-distribution-run-this-in-a = Serein はディストリビューション経由でインストールされました。ターミナルでこれを実行して更新します。
 # Context: update_settings
 updates-update-settings-support-diagnostics = サポートと診断
+# Context: update_log
+updates-update-log = 更新履歴
 # Context: update_settings
 updates-update-settings-update-checks-are-disabled-in-debug-builds = デバッグ ビルドでは更新チェックが無効になります。
 

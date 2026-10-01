@@ -456,6 +456,7 @@ fn demo_check_updates() {
 	messaging.updates.check_requested = true;
 	assert!(!updater.sync(&ctx, &runtime, &mut messaging.updates, false));
 	assert!(messaging.updates.available && !messaging.updates.ready);
+	assert!(!messaging.updates.log.is_empty());
 	messaging.updates.download_requested = true;
 	assert!(!updater.sync(&ctx, &runtime, &mut messaging.updates, false));
 	assert!(messaging.updates.ready);

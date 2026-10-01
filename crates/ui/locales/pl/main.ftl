@@ -3717,6 +3717,8 @@ updates-update-settings-restart-to-update = Uruchom ponownie, aby zaktualizować
 updates-update-settings-serein-was-installed-via-your-distribution-run-this-in-a = Serein został zainstalowany poprzez twoją dystrybucję. Uruchom to w terminalu, aby zaktualizować.
 # Context: update_settings
 updates-update-settings-support-diagnostics = Wsparcie i diagnostyka
+# Context: update_log
+updates-update-log = Dziennik aktualizacji
 # Context: update_settings
 updates-update-settings-update-checks-are-disabled-in-debug-builds = Sprawdzanie aktualizacji jest wyłączone w kompilacjach debugowania.
 

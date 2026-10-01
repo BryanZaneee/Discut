@@ -3717,6 +3717,8 @@ updates-update-settings-restart-to-update = Pro aktualizaci restartujte
 updates-update-settings-serein-was-installed-via-your-distribution-run-this-in-a = Serein byl nainstalován prostřednictvím vaší distribuce. Spusťte to v terminálu pro aktualizaci.
 # Context: update_settings
 updates-update-settings-support-diagnostics = Podpora a diagnostika
+# Context: update_log
+updates-update-log = Historie aktualizací
 # Context: update_settings
 updates-update-settings-update-checks-are-disabled-in-debug-builds = Kontroly aktualizací jsou v ladicích sestaveních zakázány.
 

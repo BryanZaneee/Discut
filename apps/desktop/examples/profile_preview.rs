@@ -282,67 +282,38 @@ fn extension_fixture(
 			.as_deref()
 			.ok_or("Set SEREIN_PREVIEW_PACKAGE to the external plugin package")?,
 		"serein-ocean" => {
-			include_bytes!(concat!(
-				env!("COMMUNITY_EXTENSIONS"),
-				"/themes/ocean.serein-extension"
-			))
+			include_bytes!("../../../extensions/themes/ocean.serein-extension")
 		}
-		"message-delete-protector" => include_bytes!(concat!(
-			env!("COMMUNITY_EXTENSIONS"),
-			"/plugins/packages/message-delete-protector.serein-extension"
-		)),
+		"message-delete-protector" => include_bytes!(
+			"../../../extensions/plugins/packages/message-delete-protector.serein-extension"
+		),
 		"serein-midnight" => {
-			include_bytes!(concat!(
-				env!("COMMUNITY_EXTENSIONS"),
-				"/themes/midnight.serein-extension"
-			))
+			include_bytes!("../../../extensions/themes/midnight.serein-extension")
 		}
 		"serein-rose" => {
-			include_bytes!(concat!(
-				env!("COMMUNITY_EXTENSIONS"),
-				"/themes/rose.serein-extension"
-			))
+			include_bytes!("../../../extensions/themes/rose.serein-extension")
 		}
 		"serein-forest" => {
-			include_bytes!(concat!(
-				env!("COMMUNITY_EXTENSIONS"),
-				"/themes/forest.serein-extension"
-			))
+			include_bytes!("../../../extensions/themes/forest.serein-extension")
 		}
 		"serein-latte" => {
-			include_bytes!(concat!(
-				env!("COMMUNITY_EXTENSIONS"),
-				"/themes/latte.serein-extension"
-			))
+			include_bytes!("../../../extensions/themes/latte.serein-extension")
 		}
 		"golden-theme" => {
-			include_bytes!(concat!(
-				env!("COMMUNITY_EXTENSIONS"),
-				"/themes/golden.serein-extension"
-			))
+			include_bytes!("../../../extensions/themes/golden.serein-extension")
 		}
 		"black-theme" => {
-			include_bytes!(concat!(
-				env!("COMMUNITY_EXTENSIONS"),
-				"/themes/katana.serein-extension"
-			))
+			include_bytes!("../../../extensions/themes/katana.serein-extension")
 		}
 		"obsidian-theme" => {
-			include_bytes!(concat!(
-				env!("COMMUNITY_EXTENSIONS"),
-				"/themes/obsidian.serein-extension"
-			))
+			include_bytes!("../../../extensions/themes/obsidian.serein-extension")
 		}
 		"teal-theme" => {
-			include_bytes!(concat!(
-				env!("COMMUNITY_EXTENSIONS"),
-				"/themes/teal.serein-extension"
-			))
+			include_bytes!("../../../extensions/themes/teal.serein-extension")
 		}
-		"emoji-sticker-images" => include_bytes!(concat!(
-			env!("COMMUNITY_EXTENSIONS"),
-			"/plugins/packages/emoji-sticker-images.serein-extension"
-		)),
+		"emoji-sticker-images" => include_bytes!(
+			"../../../extensions/plugins/packages/emoji-sticker-images.serein-extension"
+		),
 		_ => return Err("Unknown fixture extension".into()),
 	};
 	let package = extensions::parse_package(bytes)?;
@@ -386,45 +357,27 @@ fn seed_catalog(extensions: &mut ui::ExtensionUi, themes: bool) {
 	if themes {
 		let packages: [(&[u8], &str); 6] = [
 			(
-				include_bytes!(concat!(
-					env!("COMMUNITY_EXTENSIONS"),
-					"/themes/ocean.serein-extension"
-				)),
+				include_bytes!("../../../extensions/themes/ocean.serein-extension"),
 				"",
 			),
 			(
-				include_bytes!(concat!(
-					env!("COMMUNITY_EXTENSIONS"),
-					"/themes/obsidian.serein-extension"
-				)),
+				include_bytes!("../../../extensions/themes/obsidian.serein-extension"),
 				"Obsidian violet surfaces and lavender accents.",
 			),
 			(
-				include_bytes!(concat!(
-					env!("COMMUNITY_EXTENSIONS"),
-					"/themes/forest.serein-extension"
-				)),
+				include_bytes!("../../../extensions/themes/forest.serein-extension"),
 				"Calm forest greens and fresh leafy accents.",
 			),
 			(
-				include_bytes!(concat!(
-					env!("COMMUNITY_EXTENSIONS"),
-					"/themes/latte.serein-extension"
-				)),
+				include_bytes!("../../../extensions/themes/latte.serein-extension"),
 				"Warm coffee tones and a creamy caramel accent.",
 			),
 			(
-				include_bytes!(concat!(
-					env!("COMMUNITY_EXTENSIONS"),
-					"/themes/rose.serein-extension"
-				)),
+				include_bytes!("../../../extensions/themes/rose.serein-extension"),
 				"Soft rose accents.",
 			),
 			(
-				include_bytes!(concat!(
-					env!("COMMUNITY_EXTENSIONS"),
-					"/themes/midnight.serein-extension"
-				)),
+				include_bytes!("../../../extensions/themes/midnight.serein-extension"),
 				"Deep, quiet surfaces.",
 			),
 		];
@@ -452,12 +405,10 @@ fn seed_catalog(extensions: &mut ui::ExtensionUi, themes: bool) {
 			.collect();
 		entries[0].manifest.name = "My ocean".into();
 		entries[0].manifest.author = "You".into();
-		let image = image::load_from_memory(include_bytes!(concat!(
-			env!("COMMUNITY_EXTENSIONS"),
-			"/previews/ocean.png"
-		)))
-		.expect("valid synthetic cover")
-		.to_rgba8();
+		let image =
+			image::load_from_memory(include_bytes!("../../../extensions/previews/ocean.png"))
+				.expect("valid synthetic cover")
+				.to_rgba8();
 		entries[0].cover_image = Some(Arc::new(egui::ColorImage::from_rgba_unmultiplied(
 			[image.width() as usize, image.height() as usize],
 			image.as_raw(),
@@ -466,11 +417,8 @@ fn seed_catalog(extensions: &mut ui::ExtensionUi, themes: bool) {
 		extensions.set_entries(entries);
 		return;
 	}
-	let catalog = extensions::parse_catalog(include_bytes!(concat!(
-		env!("COMMUNITY_EXTENSIONS"),
-		"/catalog.json"
-	)))
-	.expect("valid fixture catalog");
+	let catalog = extensions::parse_catalog(include_bytes!("../../../extensions/catalog.json"))
+		.expect("valid fixture catalog");
 	extensions.set_entries(
 		catalog
 			.entries
@@ -492,8 +440,7 @@ fn seed_catalog(extensions: &mut ui::ExtensionUi, themes: bool) {
 			})
 			.collect(),
 	);
-	let previews =
-		PathBuf::from(env!("CARGO_MANIFEST_DIR")).join("../../community-extensions/previews");
+	let previews = PathBuf::from(env!("CARGO_MANIFEST_DIR")).join("../../extensions/previews");
 	{
 		let (id, filename) = ("serein-ocean", "ocean.png");
 		let image = image::open(previews.join(filename))
@@ -814,10 +761,9 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
 						.preview_themes(args.iter().any(|arg| arg == "--themes"));
 					if theme_preview {
 						prime_extension_chat(&mut state);
-						let package = extensions::parse_package(include_bytes!(concat!(
-							env!("COMMUNITY_EXTENSIONS"),
-							"/themes/katana.serein-extension"
-						)))?;
+						let package = extensions::parse_package(include_bytes!(
+							"../../../extensions/themes/katana.serein-extension"
+						))?;
 						messaging.extensions.receive_theme_edit(
 							Box::new(package),
 							None,
@@ -827,10 +773,9 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
 						);
 					}
 					if let Some(tab) = &theme_editor {
-						let mut package = extensions::parse_package(include_bytes!(concat!(
-							env!("COMMUNITY_EXTENSIONS"),
-							"/themes/ocean.serein-extension"
-						)))
+						let mut package = extensions::parse_package(include_bytes!(
+							"../../../extensions/themes/ocean.serein-extension"
+						))
 						.expect("valid theme fixture");
 						package.manifest.name = "My ocean".into();
 						package.manifest.author = "You".into();
@@ -841,10 +786,7 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
 							true,
 							false,
 						);
-						let bytes = include_bytes!(concat!(
-							env!("COMMUNITY_EXTENSIONS"),
-							"/previews/ocean.png"
-						));
+						let bytes = include_bytes!("../../../extensions/previews/ocean.png");
 						let pixels = image::load_from_memory(bytes)
 							.expect("valid fixture image")
 							.to_rgba8();

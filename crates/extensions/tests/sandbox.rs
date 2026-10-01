@@ -321,11 +321,8 @@ fn validates_themes_catalog_and_path_safe_identifiers() {
 
 #[test]
 fn catalog_preview_metadata_is_optional_and_bounded() {
-	let mut catalog: serde_json::Value = serde_json::from_slice(include_bytes!(concat!(
-		env!("COMMUNITY_EXTENSIONS"),
-		"/catalog.json"
-	)))
-	.unwrap();
+	let mut catalog: serde_json::Value =
+		serde_json::from_slice(include_bytes!("../../../extensions/catalog.json")).unwrap();
 	for entry in catalog["entries"].as_array_mut().unwrap() {
 		entry.as_object_mut().unwrap().remove("description");
 		entry.as_object_mut().unwrap().remove("preview");
@@ -369,10 +366,9 @@ fn catalog_preview_metadata_is_optional_and_bounded() {
 
 #[test]
 fn image_sharing_plugin_requires_activation_and_capability() {
-	let mut package = parse_package(include_bytes!(concat!(
-		env!("COMMUNITY_EXTENSIONS"),
-		"/plugins/packages/emoji-sticker-images.serein-extension"
-	)))
+	let mut package = parse_package(include_bytes!(
+		"../../../extensions/plugins/packages/emoji-sticker-images.serein-extension"
+	))
 	.unwrap();
 	let input = Invocation {
 		action: "activate".into(),
@@ -389,10 +385,9 @@ fn image_sharing_plugin_requires_activation_and_capability() {
 	assert!(!serde_json::from_str::<Output>("{}").unwrap().image_sharing);
 
 	{
-		let protector = parse_package(include_bytes!(concat!(
-			env!("COMMUNITY_EXTENSIONS"),
-			"/plugins/packages/message-delete-protector.serein-extension"
-		)))
+		let protector = parse_package(include_bytes!(
+			"../../../extensions/plugins/packages/message-delete-protector.serein-extension"
+		))
 		.unwrap();
 		let input = Invocation {
 			action: "activate".into(),
@@ -572,4 +567,72 @@ fn event_effects_allow_granted_storage_and_appearance_without_unsolicited_ui() {
 		]);
 		assert!(matches!(invoke(&package, &input), Err(Error::Capability)));
 	}
+}
+
+/// The published Custom RPC package through the real offline sandbox.
+#[test]
+fn custom_rpc_package_preserves_drafts_and_controls_presence() {
+	let bytes = include_bytes!("../../../extensions/plugins/packages/custom-rpc.serein-extension");
+	let package = parse_package(bytes).expect("package validates");
+	let mut input = Invocation {
+		action: "open".into(),
+		..Default::default()
+	};
+	let opened = invoke(&package, &input).expect("native editor panel validates");
+	assert!(opened.rich_presence.is_none());
+	assert!(opened.storage.is_none());
+	input.values.extend([
+		("application-id".into(), "123456789".into()),
+		("name".into(), "Synthetic Custom RPC".into()),
+		("details".into(), "Offline sandbox check".into()),
+		("large-key".into(), "cover".into()),
+		("button1-label".into(), "Example".into()),
+		("button1-url".into(), "https://example.com".into()),
+		("timer".into(), "Custom timestamps".into()),
+		("start".into(), "2024-03-01 00:00".into()),
+	]);
+	input.action = "preview".into();
+	let preview = invoke(&package, &input).expect("preview validates");
+	assert!(preview.rich_presence.is_none() && preview.storage.is_none());
+	assert!(
+		preview
+			.panel
+			.iter()
+			.any(|e| matches!(e, Element::ActivityPreview { .. }))
+	);
+	input.action = "apply".into();
+	let applied = invoke(&package, &input).expect("apply validates");
+	assert!(matches!(
+		applied.rich_presence,
+		Some(RichPresenceUpdate::Set { .. })
+	));
+	input.storage = applied.storage;
+	input.values.clear();
+	input.action = "activate".into();
+	assert!(
+		invoke(&package, &input)
+			.expect("restore validates")
+			.rich_presence
+			.is_some()
+	);
+	input.action = "stop".into();
+	let stopped = invoke(&package, &input).expect("stop validates");
+	assert!(matches!(
+		stopped.rich_presence,
+		Some(RichPresenceUpdate::Clear)
+	));
+	input.storage = stopped.storage;
+	input.action = "activate".into();
+	assert!(
+		invoke(&package, &input)
+			.expect("stopped activation validates")
+			.rich_presence
+			.is_none()
+	);
+	input.action = "apply".into();
+	input
+		.values
+		.insert("button1-url".into(), "javascript:alert(1)".into());
+	let invalid = invoke(&package, &input).expect("invalid field stays a valid editor panel");
+	assert!(invalid.rich_presence.is_none() && invalid.storage.is_none());
 }

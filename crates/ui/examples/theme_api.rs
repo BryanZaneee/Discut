@@ -2,10 +2,9 @@
 
 fn main() {
 	let ctx = egui::Context::default();
-	let package = extensions::parse_package(include_bytes!(concat!(
-		env!("COMMUNITY_EXTENSIONS"),
-		"/themes/ocean.serein-extension"
-	)))
+	let package = extensions::parse_package(include_bytes!(
+		"../../../extensions/themes/ocean.serein-extension"
+	))
 	.expect("existing color-only themes remain compatible");
 	let mut theme = package.theme.unwrap();
 	assert_eq!(theme.style, extensions::ThemeStyle::default());

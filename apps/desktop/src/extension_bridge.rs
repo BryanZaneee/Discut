@@ -2157,10 +2157,9 @@ mod tests {
 
 	#[test]
 	fn cancelled_import_cannot_replace_the_catalog_bytes_the_user_approved() {
-		let package = extensions::parse_package(include_bytes!(concat!(
-			env!("COMMUNITY_EXTENSIONS"),
-			"/themes/ocean.serein-extension"
-		)))
+		let package = extensions::parse_package(include_bytes!(
+			"../../../extensions/themes/ocean.serein-extension"
+		))
 		.unwrap();
 		let manifest = package.manifest;
 		let id = manifest.id.clone();

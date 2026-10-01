@@ -526,7 +526,8 @@ impl ChannelMenu {
 			builder = builder.danger();
 		}
 		let response = builder.show(ctx, |d| {
-			d.scroll(220.0, |ui| {
+			let fixed = dialog.kind == Kind::Edit;
+			let content = |ui: &mut egui::Ui| {
 				ui.spacing_mut().item_spacing.y = 10.0;
 				if !allowed {
 					dialog::notice(
@@ -640,10 +641,12 @@ impl ChannelMenu {
 						dialog.loaded = false;
 					}
 				}
-				if state.demo {
-					dialog::hint(ui, "channel-menu-show-offline-preview-no-server-changes");
-				}
-			});
+			};
+			if fixed {
+				d.pane(220.0, content);
+			} else {
+				d.scroll(220.0, content);
+			}
 			d.footer(|ui| {
 				let valid = dialog.kind == Kind::Delete
 					|| if dialog.kind == Kind::Edit {
@@ -727,6 +730,22 @@ impl ChannelMenu {
 					dialog::Action::Neutral,
 				)
 				.clicked();
+				// Status lives at the start of the footer, the way Discord's save bar reads.
+				if state.demo {
+					ui.with_layout(egui::Layout::left_to_right(egui::Align::Center), |ui| {
+						let colors = design::palette(ui);
+						ui.add(
+							egui::Label::new(
+								egui::RichText::new(crate::i18n::translate(
+									"channel-menu-show-offline-preview-no-server-changes",
+								))
+								.size(12.0)
+								.color(colors.muted),
+							)
+							.truncate(),
+						);
+					});
+				}
 			});
 		});
 		let overlay_was_open = dialog.integrations.overlay_open();
@@ -989,6 +1008,7 @@ impl Dialog {
 		let mut delete = false;
 		let mut content = |this: &mut Self, ui: &mut egui::Ui| match this.page {
 			Page::Permissions => {
+				design::page_title(ui, "server-roles-editor-permissions");
 				this.permissions
 					.show(ui, state, &channel, &mut this.draft.overwrites)
 			}
@@ -996,11 +1016,7 @@ impl Dialog {
 				.integrations
 				.show(ui, state, this.guild, avatars, commands),
 			Page::Overview => {
-				design::section(
-					ui,
-					&crate::i18n::translate("channel-menu-editor-overview"),
-					None,
-				);
+				design::page_title(ui, "channel-menu-editor-overview");
 				ui.add_enabled_ui(can_delete, |ui| {
 					this.overview(ui, &channel);
 					if matches!(channel.kind, 15 | 16) {
@@ -1423,6 +1439,137 @@ mod tests {
 			assert!(Rect::from_min_size(Pos2::ZERO, egui::vec2(width, 760.0)).contains_rect(save));
 			h.click(&ctx, save.center(), PointerButton::Primary);
 			assert!(h.commands.iter().any(|c| matches!(c, Command::ServerAdmin { action, .. } if matches!(action.as_ref(), model::server_admin::Action::Integrations(IntegrationAction::CreateWebhook { scope: Some(Id(20)), channel: Id(20), .. })))), "width {width}; commands {}; text {text:?}; error {:?}", h.commands.len(), h.state.server_admin.error);
+		}
+	}
+
+	#[test]
+	fn settings_pages_keep_one_modal_size_and_align_permission_toggles() {
+		use model::server_integrations::Snapshot;
+		for width in [1280.0, 1120.0, 760.0] {
+			let ctx = egui::Context::default();
+			design::apply(&ctx);
+			let mut state = test_support::chat_demo_state();
+			let mut permissions = test_support::permission_snapshot(&state);
+			for guild in &mut permissions.guilds {
+				guild.owner = state.user.as_ref().map(|u| u.id);
+			}
+			state.permissions.replace(permissions).unwrap();
+			let mut h = Harness {
+				state,
+				menu: ChannelMenu::default(),
+				prefs: Default::default(),
+				commands: vec![],
+				copied: vec![],
+				width,
+			};
+			h.menu.generation = h.state.generation;
+			h.menu.requested = Some((Id(20), Intent::Dialog(Kind::Edit)));
+			h.frame(&ctx, vec![]);
+			let Command::ChannelAction {
+				guild,
+				channel,
+				request,
+				..
+			} = h.commands.pop().unwrap()
+			else {
+				panic!()
+			};
+			h.state.apply(client_core::Envelope {
+				generation: h.state.generation,
+				event: client_core::Event::ChannelAction(
+					client_core::channel_actions::Event::Finished {
+						guild,
+						channel,
+						request,
+						result: Ok(client_core::channel_actions::Outcome::Details(Edit {
+							name: "getting-started".into(),
+							..Default::default()
+						})),
+					},
+				),
+			});
+			let area = egui::Id::unique(("channel-dialog", h.state.generation));
+			let measure = |h: &mut Harness| {
+				for _ in 0..3 {
+					h.frame(&ctx, vec![]);
+				}
+				let (_, text) = h.frame(&ctx, vec![]);
+				let rect = ctx.memory(|memory| memory.area_rect(area)).unwrap();
+				let cancel = text
+					.iter()
+					.rfind(|(s, _)| s == "Cancel")
+					.unwrap_or_else(|| panic!("width {width}: no Cancel in {text:?}"))
+					.1;
+				(rect, cancel, text)
+			};
+			let (overview, cancel, _) = measure(&mut h);
+			let mut sizes = vec![("Overview", overview, cancel)];
+			for page in ["Permissions", "Integrations"] {
+				let (_, text) = h.frame(&ctx, vec![]);
+				let tab = text.iter().find(|(s, _)| s == page).unwrap().1;
+				h.click(&ctx, tab.center(), PointerButton::Primary);
+				if page == "Integrations"
+					&& let Some(Command::ServerAdmin { request, .. }) = h.commands.pop()
+				{
+					h.state.apply(client_core::Envelope {
+						generation: h.state.generation,
+						event: client_core::Event::ServerAdmin(client_core::server_admin::Event {
+							guild,
+							request,
+							result: Ok(model::server_admin::Result::Integrations(Snapshot {
+								guild,
+								channel: Some(channel),
+								integrations: None,
+								webhooks: Some(vec![]),
+							})),
+						}),
+					});
+				}
+				let (rect, cancel, text) = measure(&mut h);
+				if page == "Permissions" {
+					let toggles = |text: &[(String, Rect)]| {
+						text.iter()
+							.filter(|(s, _)| s == "\u{2713}")
+							.map(|(_, r)| r.right())
+							.collect::<Vec<f32>>()
+					};
+					let mut rights = toggles(&text);
+					// Scroll the page so rows further down the list are measured too.
+					for _ in 0..4 {
+						let (_, text) = h.frame(
+							&ctx,
+							vec![
+								Event::PointerMoved(rect.center()),
+								Event::MouseWheel {
+									phase: egui::TouchPhase::Move,
+									unit: egui::MouseWheelUnit::Point,
+									delta: egui::vec2(0.0, -300.0),
+									modifiers: Modifiers::NONE,
+								},
+							],
+						);
+						rights.extend(toggles(&text));
+					}
+					assert!(rights.len() > 6, "width {width}: {rights:?}");
+					assert!(
+						rights.iter().all(|x| (x - rights[0]).abs() < 0.5),
+						"width {width}: toggles drift {rights:?}"
+					);
+					assert!(rights[0] < rect.right(), "width {width}: toggles outside");
+				}
+				sizes.push((page, rect, cancel));
+			}
+			let (_, first, _) = sizes[0];
+			for (page, rect, cancel) in &sizes {
+				assert!(
+					(rect.size() - first.size()).length() < 0.5,
+					"width {width}: {page} {rect:?} != Overview {first:?}"
+				);
+				assert!(
+					rect.bottom() - cancel.center().y < 40.0,
+					"width {width}: {page} footer stretched: {rect:?} {cancel:?}"
+				);
+			}
 		}
 	}
 

@@ -225,6 +225,22 @@ impl Body<'_> {
 				.inner
 		})
 	}
+	/// Fixed-size scrolling content for multi-page dialogs such as channel settings. Unlike
+	/// [`Self::scroll`] the area never shrinks to short pages and never widens for content
+	/// that overflows, so the dialog keeps one size while the user switches pages. Extra
+	/// space stays in the content area; the footer remains a fixed band.
+	pub fn pane<R>(&mut self, reserved: f32, add: impl FnOnce(&mut egui::Ui) -> R) -> R {
+		let height = (self.available_height - reserved).clamp(120.0, 620.0);
+		self.content(|ui| {
+			egui::ScrollArea::vertical()
+				.min_scrolled_height(height)
+				.max_height(height)
+				.auto_shrink([false, false])
+				.animated(false)
+				.show(ui, |ui| fixed_width(ui, add))
+				.inner
+		})
+	}
 	/// Full-bleed action strip pinned under the content. Add the confirming action first: the
 	/// strip lays its children out from the right edge.
 	pub fn footer<R>(&mut self, add: impl FnOnce(&mut egui::Ui) -> R) -> R {
@@ -249,11 +265,42 @@ impl Body<'_> {
 			.show(self.ui, |ui| {
 				ui.set_width(ui.available_width());
 				ui.spacing_mut().item_spacing.x = 8.0;
-				ui.with_layout(egui::Layout::right_to_left(egui::Align::Center), add)
-					.inner
+				// A right-to-left row with centred children fills all the height it is offered.
+				// Inside a modal that is the previous frame's size, so a plain `with_layout`
+				// made the strip keep the height of the tallest page shown so far. Offer one
+				// button row instead; taller children still grow it.
+				let size = egui::vec2(ui.available_width(), design::BUTTON_HEIGHT);
+				ui.allocate_ui_with_layout(
+					size,
+					egui::Layout::right_to_left(egui::Align::Center),
+					add,
+				)
+				.inner
 			})
 			.inner
 	}
+}
+
+/// Lays `add` out at exactly the available width and reports only that width to the parent,
+/// so a child that overflows cannot widen the surrounding dialog from one page to the next.
+pub fn fixed_width<R>(ui: &mut egui::Ui, add: impl FnOnce(&mut egui::Ui) -> R) -> R {
+	let available = ui.available_rect_before_wrap();
+	let width = available.width();
+	let top_left = available.min;
+	let mut child = ui.new_child(
+		egui::UiBuilder::new()
+			.id_salt("fixed-width")
+			.max_rect(available)
+			.layout(*ui.layout()),
+	);
+	child.set_width(width);
+	let inner = add(&mut child);
+	let height = child.min_rect().height();
+	ui.advance_cursor_after_rect(egui::Rect::from_min_size(
+		top_left,
+		egui::vec2(width, height),
+	));
+	inner
 }
 
 fn toolbar_header(

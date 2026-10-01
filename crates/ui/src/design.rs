@@ -2078,7 +2078,8 @@ pub fn switch(
 }
 
 /// Height of every inline [`button`].
-const BUTTON_HEIGHT: f32 = 38.0;
+/// Height of every [`button`]; dialog footers size their action row from it.
+pub const BUTTON_HEIGHT: f32 = 38.0;
 
 /// Visual weight of an inline [`button`].
 #[derive(Clone, Copy, PartialEq, Eq, Debug)]
@@ -2239,6 +2240,14 @@ pub fn divider(ui: &mut egui::Ui) {
 	ui.add_space(24.0);
 	ui.separator();
 	ui.add_space(24.0);
+}
+
+/// Heading at the top of a settings page, matching the server and channel settings pages.
+pub fn page_title(ui: &mut egui::Ui, title: &str) {
+	let title = crate::i18n::translate_if_key(title);
+	let p = palette(ui);
+	ui.add(egui::Label::new(semibold(ui, title, 20.0).color(p.text_strong)).wrap());
+	ui.add_space(12.0);
 }
 
 /// Title of a settings group, with an optional supporting line under it.

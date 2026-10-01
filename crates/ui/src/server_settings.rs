@@ -633,17 +633,22 @@ impl Editor {
 						}
 						// Pages that virtualize their own list own the only vertical scrollbar;
 						// wrapping them again would nest two scroll areas over one list.
+						// `fixed_width` keeps a page that overflows from widening the modal.
 						if self.scrolling_page() {
-							ui.set_width(ui.available_width());
-							self.page_body(ui, state, guild, avatars, profile, commands);
+							dialog::fixed_width(ui, |ui| {
+								self.page_body(ui, state, guild, avatars, profile, commands);
+							});
 						} else {
 							egui::ScrollArea::vertical()
 								.id_salt(("server-settings-content", self.page as u8))
 								.auto_shrink([false, false])
 								.show(ui, |ui| {
-									ui.set_width(ui.available_width());
-									self.page_body(ui, state, guild, avatars, profile, commands);
-									ui.add_space(24.0);
+									dialog::fixed_width(ui, |ui| {
+										self.page_body(
+											ui, state, guild, avatars, profile, commands,
+										);
+										ui.add_space(24.0);
+									});
 								});
 						}
 					});

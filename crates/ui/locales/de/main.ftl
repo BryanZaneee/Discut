@@ -1545,6 +1545,8 @@ lib-ime-updates-text-clear-this-draft = Löschen Sie diesen Entwurf
 # Context: ime_updates_text
 lib-ime-updates-text-copy-edit-text = Kopieren Sie den Bearbeitungstext
 # Context: ime_updates_text
+lib-ime-updates-text-create-a-poll = Umfrage erstellen
+# Context: ime_updates_text
 lib-ime-updates-text-draft-budget-full-clear-an-existing-draft-to-continue = Haushaltsentwurf voll. Löschen Sie einen vorhandenen Entwurf, um fortzufahren.
 # Context: ime_updates_text
 lib-ime-updates-text-drop-files-to-attach = Legen Sie Dateien zum Anhängen ab
@@ -1785,6 +1787,86 @@ pending-show-you = Du
 pending-upload-strip-cancel-upload = Hochladen abbrechen
 # Context: upload_strip
 pending-upload-strip-the-message-may-already-have-reached-discord-check-the-conversation = Möglicherweise hat die Nachricht Discord bereits erreicht. Überprüfen Sie das Gespräch, bevor Sie es erneut senden.
+
+## crates/ui/src/polls.rs
+# Context: card
+polls-card-ended = Umfrage beendet
+# Context: card
+polls-card-select-many = Wählen Sie eine oder mehrere Antworten
+# Context: card
+polls-card-select-one = Wählen Sie eine Antwort
+# Context: card
+polls-card-final-results = Endergebnis
+# Context: card
+polls-card-awaiting-results = Warten auf das Endergebnis
+# Context: card
+polls-card-hours-left = noch { $hours } Std.
+# Context: card
+polls-card-minutes-left = noch { $minutes } Min.
+# Context: card
+polls-card-in-progress = Läuft
+# Context: card
+polls-card-vote-count-one = { $count } Stimme
+# Context: card
+polls-card-vote-count-many = { $count } Stimmen
+# Context: card
+polls-card-results-not-loaded = Ergebnisse nicht geladen
+# Context: card
+polls-card-back-to-voting = Zurück zur Abstimmung
+# Context: card
+polls-card-refresh-results = Ergebnisse aktualisieren
+# Context: card
+polls-card-show-results = Ergebnisse anzeigen
+# Context: card
+polls-card-remove-vote = Stimme entfernen
+# Context: card
+polls-card-vote = Abstimmen
+# Context: card
+polls-card-end-confirm = Diese Umfrage für alle beenden?
+# Context: card
+polls-card-end-now = Jetzt beenden
+# Context: card
+polls-card-end-poll = Umfrage beenden
+# Context: creator
+polls-creator-title = Umfrage erstellen
+# Context: creator
+polls-creator-question = Frage
+# Context: creator
+polls-creator-question-hint = Welche Frage möchten Sie stellen?
+# Context: creator
+polls-creator-answers = Antworten
+# Context: creator
+polls-creator-answer-hint = Antwort { $number }
+# Context: creator
+polls-creator-add-emoji = Emoji hinzufügen
+# Context: creator
+polls-creator-change-emoji = Emoji ändern
+# Context: creator
+polls-creator-remove-answer = Antwort entfernen
+# Context: creator
+polls-creator-add-answer = Weitere Antwort hinzufügen
+# Context: creator
+polls-creator-duration = Dauer
+# Context: creator
+polls-creator-multiple-answers = Mehrere Antworten erlauben
+# Context: creator
+polls-creator-post = Posten
+# Context: creator
+polls-creator-posting = Wird gepostet…
+# Context: duration_label
+polls-duration-1-hour = 1 Stunde
+# Context: duration_label
+polls-duration-4-hours = 4 Stunden
+# Context: duration_label
+polls-duration-8-hours = 8 Stunden
+# Context: duration_label
+polls-duration-24-hours = 24 Stunden
+# Context: duration_label
+polls-duration-3-days = 3 Tage
+# Context: duration_label
+polls-duration-1-week = 1 Woche
+# Context: duration_label
+polls-duration-hours = { $hours } Stunden
 
 ## crates/ui/src/post_menu.rs
 # Context: context

@@ -1546,6 +1546,8 @@ lib-ime-updates-text-clear-this-draft = このドラフトをクリアする
 # Context: ime_updates_text
 lib-ime-updates-text-copy-edit-text = 編集テキストをコピーする
 # Context: ime_updates_text
+lib-ime-updates-text-create-a-poll = 投票を作成
+# Context: ime_updates_text
 lib-ime-updates-text-draft-budget-full-clear-an-existing-draft-to-continue = 予算案は満席です。続行するには、既存の下書きをクリアします。
 # Context: ime_updates_text
 lib-ime-updates-text-drop-files-to-attach = ファイルをドロップして添付する
@@ -1786,6 +1788,86 @@ pending-show-you = あなた
 pending-upload-strip-cancel-upload = アップロードをキャンセルする
 # Context: upload_strip
 pending-upload-strip-the-message-may-already-have-reached-discord-check-the-conversation = メッセージはすでに Discord に届いている可能性があります。再度送信する前に会話を確認してください。
+
+## crates/ui/src/polls.rs
+# Context: card
+polls-card-ended = 投票は終了しました
+# Context: card
+polls-card-select-many = 1つ以上の回答を選択
+# Context: card
+polls-card-select-one = 回答を1つ選択
+# Context: card
+polls-card-final-results = 最終結果
+# Context: card
+polls-card-awaiting-results = 最終結果を待っています
+# Context: card
+polls-card-hours-left = 残り{ $hours }時間
+# Context: card
+polls-card-minutes-left = 残り{ $minutes }分
+# Context: card
+polls-card-in-progress = 進行中
+# Context: card
+polls-card-vote-count-one = { $count }票
+# Context: card
+polls-card-vote-count-many = { $count }票
+# Context: card
+polls-card-results-not-loaded = 結果が読み込まれていません
+# Context: card
+polls-card-back-to-voting = 投票に戻る
+# Context: card
+polls-card-refresh-results = 結果を更新
+# Context: card
+polls-card-show-results = 結果を表示
+# Context: card
+polls-card-remove-vote = 投票を取り消す
+# Context: card
+polls-card-vote = 投票する
+# Context: card
+polls-card-end-confirm = この投票を全員に対して終了しますか？
+# Context: card
+polls-card-end-now = 今すぐ終了
+# Context: card
+polls-card-end-poll = 投票を終了
+# Context: creator
+polls-creator-title = 投票を作成
+# Context: creator
+polls-creator-question = 質問
+# Context: creator
+polls-creator-question-hint = 何を質問しますか？
+# Context: creator
+polls-creator-answers = 回答
+# Context: creator
+polls-creator-answer-hint = 回答 { $number }
+# Context: creator
+polls-creator-add-emoji = 絵文字を追加
+# Context: creator
+polls-creator-change-emoji = 絵文字を変更
+# Context: creator
+polls-creator-remove-answer = 回答を削除
+# Context: creator
+polls-creator-add-answer = 回答を追加
+# Context: creator
+polls-creator-duration = 期間
+# Context: creator
+polls-creator-multiple-answers = 複数回答を許可
+# Context: creator
+polls-creator-post = 投稿
+# Context: creator
+polls-creator-posting = 投稿中…
+# Context: duration_label
+polls-duration-1-hour = 1時間
+# Context: duration_label
+polls-duration-4-hours = 4時間
+# Context: duration_label
+polls-duration-8-hours = 8時間
+# Context: duration_label
+polls-duration-24-hours = 24時間
+# Context: duration_label
+polls-duration-3-days = 3日
+# Context: duration_label
+polls-duration-1-week = 1週間
+# Context: duration_label
+polls-duration-hours = { $hours }時間
 
 ## crates/ui/src/post_menu.rs
 # Context: context

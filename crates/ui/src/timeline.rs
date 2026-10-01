@@ -2893,7 +2893,7 @@ impl TimelineView {
 											}
 											if message.poll.is_some() {
 												let shown = ui.scope(|ui| {
-													self.polls.show(ui, state, message)
+													self.polls.show(ui, state, message, avatars)
 												});
 												surface.exclude(shown.response.rect);
 												if let Some(action) = shown.inner {

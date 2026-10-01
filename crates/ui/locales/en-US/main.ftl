@@ -1546,6 +1546,8 @@ lib-ime-updates-text-clear-this-draft = Clear this draft
 # Context: ime_updates_text
 lib-ime-updates-text-copy-edit-text = Copy edit text
 # Context: ime_updates_text
+lib-ime-updates-text-create-a-poll = Create a poll
+# Context: ime_updates_text
 lib-ime-updates-text-draft-budget-full-clear-an-existing-draft-to-continue = Draft budget full. Clear an existing draft to continue.
 # Context: ime_updates_text
 lib-ime-updates-text-drop-files-to-attach = Drop files to attach
@@ -1786,6 +1788,86 @@ pending-show-you = You
 pending-upload-strip-cancel-upload = Cancel upload
 # Context: upload_strip
 pending-upload-strip-the-message-may-already-have-reached-discord-check-the-conversation = The message may already have reached Discord. Check the conversation before sending again.
+
+## crates/ui/src/polls.rs
+# Context: card
+polls-card-ended = Poll ended
+# Context: card
+polls-card-select-many = Select one or more answers
+# Context: card
+polls-card-select-one = Select one answer
+# Context: card
+polls-card-final-results = Final results
+# Context: card
+polls-card-awaiting-results = Awaiting final results
+# Context: card
+polls-card-hours-left = { $hours }h left
+# Context: card
+polls-card-minutes-left = { $minutes }m left
+# Context: card
+polls-card-in-progress = In progress
+# Context: card
+polls-card-vote-count-one = { $count } vote
+# Context: card
+polls-card-vote-count-many = { $count } votes
+# Context: card
+polls-card-results-not-loaded = Results not loaded
+# Context: card
+polls-card-back-to-voting = Back to voting
+# Context: card
+polls-card-refresh-results = Refresh results
+# Context: card
+polls-card-show-results = Show results
+# Context: card
+polls-card-remove-vote = Remove Vote
+# Context: card
+polls-card-vote = Vote
+# Context: card
+polls-card-end-confirm = End this poll for everyone?
+# Context: card
+polls-card-end-now = End now
+# Context: card
+polls-card-end-poll = End Poll
+# Context: creator
+polls-creator-title = Create a Poll
+# Context: creator
+polls-creator-question = Question
+# Context: creator
+polls-creator-question-hint = What question do you want to ask?
+# Context: creator
+polls-creator-answers = Answers
+# Context: creator
+polls-creator-answer-hint = Answer { $number }
+# Context: creator
+polls-creator-add-emoji = Add emoji
+# Context: creator
+polls-creator-change-emoji = Change emoji
+# Context: creator
+polls-creator-remove-answer = Remove answer
+# Context: creator
+polls-creator-add-answer = Add another answer
+# Context: creator
+polls-creator-duration = Duration
+# Context: creator
+polls-creator-multiple-answers = Allow Multiple Answers
+# Context: creator
+polls-creator-post = Post
+# Context: creator
+polls-creator-posting = Posting…
+# Context: duration_label
+polls-duration-1-hour = 1 hour
+# Context: duration_label
+polls-duration-4-hours = 4 hours
+# Context: duration_label
+polls-duration-8-hours = 8 hours
+# Context: duration_label
+polls-duration-24-hours = 24 hours
+# Context: duration_label
+polls-duration-3-days = 3 days
+# Context: duration_label
+polls-duration-1-week = 1 week
+# Context: duration_label
+polls-duration-hours = { $hours } hours
 
 ## crates/ui/src/post_menu.rs
 # Context: context

@@ -2934,11 +2934,22 @@ impl MessagingUi {
                         egui::Popup::menu(&attach)
                             .id(attach.id.with(("composer-add", state.generation, channel)))
                             .show(|ui| {
-                                if ui.add_enabled(can_attach, egui::Button::new(crate::i18n::translate("lib-ime-updates-text-attach-files"))).clicked() {
+                                ui.set_min_width(200.0);
+                                ui.spacing_mut().button_padding = egui::vec2(8.0, 6.0);
+                                // Discord-style rows: the glyph follows the row's text colour, so it dims when disabled.
+                                let item = |icon: icons::Icon, key: &str| {
+                                    egui::Button::new((
+                                        egui::Atom::paint(egui::Vec2::splat(18.0), move |ui, args| {
+                                            icons::paint(ui.painter(), icon, args.rect, args.fallback_text_color);
+                                        }),
+                                        crate::i18n::translate(key),
+                                    ))
+                                };
+                                if ui.add_enabled(can_attach, item(icons::Icon::File, "lib-ime-updates-text-attach-files")).clicked() {
                                     self.attach_requested = true;
                                     ui.close();
                                 }
-                                if ui.add_enabled(can_create_poll, egui::Button::new("Create a poll")).clicked() {
+                                if ui.add_enabled(can_create_poll, item(icons::Icon::ChartBar, "lib-ime-updates-text-create-a-poll")).clicked() {
                                     self.poll_creator.open(state, channel);
                                     ui.close();
                                 }
@@ -2980,7 +2991,7 @@ impl MessagingUi {
                                 self.reaction_picker.record(&text);
                                 Some(text)
                             },
-                            Some(emoji_picker::Pick::React(_, _)) => None,
+                            Some(emoji_picker::Pick::React(_, _) | emoji_picker::Pick::Choose(_)) => None,
                             Some(emoji_picker::Pick::Image(asset)) => {
                                 if editing_here { state.status = "Finish or cancel the edit before attaching an image."; }
                                 else if self.upload_busy { state.status = "Wait for the upload before attaching an image."; }
@@ -3508,7 +3519,7 @@ impl MessagingUi {
 		let mut commands = Vec::new();
 		// A server joined from an invite opens as soon as the Gateway delivers it.
 		commands.extend(state.navigate_after_join());
-		if let Some(action) = self.poll_creator.show(ui.ctx(), state)
+		if let Some(action) = self.poll_creator.show(ui.ctx(), state, &mut self.avatars)
 			&& let Some(command) = state.prepare_poll(None, action)
 		{
 			commands.push(command);

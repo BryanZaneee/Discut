@@ -1546,6 +1546,8 @@ lib-ime-updates-text-clear-this-draft = Bu taslağı temizle
 # Context: ime_updates_text
 lib-ime-updates-text-copy-edit-text = Düzenleme metnini kopyala
 # Context: ime_updates_text
+lib-ime-updates-text-create-a-poll = Anket oluştur
+# Context: ime_updates_text
 lib-ime-updates-text-draft-budget-full-clear-an-existing-draft-to-continue = Taslak bütçe doldu. Devam etmek için mevcut bir taslağı temizleyin.
 # Context: ime_updates_text
 lib-ime-updates-text-drop-files-to-attach = Eklenecek dosyaları bırakın
@@ -1786,6 +1788,86 @@ pending-show-you = Sen
 pending-upload-strip-cancel-upload = Yüklemeyi iptal et
 # Context: upload_strip
 pending-upload-strip-the-message-may-already-have-reached-discord-check-the-conversation = Mesaj zaten Discord'a ulaşmış olabilir. Tekrar göndermeden önce konuşmayı kontrol edin.
+
+## crates/ui/src/polls.rs
+# Context: card
+polls-card-ended = Anket sona erdi
+# Context: card
+polls-card-select-many = Bir veya daha fazla yanıt seçin
+# Context: card
+polls-card-select-one = Bir yanıt seçin
+# Context: card
+polls-card-final-results = Kesin sonuçlar
+# Context: card
+polls-card-awaiting-results = Kesin sonuçlar bekleniyor
+# Context: card
+polls-card-hours-left = { $hours } sa kaldı
+# Context: card
+polls-card-minutes-left = { $minutes } dk kaldı
+# Context: card
+polls-card-in-progress = Devam ediyor
+# Context: card
+polls-card-vote-count-one = { $count } oy
+# Context: card
+polls-card-vote-count-many = { $count } oy
+# Context: card
+polls-card-results-not-loaded = Sonuçlar yüklenmedi
+# Context: card
+polls-card-back-to-voting = Oylamaya dön
+# Context: card
+polls-card-refresh-results = Sonuçları yenile
+# Context: card
+polls-card-show-results = Sonuçları göster
+# Context: card
+polls-card-remove-vote = Oyu kaldır
+# Context: card
+polls-card-vote = Oy ver
+# Context: card
+polls-card-end-confirm = Bu anket herkes için sonlandırılsın mı?
+# Context: card
+polls-card-end-now = Şimdi sonlandır
+# Context: card
+polls-card-end-poll = Anketi sonlandır
+# Context: creator
+polls-creator-title = Anket oluştur
+# Context: creator
+polls-creator-question = Soru
+# Context: creator
+polls-creator-question-hint = Ne sormak istiyorsunuz?
+# Context: creator
+polls-creator-answers = Yanıtlar
+# Context: creator
+polls-creator-answer-hint = Yanıt { $number }
+# Context: creator
+polls-creator-add-emoji = Emoji ekle
+# Context: creator
+polls-creator-change-emoji = Emojiyi değiştir
+# Context: creator
+polls-creator-remove-answer = Yanıtı kaldır
+# Context: creator
+polls-creator-add-answer = Başka bir yanıt ekle
+# Context: creator
+polls-creator-duration = Süre
+# Context: creator
+polls-creator-multiple-answers = Birden fazla yanıta izin ver
+# Context: creator
+polls-creator-post = Paylaş
+# Context: creator
+polls-creator-posting = Paylaşılıyor…
+# Context: duration_label
+polls-duration-1-hour = 1 saat
+# Context: duration_label
+polls-duration-4-hours = 4 saat
+# Context: duration_label
+polls-duration-8-hours = 8 saat
+# Context: duration_label
+polls-duration-24-hours = 24 saat
+# Context: duration_label
+polls-duration-3-days = 3 gün
+# Context: duration_label
+polls-duration-1-week = 1 hafta
+# Context: duration_label
+polls-duration-hours = { $hours } saat
 
 ## crates/ui/src/post_menu.rs
 # Context: context

@@ -1545,6 +1545,8 @@ lib-ime-updates-text-clear-this-draft = Vymazat tento koncept
 # Context: ime_updates_text
 lib-ime-updates-text-copy-edit-text = Kopírovat upravit text
 # Context: ime_updates_text
+lib-ime-updates-text-create-a-poll = Vytvořit anketu
+# Context: ime_updates_text
 lib-ime-updates-text-draft-budget-full-clear-an-existing-draft-to-continue = Návrh rozpočtu je plný. Chcete-li pokračovat, vymažte existující koncept.
 # Context: ime_updates_text
 lib-ime-updates-text-drop-files-to-attach = Přetáhněte soubory, které chcete připojit
@@ -1785,6 +1787,86 @@ pending-show-you = Vy
 pending-upload-strip-cancel-upload = Zrušit nahrávání
 # Context: upload_strip
 pending-upload-strip-the-message-may-already-have-reached-discord-check-the-conversation = Zpráva již možná dorazila do Discordu. Před dalším odesláním konverzaci zkontrolujte.
+
+## crates/ui/src/polls.rs
+# Context: card
+polls-card-ended = Anketa skončila
+# Context: card
+polls-card-select-many = Vyberte jednu nebo více odpovědí
+# Context: card
+polls-card-select-one = Vyberte jednu odpověď
+# Context: card
+polls-card-final-results = Konečné výsledky
+# Context: card
+polls-card-awaiting-results = Čeká se na konečné výsledky
+# Context: card
+polls-card-hours-left = zbývá { $hours } h
+# Context: card
+polls-card-minutes-left = zbývá { $minutes } min
+# Context: card
+polls-card-in-progress = Probíhá
+# Context: card
+polls-card-vote-count-one = { $count } hlas
+# Context: card
+polls-card-vote-count-many = Hlasů: { $count }
+# Context: card
+polls-card-results-not-loaded = Výsledky nejsou načteny
+# Context: card
+polls-card-back-to-voting = Zpět k hlasování
+# Context: card
+polls-card-refresh-results = Obnovit výsledky
+# Context: card
+polls-card-show-results = Zobrazit výsledky
+# Context: card
+polls-card-remove-vote = Odebrat hlas
+# Context: card
+polls-card-vote = Hlasovat
+# Context: card
+polls-card-end-confirm = Ukončit tuto anketu pro všechny?
+# Context: card
+polls-card-end-now = Ukončit nyní
+# Context: card
+polls-card-end-poll = Ukončit anketu
+# Context: creator
+polls-creator-title = Vytvořit anketu
+# Context: creator
+polls-creator-question = Otázka
+# Context: creator
+polls-creator-question-hint = Na co se chcete zeptat?
+# Context: creator
+polls-creator-answers = Odpovědi
+# Context: creator
+polls-creator-answer-hint = Odpověď { $number }
+# Context: creator
+polls-creator-add-emoji = Přidat emoji
+# Context: creator
+polls-creator-change-emoji = Změnit emoji
+# Context: creator
+polls-creator-remove-answer = Odebrat odpověď
+# Context: creator
+polls-creator-add-answer = Přidat další odpověď
+# Context: creator
+polls-creator-duration = Doba trvání
+# Context: creator
+polls-creator-multiple-answers = Povolit více odpovědí
+# Context: creator
+polls-creator-post = Zveřejnit
+# Context: creator
+polls-creator-posting = Zveřejňování…
+# Context: duration_label
+polls-duration-1-hour = 1 hodina
+# Context: duration_label
+polls-duration-4-hours = 4 hodiny
+# Context: duration_label
+polls-duration-8-hours = 8 hodin
+# Context: duration_label
+polls-duration-24-hours = 24 hodin
+# Context: duration_label
+polls-duration-3-days = 3 dny
+# Context: duration_label
+polls-duration-1-week = 1 týden
+# Context: duration_label
+polls-duration-hours = Hodin: { $hours }
 
 ## crates/ui/src/post_menu.rs
 # Context: context

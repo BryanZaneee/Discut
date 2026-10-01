@@ -1546,6 +1546,8 @@ lib-ime-updates-text-clear-this-draft = Очистить этот чернови
 # Context: ime_updates_text
 lib-ime-updates-text-copy-edit-text = Копировать текст редактирования
 # Context: ime_updates_text
+lib-ime-updates-text-create-a-poll = Создать опрос
+# Context: ime_updates_text
 lib-ime-updates-text-draft-budget-full-clear-an-existing-draft-to-continue = Проект бюджета полный. Чтобы продолжить, удалите существующий черновик.
 # Context: ime_updates_text
 lib-ime-updates-text-drop-files-to-attach = Перетащите файлы, чтобы прикрепить
@@ -1786,6 +1788,86 @@ pending-show-you = Ты
 pending-upload-strip-cancel-upload = Отменить загрузку
 # Context: upload_strip
 pending-upload-strip-the-message-may-already-have-reached-discord-check-the-conversation = Возможно, сообщение уже достигло Discord. Проверьте разговор перед повторной отправкой.
+
+## crates/ui/src/polls.rs
+# Context: card
+polls-card-ended = Опрос завершён
+# Context: card
+polls-card-select-many = Выберите один или несколько ответов
+# Context: card
+polls-card-select-one = Выберите один ответ
+# Context: card
+polls-card-final-results = Итоговые результаты
+# Context: card
+polls-card-awaiting-results = Ожидание итоговых результатов
+# Context: card
+polls-card-hours-left = осталось { $hours } ч
+# Context: card
+polls-card-minutes-left = осталось { $minutes } мин
+# Context: card
+polls-card-in-progress = Идёт
+# Context: card
+polls-card-vote-count-one = { $count } голос
+# Context: card
+polls-card-vote-count-many = Голосов: { $count }
+# Context: card
+polls-card-results-not-loaded = Результаты не загружены
+# Context: card
+polls-card-back-to-voting = Вернуться к голосованию
+# Context: card
+polls-card-refresh-results = Обновить результаты
+# Context: card
+polls-card-show-results = Показать результаты
+# Context: card
+polls-card-remove-vote = Отменить голос
+# Context: card
+polls-card-vote = Голосовать
+# Context: card
+polls-card-end-confirm = Завершить этот опрос для всех?
+# Context: card
+polls-card-end-now = Завершить сейчас
+# Context: card
+polls-card-end-poll = Завершить опрос
+# Context: creator
+polls-creator-title = Создать опрос
+# Context: creator
+polls-creator-question = Вопрос
+# Context: creator
+polls-creator-question-hint = Какой вопрос вы хотите задать?
+# Context: creator
+polls-creator-answers = Ответы
+# Context: creator
+polls-creator-answer-hint = Ответ { $number }
+# Context: creator
+polls-creator-add-emoji = Добавить эмодзи
+# Context: creator
+polls-creator-change-emoji = Изменить эмодзи
+# Context: creator
+polls-creator-remove-answer = Удалить ответ
+# Context: creator
+polls-creator-add-answer = Добавить ещё ответ
+# Context: creator
+polls-creator-duration = Длительность
+# Context: creator
+polls-creator-multiple-answers = Разрешить несколько ответов
+# Context: creator
+polls-creator-post = Опубликовать
+# Context: creator
+polls-creator-posting = Публикация…
+# Context: duration_label
+polls-duration-1-hour = 1 час
+# Context: duration_label
+polls-duration-4-hours = 4 часа
+# Context: duration_label
+polls-duration-8-hours = 8 часов
+# Context: duration_label
+polls-duration-24-hours = 24 часа
+# Context: duration_label
+polls-duration-3-days = 3 дня
+# Context: duration_label
+polls-duration-1-week = 1 неделя
+# Context: duration_label
+polls-duration-hours = Часов: { $hours }
 
 ## crates/ui/src/post_menu.rs
 # Context: context

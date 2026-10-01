@@ -733,6 +733,8 @@ design-account-row-with-remove-forget-this-account-on-this-device = Oublier ce c
 design-color-edit-hex-color-rrggbb-click-to-type-or-paste = Couleur hexadécimale : #RRGGBB. Cliquez pour taper ou coller.
 # Context: save_bar
 design-save-bar-careful-you-have-unsaved-changes = Attention : vous avez des modifications non enregistrées !
+design-save-bar-save-changes = Enregistrer les modifications
+design-save-bar-reset = Réinitialiser
 
 ## crates/ui/src/dialog.rs
 # Context: header
@@ -4233,6 +4235,10 @@ profiles-remove-friend-message = Voulez-vous vraiment retirer { $user } de vos a
 channel-menu-dialog-category-settings = Paramètres de la catégorie
 channel-menu-dialog-channel-settings = Paramètres du salon
 channel-menu-dialog-settings-subtitle = Personnalisez les paramètres et les autorisations.
+channel-menu-discard-title = Abandonner les modifications non enregistrées ?
+channel-menu-discard-message = Les modifications non enregistrées de ce salon seront perdues.
+channel-menu-discard-confirm = Abandonner les modifications
+channel-menu-discard-keep = Continuer la modification
 channel-menu-dialog-duplicate-subtitle = Copie les paramètres et les autorisations. Les messages ne sont pas copiés.
 channel-menu-dialog-create-channel-subtitle = Choisissez un type de salon et un nom.
 channel-menu-dialog-create-category-subtitle = Les catégories organisent les salons associés.

@@ -2334,12 +2334,14 @@ pub fn save_bar(
 		ui.with_layout(egui::Layout::right_to_left(egui::Align::Center), |ui| {
 			let save = ui
 				.add_enabled_ui(can_save, |ui| {
-					button(ui, "Save Changes", ButtonKind::Primary)
+					button(ui, "design-save-bar-save-changes", ButtonKind::Primary)
 				})
 				.inner
 				.clicked();
 			let reset = ui
-				.add_enabled_ui(can_reset, |ui| button(ui, "Reset", ButtonKind::Neutral))
+				.add_enabled_ui(can_reset, |ui| {
+					button(ui, "design-save-bar-reset", ButtonKind::Neutral)
+				})
 				.inner
 				.clicked();
 			ui.with_layout(egui::Layout::left_to_right(egui::Align::Center), |ui| {

@@ -734,6 +734,8 @@ design-account-row-with-remove-forget-this-account-on-this-device = このデバ
 design-color-edit-hex-color-rrggbb-click-to-type-or-paste = 16 進カラー: #RRGGBB。クリックして入力または貼り付けます。
 # Context: save_bar
 design-save-bar-careful-you-have-unsaved-changes = 注意してください。保存されていない変更があります。
+design-save-bar-save-changes = 変更を保存
+design-save-bar-reset = リセット
 
 ## crates/ui/src/dialog.rs
 # Context: header
@@ -4230,6 +4232,10 @@ profiles-remove-friend-message = { $user } をフレンドから削除します�
 channel-menu-dialog-category-settings = カテゴリ設定
 channel-menu-dialog-channel-settings = チャンネル設定
 channel-menu-dialog-settings-subtitle = 設定と権限をカスタマイズします。
+channel-menu-discard-title = 保存されていない変更を破棄しますか？
+channel-menu-discard-message = このチャンネルへの保存されていない変更は失われます。
+channel-menu-discard-confirm = 変更を破棄
+channel-menu-discard-keep = 編集を続ける
 channel-menu-dialog-duplicate-subtitle = 設定と権限をコピーします。メッセージはコピーされません。
 channel-menu-dialog-create-channel-subtitle = チャンネルの種類と名前を選択します。
 channel-menu-dialog-create-category-subtitle = カテゴリで関連するチャンネルを整理します。

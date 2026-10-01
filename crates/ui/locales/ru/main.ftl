@@ -734,6 +734,8 @@ design-account-row-with-remove-forget-this-account-on-this-device = Забыть
 design-color-edit-hex-color-rrggbb-click-to-type-or-paste = Шестнадцатеричный цвет: #RRGGBB. Нажмите, чтобы ввести или вставить.
 # Context: save_bar
 design-save-bar-careful-you-have-unsaved-changes = Осторожно — у вас есть несохраненные изменения!
+design-save-bar-save-changes = Сохранить изменения
+design-save-bar-reset = Сбросить
 
 ## crates/ui/src/dialog.rs
 # Context: header
@@ -4235,6 +4237,10 @@ profiles-remove-friend-message = Удалить пользователя { $user
 channel-menu-dialog-category-settings = Настройки категории
 channel-menu-dialog-channel-settings = Настройки канала
 channel-menu-dialog-settings-subtitle = Настройте параметры и разрешения.
+channel-menu-discard-title = Отменить несохраненные изменения?
+channel-menu-discard-message = Несохраненные изменения этого канала будут потеряны.
+channel-menu-discard-confirm = Отменить изменения
+channel-menu-discard-keep = Продолжить редактирование
 channel-menu-dialog-duplicate-subtitle = Копирует настройки и разрешения. Сообщения не копируются.
 channel-menu-dialog-create-channel-subtitle = Выберите тип и название канала.
 channel-menu-dialog-create-category-subtitle = Категории упорядочивают связанные каналы.

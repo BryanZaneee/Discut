@@ -734,6 +734,8 @@ design-account-row-with-remove-forget-this-account-on-this-device = Bu hesabı b
 design-color-edit-hex-color-rrggbb-click-to-type-or-paste = Altıgen rengi: #RRGGBB. Yazmak veya yapıştırmak için tıklayın.
 # Context: save_bar
 design-save-bar-careful-you-have-unsaved-changes = Dikkatli olun; kaydedilmemiş değişiklikleriniz var!
+design-save-bar-save-changes = Değişiklikleri Kaydet
+design-save-bar-reset = Sıfırla
 
 ## crates/ui/src/dialog.rs
 # Context: header
@@ -4230,6 +4232,10 @@ profiles-remove-friend-message = { $user } kullanıcısını arkadaşlarından k
 channel-menu-dialog-category-settings = Kategori ayarları
 channel-menu-dialog-channel-settings = Kanal ayarları
 channel-menu-dialog-settings-subtitle = Ayarları ve izinleri özelleştir.
+channel-menu-discard-title = Kaydedilmemiş değişiklikler atılsın mı?
+channel-menu-discard-message = Bu kanalda kaydedilmemiş değişiklikleriniz kaybolacak.
+channel-menu-discard-confirm = Değişiklikleri At
+channel-menu-discard-keep = Düzenlemeye Devam Et
 channel-menu-dialog-duplicate-subtitle = Ayarları ve izinleri kopyalar. Mesajlar kopyalanmaz.
 channel-menu-dialog-create-channel-subtitle = Bir kanal türü ve ad seç.
 channel-menu-dialog-create-category-subtitle = Kategoriler ilgili kanalları düzenler.

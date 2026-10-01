@@ -733,6 +733,8 @@ design-account-row-with-remove-forget-this-account-on-this-device = Esqueça est
 design-color-edit-hex-color-rrggbb-click-to-type-or-paste = Cor hexadecimal: #RRGGBB. Clique para digitar ou colar.
 # Context: save_bar
 design-save-bar-careful-you-have-unsaved-changes = Cuidado – você tem alterações não salvas!
+design-save-bar-save-changes = Salvar alterações
+design-save-bar-reset = Redefinir
 
 ## crates/ui/src/dialog.rs
 # Context: header
@@ -4233,6 +4235,10 @@ profiles-remove-friend-message = Tem certeza de que deseja remover { $user } dos
 channel-menu-dialog-category-settings = Configurações da categoria
 channel-menu-dialog-channel-settings = Configurações do canal
 channel-menu-dialog-settings-subtitle = Personalize as configurações e permissões.
+channel-menu-discard-title = Descartar alterações não salvas?
+channel-menu-discard-message = As alterações não salvas deste canal serão perdidas.
+channel-menu-discard-confirm = Descartar alterações
+channel-menu-discard-keep = Continuar editando
 channel-menu-dialog-duplicate-subtitle = Copia configurações e permissões. As mensagens não são copiadas.
 channel-menu-dialog-create-channel-subtitle = Escolha um tipo de canal e um nome.
 channel-menu-dialog-create-category-subtitle = As categorias organizam canais relacionados.

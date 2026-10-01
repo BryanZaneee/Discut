@@ -733,6 +733,8 @@ design-account-row-with-remove-forget-this-account-on-this-device = Vergessen Si
 design-color-edit-hex-color-rrggbb-click-to-type-or-paste = Hex-Farbe: #RRGGBB. Klicken Sie, um etwas einzugeben oder einzufügen.
 # Context: save_bar
 design-save-bar-careful-you-have-unsaved-changes = Vorsicht – Sie haben nicht gespeicherte Änderungen!
+design-save-bar-save-changes = Änderungen speichern
+design-save-bar-reset = Zurücksetzen
 
 ## crates/ui/src/dialog.rs
 # Context: header
@@ -4233,6 +4235,10 @@ profiles-remove-friend-message = Möchtest du { $user } wirklich aus deinen Freu
 channel-menu-dialog-category-settings = Kategorieeinstellungen
 channel-menu-dialog-channel-settings = Kanaleinstellungen
 channel-menu-dialog-settings-subtitle = Passe Einstellungen und Berechtigungen an.
+channel-menu-discard-title = Nicht gespeicherte Änderungen verwerfen?
+channel-menu-discard-message = Deine nicht gespeicherten Änderungen an diesem Kanal gehen verloren.
+channel-menu-discard-confirm = Änderungen verwerfen
+channel-menu-discard-keep = Weiter bearbeiten
 channel-menu-dialog-duplicate-subtitle = Kopiert Einstellungen und Berechtigungen. Nachrichten werden nicht kopiert.
 channel-menu-dialog-create-channel-subtitle = Wähle einen Kanaltyp und einen Namen.
 channel-menu-dialog-create-category-subtitle = Kategorien ordnen zusammengehörige Kanäle.

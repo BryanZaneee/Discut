@@ -733,6 +733,8 @@ design-account-row-with-remove-forget-this-account-on-this-device = Zapomenout t
 design-color-edit-hex-color-rrggbb-click-to-type-or-paste = Barva hex: #RRGGBB. Klepnutím zadejte nebo vložte.
 # Context: save_bar
 design-save-bar-careful-you-have-unsaved-changes = Pozor – máte neuložené změny!
+design-save-bar-save-changes = Uložit změny
+design-save-bar-reset = Obnovit
 
 ## crates/ui/src/dialog.rs
 # Context: header
@@ -4234,6 +4236,10 @@ profiles-remove-friend-message = Opravdu chcete odebrat uživatele { $user } z p
 channel-menu-dialog-category-settings = Nastavení kategorie
 channel-menu-dialog-channel-settings = Nastavení kanálu
 channel-menu-dialog-settings-subtitle = Upravte nastavení a oprávnění tohoto místa.
+channel-menu-discard-title = Zahodit neuložené změny?
+channel-menu-discard-message = Neuložené změny tohoto kanálu budou ztraceny.
+channel-menu-discard-confirm = Zahodit změny
+channel-menu-discard-keep = Pokračovat v úpravách
 channel-menu-dialog-duplicate-subtitle = Zkopíruje nastavení a oprávnění. Zprávy se nekopírují.
 channel-menu-dialog-create-channel-subtitle = Zvolte typ a název kanálu.
 channel-menu-dialog-create-category-subtitle = Kategorie uspořádávají související kanály.

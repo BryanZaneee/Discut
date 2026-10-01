@@ -83,6 +83,7 @@ mod polls;
 mod profile_edit;
 mod reactions;
 mod reading;
+mod registered_games;
 pub mod screen;
 pub mod scroll;
 mod search;
@@ -290,6 +291,13 @@ pub struct MessagingUi {
 	pub share_game_activity: bool,
 	pub own_game: Option<String>,
 	pub game_activity_status: &'static str,
+	/// Edited on the Registered Games page; the desktop app persists and applies the list.
+	pub registered_games: Vec<model::registered_games::RegisteredGame>,
+	/// The game the local process scan reports while activity sharing is on.
+	pub running_game: Option<model::registered_games::RunningGame>,
+	/// Set by "Add it!"; the desktop app answers in `running_processes`.
+	pub running_processes_request: bool,
+	pub running_processes: Option<Vec<String>>,
 	reading_sidebar_applied: Option<u16>,
 	reading_sidebar_constrained: bool,
 	reading_zoom_pending: bool,

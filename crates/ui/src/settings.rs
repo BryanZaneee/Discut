@@ -12,6 +12,7 @@ pub(super) struct Settings {
 	pub(super) editor: crate::profile_edit::Editor,
 	pub(super) notifications: crate::notification_settings::Navigation,
 	pub(super) messaging_permissions: crate::messaging_permissions::Navigation,
+	pub(super) games: crate::registered_games::Page,
 }
 
 #[derive(Clone, Copy, Default, PartialEq, Eq)]
@@ -25,6 +26,7 @@ enum Page {
 	MessagingPermissions,
 	Notifications,
 	Activity,
+	RegisteredGames,
 	Voice,
 	Keybinds,
 	Storage,
@@ -34,7 +36,7 @@ enum Page {
 }
 impl Page {
 	/// Every page in sidebar order; the narrow-window page picker lists them the same way.
-	const ALL: [Self; 14] = [
+	const ALL: [Self; 15] = [
 		Self::Account,
 		Self::Profile,
 		Self::MessagingPermissions,
@@ -45,6 +47,7 @@ impl Page {
 		Self::Voice,
 		Self::Keybinds,
 		Self::Activity,
+		Self::RegisteredGames,
 		Self::General,
 		Self::Updates,
 		Self::Themes,
@@ -71,6 +74,7 @@ impl Page {
 				Self::Voice,
 				Self::Keybinds,
 				Self::Activity,
+				Self::RegisteredGames,
 				Self::General,
 				Self::Updates,
 			],
@@ -87,6 +91,7 @@ impl Page {
 			Self::MessagingPermissions => "page-messaging-permissions",
 			Self::Notifications => "page-notifications",
 			Self::Activity => "page-activity",
+			Self::RegisteredGames => "page-registered-games",
 			Self::Voice => "page-voice",
 			Self::Keybinds => "page-keybinds",
 			Self::Storage => "page-storage",
@@ -108,6 +113,7 @@ impl Page {
 			Self::MessagingPermissions => "description-messaging-permissions",
 			Self::Notifications => "description-notifications",
 			Self::Activity => "description-activity",
+			Self::RegisteredGames => "description-registered-games",
 			Self::Voice => "description-voice",
 			Self::Keybinds => "description-keybinds",
 			Self::Storage => "description-storage",
@@ -139,6 +145,9 @@ impl Page {
 				"notifications desktop system alerts overview sounds badges message ring"
 			}
 			Self::Activity => "game activity playing osu status presence sharing",
+			Self::RegisteredGames => {
+				"registered games added current game detection detected process program executable rename wrong add"
+			}
 			Self::Voice => {
 				"voice video camera preview audio microphone speakers devices volume gain noise suppression push to talk"
 			}
@@ -440,6 +449,9 @@ impl MessagingUi {
 										self.notification_settings(ui, state.demo)
 									}
 									Page::Activity => self.activity_settings(ui, state),
+									Page::RegisteredGames => {
+										self.registered_games_settings(ui, state.demo)
+									}
 									Page::Voice => self.voice_settings_content(
 										ui,
 										state.demo,

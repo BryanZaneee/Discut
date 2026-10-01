@@ -41,6 +41,7 @@ mod polls_demo;
 mod post_menu_demo;
 mod proxy_auth;
 mod reading_settings;
+mod registered_games;
 #[cfg(feature = "demo")]
 mod rendering_demo;
 mod screen;
@@ -848,6 +849,7 @@ struct Desktop {
 	font_picker: Option<std::sync::mpsc::Receiver<font_import::Selected>>,
 	updater: updater::Updater,
 	game_activity: toggle_setting::Settings,
+	registered_games: registered_games::Registered,
 	tray_setting: toggle_setting::Settings,
 	startup: startup::Startup,
 	tray: Option<platform::tray::Tray>,
@@ -2039,6 +2041,11 @@ impl Desktop {
 			font_picker: None,
 			updater: updater::Updater::new(demo),
 			game_activity,
+			registered_games: if demo {
+				registered_games::Registered::default()
+			} else {
+				registered_games::Registered::load()
+			},
 			tray_setting,
 			startup,
 			tray: None,
@@ -2696,6 +2703,29 @@ impl Desktop {
 				.share_game_activity
 				.then(game_activity::demo_activity);
 			self.messaging.own_game = activity.as_ref().map(model::RichActivity::summary);
+			self.messaging.running_game = self
+				.messaging
+				.share_game_activity
+				.then(|| {
+					let renamed = self
+						.messaging
+						.registered_games
+						.iter()
+						.find(|game| game.executable == "osu!.exe");
+					model::registered_games::RunningGame {
+						executable: "osu!.exe".into(),
+						name: renamed.map_or_else(|| "osu!".into(), |game| game.name.clone()),
+						application: Some(model::Id(367_827_983_903_490_050)),
+						renamed: renamed.is_some(),
+					}
+				})
+				.filter(|_| {
+					!self
+						.messaging
+						.registered_games
+						.iter()
+						.any(|game| game.executable == "osu!.exe" && game.hidden)
+				});
 			let changed = self.state.set_local_game_activity(activity);
 			self.messaging.game_activity_status =
 				"Offline preview: synthetic activity, never shared or saved.";
@@ -2712,6 +2742,8 @@ impl Desktop {
 		if self.fixture_only {
 			return;
 		}
+		self.registered_games.sync(&mut self.messaging, ctx);
+		self.messaging.running_game = None;
 		self.game_activity
 			.observe(self.messaging.share_game_activity);
 		if self.game_activity.dirty && !self.game_activity.saving {
@@ -2744,6 +2776,17 @@ impl Desktop {
 				*current = custom.cloned();
 				true
 			});
+			let registered = self.registered_games.games();
+			connection.registered_games.send_if_modified(|current| {
+				if current.as_slice() == registered {
+					return false;
+				}
+				*current = registered.to_vec();
+				true
+			});
+			if self.game_activity.enabled && self.state.gateway_connected {
+				self.messaging.running_game = connection.running_game.borrow().clone();
+			}
 			connection.share_activity.send_if_modified(|enabled| {
 				if *enabled == self.game_activity.enabled {
 					return false;

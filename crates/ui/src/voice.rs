@@ -3683,24 +3683,15 @@ fn tile_button(
 	response.on_hover_text(hint)
 }
 
-/// Discord's ringing seat: a steady grey ring with a second one breathing outward.
+/// Discord's ringing seat: a grey ring breathing outward from the avatar.
 fn ringing_pulse(ui: &egui::Ui, avatar: egui::Rect) {
 	const PERIOD: f64 = 1.6;
 	let phase = (ui.input(|input| input.time) % PERIOD / PERIOD) as f32;
-	let center = avatar.center();
-	let radius = avatar.width() * 0.5 + 7.0;
-	let painter = ui.painter();
-	painter.circle_stroke(
-		center,
-		radius + 3.0 + phase * 10.0,
+	ui.painter().circle_stroke(
+		avatar.center(),
+		avatar.width() * 0.5 + 4.0 + phase * 14.0,
 		egui::Stroke::new(3.0, STAGE_MUTED.gamma_multiply(0.9 * (1.0 - phase))),
 	);
-	painter.circle_filled(
-		center,
-		radius + 3.0,
-		egui::Color32::from_rgb(0x5c, 0x5e, 0x66),
-	);
-	painter.circle_filled(center, radius - 3.0, STAGE_FILL);
 	// The pulse only needs a smooth 30 fps while someone is being rung.
 	ui.ctx()
 		.request_repaint_after(std::time::Duration::from_millis(33));

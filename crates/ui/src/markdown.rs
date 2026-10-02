@@ -522,6 +522,28 @@ struct Render<'a> {
 	author: Option<InlineAuthor<'a>>,
 }
 
+impl Render<'_> {
+	fn show_author(&mut self, ui: &mut egui::Ui, trailing: f32) {
+		let Some((author, name, color, action)) = self.author.take() else {
+			return;
+		};
+		let response = crate::account_badge::name(
+			ui,
+			author,
+			name,
+			15.5,
+			color,
+			egui::Sense::click(),
+			trailing,
+		);
+		self.surface.keep(&response);
+		if let (Some(source), Some(action)) = (self.source, action) {
+			crate::user_menu::show(&response, source.state, author, self.profile, action);
+		}
+		self.profile.person_click(ui, &response, None, author);
+	}
+}
+
 fn channel_reference_name<'a>(
 	id: Id,
 	channels: &'a [model::Channel],
@@ -1246,6 +1268,23 @@ impl Formatted {
 		render: &mut Render<'_>,
 		quoted: bool,
 	) {
+		if render.author.is_some()
+			&& spans
+				.first()
+				.is_some_and(|(_, style)| style.quote || style.block.is_some())
+		{
+			// A leading block keeps its own line boundaries and full body width,
+			// while the compact author remains beside it in a separate column.
+			ui.horizontal_top(|ui| {
+				ui.spacing_mut().item_spacing.x = 8.0;
+				render.show_author(ui, 168.0);
+				ui.vertical(|ui| {
+					ui.set_width(ui.available_width());
+					self.show_run(ui, spans, render, quoted);
+				});
+			});
+			return;
+		}
 		let line = render.line;
 		ui.allocate_ui_with_layout(
 			egui::vec2(ui.available_width(), 0.0),
@@ -1258,28 +1297,9 @@ impl Formatted {
 						ui.allocate_space(egui::vec2(0.0, height));
 					}
 				};
-				if let Some((author, name, color, action)) = render.author.take() {
+				if render.author.is_some() {
 					reserve(ui);
-					let response = crate::account_badge::name(
-						ui,
-						author,
-						name,
-						15.5,
-						color,
-						egui::Sense::click(),
-						48.0,
-					);
-					render.surface.keep(&response);
-					if let (Some(source), Some(action)) = (render.source, action) {
-						crate::user_menu::show(
-							&response,
-							source.state,
-							author,
-							render.profile,
-							action,
-						);
-					}
-					render.profile.person_click(ui, &response, None, author);
+					render.show_author(ui, 48.0);
 					ui.allocate_space(egui::vec2(8.0, 0.0));
 				}
 				let mut start = 0;

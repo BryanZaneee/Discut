@@ -4208,6 +4208,68 @@ mod tests {
 	}
 
 	#[test]
+	fn compact_authors_remain_beside_leading_quote_and_code_blocks() {
+		for (content, body, first_row) in [
+			(
+				"> Quoted compact body\n> Continued quote\n\nAfter quote",
+				"Quoted compact body",
+				"Quoted compact body",
+			),
+			(
+				"```rust\nleading_code_body();\n```\nAfter code",
+				"leading_code_body();",
+				"Rust",
+			),
+			(
+				"> ```rust\n> nested_code_body();\n> ```",
+				"nested_code_body();",
+				"Rust",
+			),
+		] {
+			let ctx = egui::Context::default();
+			crate::design::apply(&ctx);
+			let mut state = loading_unread_channel(false);
+			state.freshness = model::Freshness::Fresh;
+			state.history_pending = false;
+			let mut message = text_message(20);
+			message.author.name = "Compact block speaker".into();
+			message.content = content.into();
+			state.timeline.insert(message, false, false).unwrap();
+			let mut view = TimelineView {
+				compact_messages: true,
+				..Default::default()
+			};
+			for _ in 0..5 {
+				banner_frame(&ctx, &mut view, &mut state, vec![], false);
+			}
+			let labels = banner_frame_bounds(&ctx, &mut view, &mut state, vec![], false, true);
+			let author = labels
+				.iter()
+				.find(|(text, _)| text == "Compact block speaker")
+				.unwrap()
+				.1;
+			let block = labels
+				.iter()
+				.find(|(text, _)| text.contains(body))
+				.unwrap()
+				.1;
+			assert!(
+				author.right() < block.left(),
+				"author {author:?} must stay beside {block:?}: {content}"
+			);
+			let first_row = labels
+				.iter()
+				.find(|(text, _)| text.contains(first_row))
+				.unwrap()
+				.1;
+			assert!(
+				(author.top() - first_row.top()).abs() < 32.0,
+				"author {author:?} remains beside the first block row {first_row:?}: {content}"
+			);
+		}
+	}
+
+	#[test]
 	fn unread_banner_is_visible_as_soon_as_an_unread_channel_is_joined() {
 		let ctx = egui::Context::default();
 		for cached_reply in [true, false] {

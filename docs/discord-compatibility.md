@@ -2059,6 +2059,33 @@ Extension snapshots retain their existing unsupported poll contract. No live Dis
 used to verify normal-account interoperability. Use --demo --demo-polls for an offline preview
 and --demo --demo-check-polls for the focused synthetic debug check.
 
+## Quiet messages (`@silent`)
+
+Start a new message with `@silent` followed by whitespace to request a quiet send.
+The marker and exactly one separating whitespace character are removed; remaining
+indentation, line breaks and trailing whitespace are preserved. The documented
+[`SUPPRESS_NOTIFICATIONS` message flag](https://docs.discord.com/developers/resources/message#message-object-message-flags)
+(4096) is set. Discord describes this as suppressing push/desktop notifications while
+retaining notification badges. Existing mention selection and reply-mention preferences
+still apply. Ordinary text, replies, attachment captions, sticker captions and forum
+starter messages share this behavior. An attachment or sticker can use `@silent` alone;
+a text-only empty message is rejected. Embedded occurrences, `@silently`, escaped/code
+text and edits remain literal. The prefix is case-sensitive.
+
+Pending/recovery text retains the typed prefix until service confirmation so a failed
+send can be reviewed and deliberately retried with the same intent. Writes are never
+automatically replayed. The flag is documented in Discord's developer API; normal-account
+interoperability remains unofficial and live-unverified. Loopback tests inspect the
+actual outgoing JSON and do not contact Discord.
+
+Quiet-message admission is shared by the composer, forum editor, core state and
+transport. A marker-only text draft is rejected before it or its reply is consumed;
+attachment/sticker-only messages may carry the marker. New-message editors have an
+eight-scalar marker allowance while the effective outgoing text retains its full
+2,000-scalar limit. The allowance is separately bounded; edits treat the marker
+literally. Existing per-draft byte ceilings and the session input budget remain
+in force. A quiet forwarding note affects only that separately sent note.
+
 ## Public Catbox attachment links (October 2, 2026)
 
 Each staged message-composer file has a **Host file…** action. Selecting it shows

@@ -79,6 +79,17 @@ const SIGN_IN_HEADER_HEIGHT: f32 = if cfg!(target_os = "windows") {
 fn main() -> eframe::Result {
 	#[cfg(all(debug_assertions, feature = "demo"))]
 	if std::env::args().any(|arg| arg == "--demo")
+		&& std::env::args().any(|arg| arg == "--demo-check-heic")
+	{
+		avatars::debug_heic_check();
+		uploads::debug_heic_check();
+		println!(
+			"Offline HEIC check passed: brand recognition, malformed rejection, upload preview admission, decoded aspect ratio and 4096px original viewer routing. Valid synthetic 6000x4000 HEIC decoding and scaling checked on Windows; owner photos unverified."
+		);
+		return Ok(());
+	}
+	#[cfg(all(debug_assertions, feature = "demo"))]
+	if std::env::args().any(|arg| arg == "--demo")
 		&& std::env::args().any(|arg| arg == "--demo-check-resume-send")
 	{
 		discord_gateway::debug_recovery_check();

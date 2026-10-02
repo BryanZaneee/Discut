@@ -4365,6 +4365,8 @@ lib-composer-onboarding-incomplete = Finish joining this server to unlock more c
 # Context: composer
 lib-composer-onboarding-complete = Complete Onboarding
 
+reconnect-now = Reconnect now
+
 # Explicit public attachment hosting
 public-upload-host-file = Host file…
 public-upload-heading = Upload to Catbox

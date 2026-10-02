@@ -4367,6 +4367,8 @@ lib-composer-onboarding-incomplete = Dokonči připojení k serveru a odemkni da
 # Context: composer
 lib-composer-onboarding-complete = Dokončit uvítání
 
+reconnect-now = Znovu připojit
+
 # Explicit public attachment hosting
 public-upload-host-file = Hostovat soubor…
 public-upload-heading = Nahrát na Catbox

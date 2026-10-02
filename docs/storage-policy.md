@@ -1485,6 +1485,11 @@ the credential-store job completes. A failed deletion leaves routing paused; it
 does not resume stored credentials. In-flight requests retain their earlier
 snapshot. Rejected saves retain the credential draft until a valid job can start.
 
+Linux system appearance retains one atomic preference and at most one portal
+connection/subscription (eight queued messages). Portal connect/read operations
+have three-second timeouts and reconnect attempts are separated by three seconds.
+The initial gsettings fallback runs once off rendering, with a two-second process
+limit and a 256-byte output cap; no preference history or diagnostics are stored.
 Reading zoom is constrained to 50–150%. Schema 26 rebuilds the fixed-size reading
 preferences table in the existing migration transaction, preserving all saved choices
 while widening the former 80% lower limit. Older clients reject schema 26 rather than

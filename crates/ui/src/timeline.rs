@@ -4036,6 +4036,26 @@ mod tests {
 		shift_widget_order: bool,
 		actual_glyphs: bool,
 	) -> Vec<(String, egui::Rect)> {
+		banner_frame_bounds_width(
+			ctx,
+			view,
+			state,
+			events,
+			shift_widget_order,
+			actual_glyphs,
+			900.0,
+		)
+	}
+
+	fn banner_frame_bounds_width(
+		ctx: &egui::Context,
+		view: &mut TimelineView,
+		state: &mut State,
+		events: Vec<egui::Event>,
+		shift_widget_order: bool,
+		actual_glyphs: bool,
+		width: f32,
+	) -> Vec<(String, egui::Rect)> {
 		fn collect(
 			shape: &egui::Shape,
 			labels: &mut Vec<(String, egui::Rect)>,
@@ -4069,7 +4089,7 @@ mod tests {
 				events,
 				screen_rect: Some(egui::Rect::from_min_size(
 					egui::Pos2::ZERO,
-					egui::vec2(900.0, 600.0),
+					egui::vec2(width, 600.0),
 				)),
 				..Default::default()
 			},
@@ -4226,46 +4246,69 @@ mod tests {
 				"Rust",
 			),
 		] {
-			let ctx = egui::Context::default();
-			crate::design::apply(&ctx);
-			let mut state = loading_unread_channel(false);
-			state.freshness = model::Freshness::Fresh;
-			state.history_pending = false;
-			let mut message = text_message(20);
-			message.author.name = "Compact block speaker".into();
-			message.content = content.into();
-			state.timeline.insert(message, false, false).unwrap();
-			let mut view = TimelineView {
-				compact_messages: true,
-				..Default::default()
-			};
-			for _ in 0..5 {
-				banner_frame(&ctx, &mut view, &mut state, vec![], false);
+			for width in [900.0, 440.0] {
+				let ctx = egui::Context::default();
+				crate::design::apply(&ctx);
+				let mut state = loading_unread_channel(false);
+				state.freshness = model::Freshness::Fresh;
+				state.history_pending = false;
+				let mut message = text_message(20);
+				message.author.name = "LongSyntheticAuthorDisplayName".into();
+				message.content = content.into();
+				state.timeline.insert(message, false, false).unwrap();
+				let mut view = TimelineView {
+					compact_messages: true,
+					..Default::default()
+				};
+				for _ in 0..5 {
+					banner_frame_bounds_width(
+						&ctx,
+						&mut view,
+						&mut state,
+						vec![],
+						false,
+						true,
+						width,
+					);
+				}
+				let labels = banner_frame_bounds_width(
+					&ctx,
+					&mut view,
+					&mut state,
+					vec![],
+					false,
+					true,
+					width,
+				);
+				let author = labels
+					.iter()
+					.find(|(text, _)| text == "LongSyntheticAuthorDisplayName")
+					.unwrap()
+					.1;
+				let block = labels
+					.iter()
+					.find(|(text, _)| text.contains(body))
+					.unwrap()
+					.1;
+				assert!(
+					author.right() < block.left(),
+					"author {author:?} must stay beside {block:?}: {content}"
+				);
+				assert!(author.width() <= 161.0, "bounded author: {author:?}");
+				assert!(
+					block.right() <= width + 1.0,
+					"block fits narrow row: {block:?}, width {width}"
+				);
+				let first_row = labels
+					.iter()
+					.find(|(text, _)| text.contains(first_row))
+					.unwrap()
+					.1;
+				assert!(
+					(author.top() - first_row.top()).abs() < 32.0,
+					"author {author:?} remains beside the first block row {first_row:?}: {content}"
+				);
 			}
-			let labels = banner_frame_bounds(&ctx, &mut view, &mut state, vec![], false, true);
-			let author = labels
-				.iter()
-				.find(|(text, _)| text == "Compact block speaker")
-				.unwrap()
-				.1;
-			let block = labels
-				.iter()
-				.find(|(text, _)| text.contains(body))
-				.unwrap()
-				.1;
-			assert!(
-				author.right() < block.left(),
-				"author {author:?} must stay beside {block:?}: {content}"
-			);
-			let first_row = labels
-				.iter()
-				.find(|(text, _)| text.contains(first_row))
-				.unwrap()
-				.1;
-			assert!(
-				(author.top() - first_row.top()).abs() < 32.0,
-				"author {author:?} remains beside the first block row {first_row:?}: {content}"
-			);
 		}
 	}
 

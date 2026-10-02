@@ -1277,7 +1277,9 @@ impl Formatted {
 			// while the compact author remains beside it in a separate column.
 			ui.horizontal_top(|ui| {
 				ui.spacing_mut().item_spacing.x = 8.0;
-				render.show_author(ui, 168.0);
+				let width = ui.available_width();
+				let author_width = (width * 0.35).min(160.0);
+				render.show_author(ui, width - author_width);
 				ui.vertical(|ui| {
 					ui.set_width(ui.available_width());
 					self.show_run(ui, spans, render, quoted);

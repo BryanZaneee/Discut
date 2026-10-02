@@ -2050,7 +2050,7 @@ pub fn switch(
 	let on = ui.ctx().animate_bool_with_time_and_easing(
 		response.id.with("switch"),
 		*enabled,
-		ui.style().animation_time * 2.0,
+		ui.style().animation_time * 1.25,
 		egui::emath::easing::cubic_out,
 	);
 	let mut fill = p.base.lerp_to_gamma(p.accent, on);

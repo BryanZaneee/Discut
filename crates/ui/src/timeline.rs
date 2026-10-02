@@ -347,6 +347,11 @@ fn layout_key(message: &Message) -> u64 {
 	key.finish()
 }
 pub(crate) const MESSAGE_LINE: f32 = 22.0;
+
+/// Widest author name in a compact (IRC) row; the body takes the rest beside it.
+pub(crate) fn compact_author_width(available: f32) -> f32 {
+	(available * 0.35).clamp(72.0, 150.0)
+}
 const GROUPED_ROW_SAVINGS: f32 = 52.0;
 
 /// Space above a new message group: cozy by default, tighter when compact spacing is on.
@@ -2145,7 +2150,8 @@ impl TimelineView {
 					self.leading_rendered += 1;
 				}
 
-				let compact = self.compact_messages || grouped(previous, message, self.unread_boundary);
+				let compact =
+					self.compact_messages || grouped(previous, message, self.unread_boundary);
 				let new_day = previous
 					.is_none_or(|previous| timestamp(previous.id).date() != timestamp(id).date());
 				let response = ui.scope_builder(egui::UiBuilder::new().scope_id(row_id), |ui| {
@@ -2179,7 +2185,8 @@ impl TimelineView {
 						})
 						.show(ui, |ui| {
 							let mut surface = crate::select::Surface::new(ui, "row");
-							ui.spacing_mut().item_spacing = egui::vec2(16.0, if self.compact_messages { 2.0 } else { 4.0 });
+							ui.spacing_mut().item_spacing =
+								egui::vec2(16.0, if self.compact_messages { 2.0 } else { 4.0 });
 							if let Some(interaction) = message
 								.interaction
 								.as_deref()
@@ -2461,9 +2468,16 @@ impl TimelineView {
 								});
 							}
 							let system = message.system_message();
-							let inline_author = self.compact_messages && system.is_none()
-								&& !(self.hide_media_links && crate::embeds::standalone_media_links(message))
-								&& !(deleted && message.content.is_empty());
+							let name_color = state.message_author_color(message).map_or(
+								colors.text_strong,
+								|rgb| {
+									crate::design::role_name_color(
+										rgb,
+										colors.chat,
+										colors.text_strong,
+									)
+								},
+							);
 							let mut body_bottom = f32::NAN;
 							// Hovering the avatar underlines the author, like hovering the name.
 							let mut avatar_hot = false;
@@ -2483,6 +2497,70 @@ impl TimelineView {
 										),
 										tint,
 									);
+								} else if self.compact_messages {
+									// Compact (IRC) rows drop the avatar gutter: time, author, then
+									// the body in its own column so wrapped lines never run under the name.
+									let body_spacing = ui.spacing().item_spacing.x;
+									ui.spacing_mut().item_spacing.x = 8.0;
+									let time = timestamp(id);
+									ui.allocate_ui_with_layout(
+										egui::vec2(ui.available_width(), MESSAGE_LINE),
+										egui::Layout::left_to_right(egui::Align::Center),
+										|ui| {
+											let time = ui
+												.label(
+													RichText::new(format!(
+														"{:02}:{:02}",
+														time.hour(),
+														time.minute()
+													))
+													.size(12.0)
+													.color(colors.muted),
+												)
+												.on_hover_text_with(|| format!("{} UTC", time));
+											surface.exclude(time.rect);
+										},
+									);
+									let width = compact_author_width(ui.available_width());
+									ui.allocate_ui_with_layout(
+										egui::vec2(width, MESSAGE_LINE),
+										egui::Layout::left_to_right(egui::Align::Center),
+										|ui| {
+											ui.set_max_width(width);
+											let author = crate::account_badge::name(
+												ui,
+												&message.author,
+												state.message_author_name(message),
+												15.5,
+												name_color,
+												egui::Sense::click(),
+												0.0,
+											)
+											.on_hover_cursor(egui::CursorIcon::PointingHand);
+											if author.hovered() {
+												ui.painter().hline(
+													author.rect.x_range(),
+													author.rect.bottom() - 1.0,
+													egui::Stroke::new(1.0, name_color),
+												);
+											}
+											crate::user_menu::show(
+												&author,
+												state,
+												&message.author,
+												profile,
+												&mut self.user_action,
+											);
+											profile.person_click(
+												ui,
+												&author,
+												None,
+												&message.author,
+											);
+											surface.keep(&author);
+										},
+									);
+									ui.spacing_mut().item_spacing.x = body_spacing;
 								} else if compact {
 									time_rect = Some(
 										ui.allocate_exact_size(
@@ -2509,21 +2587,12 @@ impl TimelineView {
 								ui.vertical(|ui| {
 									ui.set_width(ui.available_width());
 									let mut text_line = egui::Rect::NOTHING;
-									if (!compact || (self.compact_messages && !inline_author)) && system.is_none() {
+									if !compact && system.is_none() {
 										ui.allocate_ui_with_layout(
 											egui::vec2(ui.available_width(), MESSAGE_LINE),
 											egui::Layout::left_to_right(egui::Align::Center),
 											|ui| {
 												ui.spacing_mut().item_spacing.x = 8.0;
-												let name_color = state
-													.message_author_color(message)
-													.map_or(colors.text_strong, |rgb| {
-														crate::design::role_name_color(
-															rgb,
-															colors.chat,
-															colors.text_strong,
-														)
-													});
 												let author = crate::account_badge::name(
 													ui,
 													&message.author,
@@ -2674,7 +2743,7 @@ impl TimelineView {
 																	state,
 																	channel: message.channel,
 																};
-															formatted.show_search_with_author(
+															formatted.show_references(
 																ui,
 																&mut self.opening,
 																&message.mentions,
@@ -2691,14 +2760,7 @@ impl TimelineView {
 																),
 																(avatars, state.demo, &mut text),
 																&mut surface,
-																"",
 																crate::design::MessageCardSurface::Conversation,
-																inline_author.then(|| (
-																	&message.author,
-																	state.message_author_name(message),
-																	state.message_author_color(message).map_or(colors.text_strong, |rgb| crate::design::role_name_color(rgb, colors.chat, colors.text_strong)),
-																	Some(&mut self.user_action),
-																)),
 															);
 														}
 													})
@@ -3430,7 +3492,11 @@ impl TimelineView {
 					crate::pending::show(
 						ui,
 						pending,
-						(compact, group_gap(self.compact_messages), self.compact_messages),
+						(
+							compact,
+							group_gap(self.compact_messages),
+							self.compact_messages,
+						),
 						state,
 						(
 							avatars,

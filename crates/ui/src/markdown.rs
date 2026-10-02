@@ -493,13 +493,6 @@ fn normalize_fences(input: &str) -> std::borrow::Cow<'_, str> {
 	}
 }
 
-pub(crate) type InlineAuthor<'a> = (
-	&'a model::User,
-	&'a str,
-	egui::Color32,
-	Option<&'a mut Option<crate::user_menu::Action>>,
-);
-
 /// Everything one message body needs while its spans are laid out, so a quote can lay out its
 /// own nested run without repeating the argument list.
 struct Render<'a> {
@@ -519,29 +512,6 @@ struct Render<'a> {
 	/// Row height reserved for artwork, so emoji and text share one baseline.
 	line: Option<f32>,
 	card_surface: crate::design::MessageCardSurface,
-	author: Option<InlineAuthor<'a>>,
-}
-
-impl Render<'_> {
-	fn show_author(&mut self, ui: &mut egui::Ui, trailing: f32) {
-		let Some((author, name, color, action)) = self.author.take() else {
-			return;
-		};
-		let response = crate::account_badge::name(
-			ui,
-			author,
-			name,
-			15.5,
-			color,
-			egui::Sense::click(),
-			trailing,
-		);
-		self.surface.keep(&response);
-		if let (Some(source), Some(action)) = (self.source, action) {
-			crate::user_menu::show(&response, source.state, author, self.profile, action);
-		}
-		self.profile.person_click(ui, &response, None, author);
-	}
 }
 
 fn channel_reference_name<'a>(
@@ -1189,40 +1159,6 @@ impl Formatted {
 		query: &str,
 		card_surface: crate::design::MessageCardSurface,
 	) {
-		self.show_search_with_author(
-			ui,
-			opening,
-			users,
-			source,
-			profile,
-			references,
-			media,
-			surface,
-			query,
-			card_surface,
-			None,
-		);
-	}
-	#[allow(clippy::too_many_arguments)]
-	pub(crate) fn show_search_with_author(
-		&self,
-		ui: &mut egui::Ui,
-		opening: &mut Option<String>,
-		users: &[model::User],
-		source: Option<&crate::mentions::MentionSource<'_>>,
-		profile: &mut crate::profiles::ProfileSession,
-		references: (
-			&[model::Channel],
-			&mut Option<Id>,
-			&[model::Guild],
-			&[model::permissions::Role],
-		),
-		media: (&mut crate::avatars::Avatars, bool, &mut u32),
-		surface: &mut crate::select::Surface,
-		query: &str,
-		card_surface: crate::design::MessageCardSurface,
-		author: Option<InlineAuthor<'_>>,
-	) {
 		let (channels, channel, guilds, roles) = references;
 		let (images, demo, revealed) = media;
 		// Relative timestamps age without input; a coarse tick keeps them honest without a timer.
@@ -1255,7 +1191,6 @@ impl Formatted {
 			query,
 			line,
 			card_surface,
-			author,
 		};
 		self.show_run(ui, &self.spans, &mut render, false);
 	}
@@ -1268,25 +1203,6 @@ impl Formatted {
 		render: &mut Render<'_>,
 		quoted: bool,
 	) {
-		if render.author.is_some()
-			&& spans
-				.first()
-				.is_some_and(|(_, style)| style.quote || style.block.is_some())
-		{
-			// A leading block keeps its own line boundaries and full body width,
-			// while the compact author remains beside it in a separate column.
-			ui.horizontal_top(|ui| {
-				ui.spacing_mut().item_spacing.x = 8.0;
-				let width = ui.available_width();
-				let author_width = (width * 0.35).min(160.0);
-				render.show_author(ui, width - author_width);
-				ui.vertical(|ui| {
-					ui.set_width(ui.available_width());
-					self.show_run(ui, spans, render, quoted);
-				});
-			});
-			return;
-		}
 		let line = render.line;
 		ui.allocate_ui_with_layout(
 			egui::vec2(ui.available_width(), 0.0),
@@ -1299,11 +1215,6 @@ impl Formatted {
 						ui.allocate_space(egui::vec2(0.0, height));
 					}
 				};
-				if render.author.is_some() {
-					reserve(ui);
-					render.show_author(ui, 48.0);
-					ui.allocate_space(egui::vec2(8.0, 0.0));
-				}
 				let mut start = 0;
 				while start < spans.len() {
 					// Discord's quote rail spans the whole block: a nested run keeps every

@@ -65,7 +65,44 @@ pub fn show(
 		.show(ui, |ui| {
 			ui.spacing_mut().item_spacing = egui::vec2(16.0, 4.0);
 			ui.horizontal_top(|ui| {
-				if compact {
+				if irc {
+					// Match a compact timeline row: a time-wide slot, the author, then the body.
+					let body_spacing = ui.spacing().item_spacing.x;
+					ui.spacing_mut().item_spacing.x = 8.0;
+					let time = ui.painter().layout_no_wrap(
+						"00:00".into(),
+						egui::FontId::proportional(12.0),
+						colors.muted,
+					);
+					ui.allocate_exact_size(
+						egui::vec2(time.size().x, crate::timeline::MESSAGE_LINE),
+						egui::Sense::hover(),
+					);
+					let width = crate::timeline::compact_author_width(ui.available_width());
+					ui.allocate_ui_with_layout(
+						egui::vec2(width, crate::timeline::MESSAGE_LINE),
+						egui::Layout::left_to_right(egui::Align::Center),
+						|ui| {
+							ui.set_max_width(width);
+							ui.add(
+								egui::Label::new(
+									design::medium(
+										ui,
+										state.user.as_ref().map_or_else(
+											|| crate::i18n::translate("pending-show-you"),
+											|u| u.name.clone(),
+										),
+										15.5,
+									)
+									.color(colors.muted),
+								)
+								.truncate()
+								.selectable(false),
+							);
+						},
+					);
+					ui.spacing_mut().item_spacing.x = body_spacing;
+				} else if compact {
 					ui.allocate_exact_size(
 						egui::vec2(40.0, crate::timeline::MESSAGE_LINE),
 						egui::Sense::hover(),
@@ -84,12 +121,11 @@ pub fn show(
 					ui.set_width(ui.available_width());
 					let mut text_line = egui::Rect::NOTHING;
 					if !compact
-						|| (irc && pending.content.is_empty())
 						|| matches!(pending.delivery, Delivery::Rejected | Delivery::Ambiguous)
 					{
 						ui.horizontal_wrapped(|ui| {
 							ui.spacing_mut().item_spacing.x = 8.0;
-							if !compact || (irc && pending.content.is_empty()) {
+							if !compact {
 								ui.label(
 									design::medium(
 										ui,
@@ -140,7 +176,7 @@ pub fn show(
 										state,
 										channel: pending.channel,
 									};
-									formatted.show_search_with_author(
+									formatted.show_references(
 										ui,
 										opening,
 										&crate::mentions::known_users(state, pending.channel),
@@ -154,11 +190,7 @@ pub fn show(
 										),
 										(avatars, state.demo, &mut revealed),
 										&mut surface,
-										"",
 										crate::design::MessageCardSurface::Conversation,
-										state.user.as_ref().filter(|_| irc).map(|user| {
-											(user, user.name.as_str(), colors.muted, None)
-										}),
 									);
 								})
 								.response

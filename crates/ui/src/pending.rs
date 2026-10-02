@@ -59,7 +59,13 @@ pub fn show(
 		.inner_margin(egui::Margin {
 			left: 16,
 			right: 16,
-			top: if compact { 1 } else { gap },
+			top: if irc {
+				3
+			} else if compact {
+				1
+			} else {
+				gap
+			},
 			bottom: 1,
 		})
 		.show(ui, |ui| {

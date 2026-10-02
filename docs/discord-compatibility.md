@@ -2096,9 +2096,10 @@ Extension snapshots retain their existing unsupported poll contract. No live Dis
 used to verify normal-account interoperability. Use --demo --demo-polls for an offline preview
 and --demo --demo-check-polls for the focused synthetic debug check.
 
-Compact message display is a device-local IRC-style layout: ordinary message
-rows keep the timestamp gutter and show a clickable author beside the formatted body,
-without the message avatar/header row. Existing reply and system widgets remain. Pending rows use the same inline author display;
+Compact message display is a device-local layout: ordinary message rows show
+the time, then a clickable author, then the formatted body in its own column,
+without the avatar gutter or header row. Existing reply and system widgets remain.
+Pending rows use the same time, author and body columns;
 message selection, mentions, spoilers, media and delivery actions remain in
 the existing native widgets. The saved compact choice also reduces divider and
 reply/system spacing. This changes local presentation only.

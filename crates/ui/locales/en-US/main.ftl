@@ -2166,7 +2166,7 @@ reading-chat-reading-settings-scrolling-speed = Scrolling speed
 # Context: chat_reading_settings
 reading-chat-reading-settings-smooth-scrolling = Smooth scrolling
 # Context: chat_reading_settings
-reading-chat-reading-settings-compact-message-spacing = Compact messages (IRC style)
+reading-chat-reading-settings-compact-message-spacing = Compact messages
 # Context: chat_reading_settings
 reading-chat-reading-settings-tighter-gaps-between-message-groups = Show names beside messages without avatars, with tighter message and divider spacing.
 # Context: chat_reading_settings

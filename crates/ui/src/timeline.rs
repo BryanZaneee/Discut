@@ -348,7 +348,7 @@ fn layout_key(message: &Message) -> u64 {
 }
 pub(crate) const MESSAGE_LINE: f32 = 22.0;
 
-/// Widest author name in a compact (IRC) row; the body takes the rest beside it.
+/// Widest author name in a compact row; the body takes the rest beside it.
 pub(crate) fn compact_author_width(available: f32) -> f32 {
 	(available * 0.35).clamp(72.0, 150.0)
 }
@@ -2176,7 +2176,9 @@ impl TimelineView {
 						.inner_margin(egui::Margin {
 							left: 16,
 							right: 16,
-							top: if compact {
+							top: if self.compact_messages {
+								3
+							} else if compact {
 								1
 							} else {
 								group_gap(self.compact_messages)
@@ -2498,7 +2500,7 @@ impl TimelineView {
 										tint,
 									);
 								} else if self.compact_messages {
-									// Compact (IRC) rows drop the avatar gutter: time, author, then
+									// Compact rows drop the avatar gutter: time, author, then
 									// the body in its own column so wrapped lines never run under the name.
 									let body_spacing = ui.spacing().item_spacing.x;
 									ui.spacing_mut().item_spacing.x = 8.0;

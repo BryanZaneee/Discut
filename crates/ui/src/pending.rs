@@ -30,7 +30,7 @@ pub fn show(
 	ui: &mut egui::Ui,
 	pending: &Pending,
 	// Whether the row continues a group, and the gap above a new group.
-	(compact, gap): (bool, i8),
+	(compact, gap, irc): (bool, i8, bool),
 	state: &State,
 	media: (
 		&mut crate::avatars::Avatars,
@@ -44,6 +44,7 @@ pub fn show(
 ) {
 	let colors = design::palette(ui);
 	let (avatars, opening, profile, channel, formats) = media;
+	let compact = compact || irc;
 	let upload = upload.filter(|upload| upload.nonce == pending.nonce);
 	let sending = pending.delivery == Delivery::Sending;
 	let artwork = pending.attachments.len() == 1
@@ -83,11 +84,12 @@ pub fn show(
 					ui.set_width(ui.available_width());
 					let mut text_line = egui::Rect::NOTHING;
 					if !compact
+						|| (irc && pending.content.is_empty())
 						|| matches!(pending.delivery, Delivery::Rejected | Delivery::Ambiguous)
 					{
 						ui.horizontal_wrapped(|ui| {
 							ui.spacing_mut().item_spacing.x = 8.0;
-							if !compact {
+							if !compact || (irc && pending.content.is_empty()) {
 								ui.label(
 									design::medium(
 										ui,
@@ -138,7 +140,7 @@ pub fn show(
 										state,
 										channel: pending.channel,
 									};
-									formatted.show_references(
+									formatted.show_search_with_author(
 										ui,
 										opening,
 										&crate::mentions::known_users(state, pending.channel),
@@ -152,7 +154,11 @@ pub fn show(
 										),
 										(avatars, state.demo, &mut revealed),
 										&mut surface,
+										"",
 										crate::design::MessageCardSurface::Conversation,
+										state.user.as_ref().filter(|_| irc).map(|user| {
+											(user, user.name.as_str(), colors.muted, None)
+										}),
 									);
 								})
 								.response
@@ -477,7 +483,7 @@ mod tests {
 						show(
 							ui,
 							&pending,
-							(true, 10),
+							(true, 10, false),
 							&state,
 							(
 								&mut crate::avatars::Avatars::default(),

@@ -730,10 +730,10 @@ fn row_height_key(
 ) -> u64 {
 	row_key(message, previous, boundary, state) ^ u64::from(deleted)
 }
-fn divider(ui: &mut egui::Ui, label: String, unread: bool) {
+fn divider(ui: &mut egui::Ui, label: String, unread: bool, compact: bool) {
 	let colors = crate::design::palette(ui);
 	let color = if unread { colors.danger } else { colors.muted };
-	ui.add_space(16.0);
+	ui.add_space(if compact { 8.0 } else { 16.0 });
 	ui.horizontal(|ui| {
 		ui.add_space(16.0);
 		let font = egui::FontId::new(12.0, crate::design::semibold_family(ui.ctx()));
@@ -773,7 +773,7 @@ fn divider(ui: &mut egui::Ui, label: String, unread: bool) {
 			ui.ctx().set_cursor_icon(egui::CursorIcon::Default);
 		}
 	});
-	ui.add_space(4.0);
+	ui.add_space(if compact { 2.0 } else { 4.0 });
 }
 fn action_button(ui: &mut egui::Ui, icon: crate::icons::Icon, label: &str) -> egui::Response {
 	crate::icons::button(ui, icon, 28.0, label)
@@ -1524,6 +1524,7 @@ impl TimelineView {
 			let following = restored.is_none_or(|cursor| cursor.message.is_none());
 			*self = Self {
 				extension_actions: self.extension_actions.clone(),
+				compact_messages: self.compact_messages,
 				hide_media_links: self.hide_media_links,
 				instant_scrolling: self.instant_scrolling,
 				suppressed_deleted_highlight: std::mem::take(
@@ -1713,7 +1714,7 @@ impl TimelineView {
 						&m.attachments,
 						(width - 88.0).max(1.0),
 					) + 58.0 + 18.0 * lines.min(128.0);
-					if grouped(prior, m, self.unread_boundary) {
+					if self.compact_messages || grouped(prior, m, self.unread_boundary) {
 						estimate = (estimate - GROUPED_ROW_SAVINGS).max(24.0);
 					}
 					estimate += reserved_chrome(ui, m, width);
@@ -2142,7 +2143,7 @@ impl TimelineView {
 					self.leading_rendered += 1;
 				}
 
-				let compact = grouped(previous, message, self.unread_boundary);
+				let compact = self.compact_messages || grouped(previous, message, self.unread_boundary);
 				let new_day = previous
 					.is_none_or(|previous| timestamp(previous.id).date() != timestamp(id).date());
 				let response = ui.scope_builder(egui::UiBuilder::new().scope_id(row_id), |ui| {
@@ -2152,10 +2153,11 @@ impl TimelineView {
 							ui,
 							format!("{} {}, {}", date.month(), date.day(), date.year()),
 							false,
+							self.compact_messages,
 						);
 					}
 					if self.unread_boundary == Some(id) {
-						divider(ui, "New messages".into(), true);
+						divider(ui, "New messages".into(), true, self.compact_messages);
 					}
 					let colors = crate::design::palette(ui);
 					let background = ui.painter().add(egui::Shape::Noop);
@@ -2175,7 +2177,7 @@ impl TimelineView {
 						})
 						.show(ui, |ui| {
 							let mut surface = crate::select::Surface::new(ui, "row");
-							ui.spacing_mut().item_spacing = egui::vec2(16.0, 4.0);
+							ui.spacing_mut().item_spacing = egui::vec2(16.0, if self.compact_messages { 2.0 } else { 4.0 });
 							if let Some(interaction) = message
 								.interaction
 								.as_deref()
@@ -2457,6 +2459,9 @@ impl TimelineView {
 								});
 							}
 							let system = message.system_message();
+							let inline_author = self.compact_messages && system.is_none()
+								&& !(self.hide_media_links && crate::embeds::standalone_media_links(message))
+								&& !(deleted && message.content.is_empty());
 							let mut body_bottom = f32::NAN;
 							// Hovering the avatar underlines the author, like hovering the name.
 							let mut avatar_hot = false;
@@ -2502,7 +2507,7 @@ impl TimelineView {
 								ui.vertical(|ui| {
 									ui.set_width(ui.available_width());
 									let mut text_line = egui::Rect::NOTHING;
-									if !compact && system.is_none() {
+									if (!compact || (self.compact_messages && !inline_author)) && system.is_none() {
 										ui.allocate_ui_with_layout(
 											egui::vec2(ui.available_width(), MESSAGE_LINE),
 											egui::Layout::left_to_right(egui::Align::Center),
@@ -2667,7 +2672,7 @@ impl TimelineView {
 																	state,
 																	channel: message.channel,
 																};
-															formatted.show_references(
+															formatted.show_search_with_author(
 																ui,
 																&mut self.opening,
 																&message.mentions,
@@ -2684,7 +2689,14 @@ impl TimelineView {
 																),
 																(avatars, state.demo, &mut text),
 																&mut surface,
+																"",
 																crate::design::MessageCardSurface::Conversation,
+																inline_author.then(|| (
+																	&message.author,
+																	state.message_author_name(message),
+																	state.message_author_color(message).map_or(colors.text_strong, |rgb| crate::design::role_name_color(rgb, colors.chat, colors.text_strong)),
+																	Some(&mut self.user_action),
+																)),
 															);
 														}
 													})
@@ -3416,7 +3428,7 @@ impl TimelineView {
 					crate::pending::show(
 						ui,
 						pending,
-						(compact, group_gap(self.compact_messages)),
+						(compact, group_gap(self.compact_messages), self.compact_messages),
 						state,
 						(
 							avatars,
@@ -4013,15 +4025,39 @@ mod tests {
 		events: Vec<egui::Event>,
 		shift_widget_order: bool,
 	) -> Vec<(String, egui::Rect)> {
-		fn collect(shape: &egui::Shape, labels: &mut Vec<(String, egui::Rect)>) {
+		banner_frame_bounds(ctx, view, state, events, shift_widget_order, false)
+	}
+
+	fn banner_frame_bounds(
+		ctx: &egui::Context,
+		view: &mut TimelineView,
+		state: &mut State,
+		events: Vec<egui::Event>,
+		shift_widget_order: bool,
+		actual_glyphs: bool,
+	) -> Vec<(String, egui::Rect)> {
+		fn collect(
+			shape: &egui::Shape,
+			labels: &mut Vec<(String, egui::Rect)>,
+			actual_glyphs: bool,
+		) {
 			match shape {
-				egui::Shape::Text(text) => labels.push((
-					text.galley.job.text.clone(),
-					text.galley.rect.translate(text.pos.to_vec2()),
-				)),
+				egui::Shape::Text(text) => {
+					let mut rect = text.galley.rect.translate(text.pos.to_vec2());
+					if actual_glyphs {
+						// Wrapped labels include the occupied author space in their galley
+						// rectangle; inspect actual first-row glyphs for painted text positions.
+						if let Some(row) = text.galley.rows.first()
+							&& let Some(glyph) = row.glyphs.first()
+						{
+							rect.min.x = text.pos.x + row.pos.x + glyph.pos.x;
+						}
+					}
+					labels.push((text.galley.job.text.clone(), rect));
+				}
 				egui::Shape::Vec(shapes) => {
 					for shape in shapes {
-						collect(shape, labels);
+						collect(shape, labels, actual_glyphs);
 					}
 				}
 				_ => {}
@@ -4058,7 +4094,7 @@ mod tests {
 		assert!(output.platform_output.commands.is_empty());
 		let mut labels = vec![];
 		for shape in &output.shapes {
-			collect(&shape.shape, &mut labels);
+			collect(&shape.shape, &mut labels, actual_glyphs);
 		}
 		output.drop_without_applying_deltas();
 		labels
@@ -4113,6 +4149,62 @@ mod tests {
 			state.timeline.insert(message, false, false).unwrap();
 		}
 		state
+	}
+
+	#[test]
+	fn compact_messages_place_authors_beside_every_body_and_reduce_row_height() {
+		let mut heights = Vec::new();
+		for compact in [false, true] {
+			let ctx = egui::Context::default();
+			crate::design::apply(&ctx);
+			let mut state = loading_unread_channel(false);
+			state.freshness = model::Freshness::Fresh;
+			state.history_pending = false;
+			for id in [20, 21] {
+				let mut message = text_message(id);
+				message.author.name = "Synthetic compact speaker".into();
+				message.content = format!("Compact body {id}");
+				state.timeline.insert(message, false, false).unwrap();
+			}
+			let mut view = TimelineView {
+				compact_messages: compact,
+				..Default::default()
+			};
+			for _ in 0..5 {
+				banner_frame(&ctx, &mut view, &mut state, vec![], false);
+			}
+			let labels = banner_frame_bounds(&ctx, &mut view, &mut state, vec![], false, true);
+			assert_eq!(
+				view.compact_messages, compact,
+				"channel initialization preserves density"
+			);
+			if compact {
+				let names: Vec<_> = labels
+					.iter()
+					.filter(|(text, _)| text == "Synthetic compact speaker")
+					.map(|(_, rect)| rect)
+					.collect();
+				assert_eq!(names.len(), 2, "every compact row retains its author");
+				for id in [20, 21] {
+					let (_, body) = labels
+						.iter()
+						.find(|(text, _)| text == &format!("Compact body {id}"))
+						.unwrap();
+					assert!(
+						names
+							.iter()
+							.any(|name| (name.top() - body.top()).abs() < 4.0
+								&& name.right() < body.left()),
+						"authors {names:?}, body {body:?}"
+					);
+				}
+			}
+			heights.push(view.rows.iter().map(|(_, height)| height).sum::<f32>());
+		}
+		assert!(
+			heights[1] < heights[0],
+			"compact {heights:?} should use less vertical space"
+		);
 	}
 
 	#[test]

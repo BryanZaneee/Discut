@@ -103,6 +103,7 @@ no-conversations = Здесь нет доступных разговоров.
 open-in-discord = Открыть в Discord
 new = Новый
 members-count = Члены
+members-heading = Члены
 no-conversation-selected = Ни один разговор не выбран
 select-conversation = Выберите канал или прямое сообщение из списка.
 friends-online = Онлайн

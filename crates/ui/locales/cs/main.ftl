@@ -103,6 +103,7 @@ no-conversations = Nejsou zde dostupné žádné konverzace.
 open-in-discord = Otevřít v Discordu
 new = Nové
 members-count = členů
+members-heading = Členové
 no-conversation-selected = Není vybrána žádná konverzace
 select-conversation = Vyberte kanál nebo přímou zprávu ze seznamu.
 friends-online = Online

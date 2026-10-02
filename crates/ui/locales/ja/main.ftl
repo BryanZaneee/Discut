@@ -103,6 +103,7 @@ no-conversations = ここでは会話ができません。
 open-in-discord = Discordで開く
 new = 新しい
 members-count = メンバー
+members-heading = メンバー
 no-conversation-selected = 会話が選択されていません
 select-conversation = リストからチャンネルまたはダイレクトメッセージを選択します。
 friends-online = オンライン

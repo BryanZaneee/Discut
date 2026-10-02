@@ -103,6 +103,7 @@ no-conversations = Nenhuma conversa disponível aqui.
 open-in-discord = Abrir no Discord
 new = Novo
 members-count = Membros
+members-heading = Membros
 no-conversation-selected = Nenhuma conversa selecionada
 select-conversation = Escolha um canal ou mensagem direta na lista.
 friends-online = On-line

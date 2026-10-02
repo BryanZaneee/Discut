@@ -103,6 +103,7 @@ no-conversations = Burada sohbet mevcut değil.
 open-in-discord = Discord'da aç
 new = Yeni
 members-count = Üyeler
+members-heading = Üyeler
 no-conversation-selected = Hiçbir görüşme seçilmedi
 select-conversation = Listeden bir kanal veya doğrudan mesaj seçin.
 friends-online = Çevrimiçi

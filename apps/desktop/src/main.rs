@@ -1130,7 +1130,12 @@ fn changes_active_history(state: &State, event: &Event) -> bool {
 }
 /// Synthetic People rows with presence; never a Discord member directory.
 #[cfg(feature = "demo")]
-fn demo_members(guild: Option<model::Id>, channel: model::Id, request: u64) -> model::MemberList {
+fn demo_members(
+	state: &State,
+	guild: Option<model::Id>,
+	channel: model::Id,
+	request: u64,
+) -> model::MemberList {
 	let mut members = vec![
 		model::Member {
 			user: test_support::message(2, channel).author,
@@ -1171,7 +1176,37 @@ fn demo_members(guild: Option<model::Id>, channel: model::Id, request: u64) -> m
 			}],
 		},
 	];
-	if guild.is_some() {
+	if guild.is_none() {
+		let mut users = state
+			.channel(channel)
+			.map(|channel| channel.recipients.clone())
+			.unwrap_or_default();
+		if let Some(user) = &state.user
+			&& !users.iter().any(|recipient| recipient.id == user.id)
+		{
+			users.push(user.clone());
+		}
+		members = users
+			.into_iter()
+			.map(|user| {
+				let mut member = members
+					.iter()
+					.find(|member| member.user.id == user.id)
+					.cloned()
+					.unwrap_or(model::Member {
+						user: user.clone(),
+						nick: None,
+						roles: vec![],
+						status: None,
+						custom_status: None,
+						clients: model::ClientPlatforms::default(),
+						activities: vec![],
+					});
+				member.user = user;
+				member
+			})
+			.collect();
+	} else {
 		for (id, name, status) in [
 			(9003, "Alex (synthetic)", "online"),
 			(9004, "Sam (synthetic)", "offline"),
@@ -1316,6 +1351,11 @@ impl Desktop {
 			};
 		}
 		#[cfg(feature = "demo")]
+		if demo && std::env::args().any(|arg| arg == "--demo-group-dm") {
+			// Existing synthetic group conversation; no account or call is opened.
+			let _ = state.select(model::Id(29));
+		}
+		#[cfg(feature = "demo")]
 		if demo && std::env::args().any(|arg| arg == "--demo-voice-failed") {
 			let call = state
 				.voice
@@ -1348,7 +1388,7 @@ impl Desktop {
 		#[cfg(feature = "demo")]
 		if demo {
 			if !std::env::args().any(|arg| arg == "--demo-friends") {
-				let fixture = demo_members(None, model::Id(22), 0);
+				let fixture = demo_members(&state, None, model::Id(22), 0);
 				state.direct_presences = fixture
 					.slots
 					.into_iter()
@@ -1702,7 +1742,7 @@ impl Desktop {
 			// Presence for the fixture card comes from the same synthetic People rows.
 			let _ = state.request_members();
 			if let Some(list) = &state.members {
-				state.members = Some(demo_members(list.guild, list.channel, list.request));
+				state.members = Some(demo_members(&state, list.guild, list.channel, list.request));
 			}
 			let user = if messaging.share_game_activity {
 				state.user.clone().expect("demo has a current user")
@@ -3221,23 +3261,28 @@ impl Desktop {
 				}
 				Command::MemberSearch(request) => {
 					let query = request.query.to_lowercase();
-					let rows = demo_members(Some(request.guild), request.channel, request.nonce)
-						.slots
-						.into_iter()
-						.flatten()
-						.filter_map(|slot| match slot {
-							model::MemberSlot::Person(member) => Some(member),
-							_ => None,
-						})
-						.filter(|member| {
-							member.user.name.to_lowercase().contains(&query)
-								|| member
-									.nick
-									.as_ref()
-									.is_some_and(|name| name.to_lowercase().contains(&query))
-								|| member.user.id.to_string() == query
-						})
-						.collect();
+					let rows = demo_members(
+						&self.state,
+						Some(request.guild),
+						request.channel,
+						request.nonce,
+					)
+					.slots
+					.into_iter()
+					.flatten()
+					.filter_map(|slot| match slot {
+						model::MemberSlot::Person(member) => Some(member),
+						_ => None,
+					})
+					.filter(|member| {
+						member.user.name.to_lowercase().contains(&query)
+							|| member
+								.nick
+								.as_ref()
+								.is_some_and(|name| name.to_lowercase().contains(&query))
+							|| member.user.id.to_string() == query
+					})
+					.collect();
 					Event::MemberSearch {
 						request,
 						result: Ok(rows),
@@ -3811,7 +3856,7 @@ impl Desktop {
 					let Some(channel) = channel else {
 						return;
 					};
-					Event::Members(demo_members(guild, channel, request))
+					Event::Members(demo_members(&self.state, guild, channel, request))
 				}
 				Command::ForumPosts { .. } | Command::ForumSummaries { .. } => return,
 				Command::History { before, after, .. } => {
@@ -6853,6 +6898,49 @@ impl eframe::App for Desktop {
 #[cfg(test)]
 mod tests {
 	use super::*;
+	#[cfg(feature = "demo")]
+	#[test]
+	fn demo_group_members_preserve_recipients_and_deduplicate_current_account() {
+		let mut state = test_support::demo_state();
+		let channel = model::Id(29);
+		state.selected = Some(channel);
+		let recipient = state.channel(channel).unwrap().recipients[1].clone();
+		for include_current in [false, true] {
+			if include_current {
+				let current = state.user.clone().unwrap();
+				state
+					.channels
+					.iter_mut()
+					.find(|c| c.id == channel)
+					.unwrap()
+					.recipients = vec![current, recipient.clone()];
+			}
+			let Some(Command::Members { guild, request, .. }) = state.request_members() else {
+				panic!("synthetic group member request");
+			};
+			let expected = state.members.as_ref().unwrap().clone();
+			let response = demo_members(&state, guild, channel, request);
+			state.apply(Envelope {
+				generation: state.generation,
+				event: Event::Members(response),
+			});
+			let list = state.members.as_ref().unwrap();
+			assert_eq!(list.total, if include_current { 2 } else { 3 });
+			assert_eq!(list.total, expected.total);
+			let users = |list: &model::MemberList| {
+				list.slots
+					.iter()
+					.filter_map(|slot| match slot {
+						Some(model::MemberSlot::Person(member)) => Some(member.user.clone()),
+						_ => None,
+					})
+					.collect::<Vec<_>>()
+			};
+			assert!(users(list) == users(&expected));
+			assert!(users(list).contains(&recipient));
+		}
+	}
+
 	#[test]
 	fn user_action_results_use_toasts() {
 		let success = Event::UserAction(client_core::user_actions::Event::Written {

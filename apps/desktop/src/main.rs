@@ -5830,9 +5830,13 @@ impl eframe::App for Desktop {
 			raw_input.predicted_dt = period.as_secs_f32();
 		}
 		let track = self.messaging.tracking_pointer();
-		let intercepted =
-			self.pointer
-				.intercept(raw_input, &self.window, ctx.pixels_per_point(), track);
+		let intercepted = self.pointer.intercept(
+			raw_input,
+			&self.window,
+			ctx.pixels_per_point(),
+			track,
+			self.messaging.wants_mouse_buttons(),
+		);
 		self.messaging.middle_button(intercepted.middle);
 		self.messaging.side_buttons(intercepted.side);
 		if track
@@ -6101,6 +6105,8 @@ impl eframe::App for Desktop {
 		self.messaging.voice_ptt_active = self.messaging.voice_push_to_talk
 			&& self.state.voice.active.is_some()
 			&& (self.messaging.push_to_talk_down(ctx) || self.hotkeys.push_to_talk_down());
+		self.messaging.voice_ptm_active = self.state.voice.active.is_some()
+			&& (self.messaging.push_to_mute_down(ctx) || self.hotkeys.push_to_mute_down());
 		if self.state.auth == AuthState::Authenticated || self.state.demo {
 			self.poll_voice(ctx);
 		} else {

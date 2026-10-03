@@ -39,6 +39,32 @@ pub(crate) fn voice_users(state: &State) -> std::collections::BTreeSet<Id> {
 	users
 }
 
+/// Same rules as `voice_users` for one person; stops at the first match and allocates nothing,
+/// so single-user callers do not scan the whole roster into a set each redraw.
+pub(crate) fn user_in_voice(state: &State, user: Id) -> bool {
+	state.gateway_connected
+		&& (state.voice.roster.iter().any(|entry| {
+			entry.participant.user == user
+				&& state.guilds.iter().any(|guild| guild.id == entry.guild)
+				&& state.can_view(entry.channel)
+		}) || state
+			.voice
+			.dm_call_participants()
+			.any(|(channel, participants)| {
+				participants
+					.iter()
+					.any(|participant| participant.user == user)
+					&& state.can_view(channel)
+			}) || state.voice.active.as_ref().is_some_and(|call| {
+			call.guild.is_none()
+				&& call
+					.participants
+					.iter()
+					.any(|participant| participant.user == user)
+				&& state.can_view(call.channel)
+		}))
+}
+
 /// Prefix a status row with the shared voice badge, reserving room for its existing text.
 pub(crate) fn voice_badge(ui: &mut egui::Ui, in_voice: bool, has_status: bool) {
 	if !in_voice {
@@ -1951,7 +1977,7 @@ pub fn show_with_session(
 	} else {
 		presence(state, user.id, guild)
 	};
-	let in_voice = !user.webhook && voice_users(state).contains(&user.id);
+	let in_voice = !user.webhook && user_in_voice(state, user.id);
 	let dm_channel = state
 		.channels
 		.iter()

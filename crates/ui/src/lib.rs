@@ -2360,7 +2360,7 @@ impl MessagingUi {
 						.as_ref()
 						.filter(|_| dm)
 						.and_then(|channel| channel.recipients.first())
-						.is_some_and(|user| profiles::voice_users(state).contains(&user.id));
+						.is_some_and(|user| profiles::user_in_voice(state, user.id));
 					let name_height = ui
 						.painter()
 						.layout_no_wrap(
@@ -8318,6 +8318,7 @@ pub fn debug_member_voice_status_check(mut state: State, mut private: State) {
 	check_cards(&mut view, &mut private, true);
 	private.gateway_connected = false;
 	assert!(!profiles::voice_users(&private).contains(&user.id));
+	assert!(!profiles::user_in_voice(&private, user.id));
 	private.gateway_connected = true;
 	let guild = private
 		.guilds
@@ -8327,6 +8328,7 @@ pub fn debug_member_voice_status_check(mut state: State, mut private: State) {
 		.clone();
 	private.guilds.retain(|guild| guild.id != entry.guild);
 	assert!(!profiles::voice_users(&private).contains(&user.id));
+	assert!(!profiles::user_in_voice(&private, user.id));
 	private.guilds.push(guild);
 	private.voice.roster.clear();
 	assert!(
@@ -8359,6 +8361,7 @@ pub fn debug_member_voice_status_check(mut state: State, mut private: State) {
 	}
 	private.selected = Some(entry.channel);
 	assert!(profiles::voice_users(&private).contains(&user.id));
+	assert!(profiles::user_in_voice(&private, user.id));
 	check_cards(&mut view, &mut private, false);
 	private.selected = Some(channel);
 	private.demo = false;

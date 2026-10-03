@@ -6146,6 +6146,31 @@ impl eframe::App for Desktop {
 				&& !self.messaging.has_edit_in(self.state.selected)
 			{
 				match result {
+					Ok(clipboard::Content::Text(text))
+						if upload_allowed && can_attach && {
+							let draft = self
+								.state
+								.drafts
+								.get(&paste.channel)
+								.map_or("", String::as_str);
+							model::message_options::content(draft).0.chars().count()
+								+ text.chars().count() > self.state.content_limit()
+						} =>
+					{
+						// Text that cannot fit one message is attached as `message.txt`, like Discord.
+						if let Err(error) =
+							discord_api::upload::Source::pasted_text(text).and_then(|source| {
+								self.uploads.select_pasted(
+									paste.generation,
+									paste.channel,
+									vec![source],
+									self.runtime.handle(),
+									&ctx,
+								)
+							}) {
+							self.messaging.toasts.push(ui::design::Level::Error, error);
+						}
+					}
 					Ok(clipboard::Content::Text(text)) => {
 						self.messaging.pasted_text = Some((paste.channel, paste.target, text));
 					}
@@ -6569,6 +6594,7 @@ impl eframe::App for Desktop {
 				key,
 				filename,
 				bytes,
+				host,
 			}) = self.messaging.external_upload.request.take()
 			{
 				let result = if generation != self.state.generation
@@ -6584,6 +6610,7 @@ impl eframe::App for Desktop {
 						channel,
 						&filename,
 						bytes,
+						host,
 						self.runtime.handle(),
 						&ctx,
 						self.state.demo,

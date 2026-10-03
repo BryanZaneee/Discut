@@ -1604,7 +1604,7 @@ async fn run_recoverable(
 											notification_preferences(entries, replace)
 										});
 										emit(Event::Startup(Box::new(client_core::Startup {
-											external_stickers: matches!(ready.user.premium_type, model::Patch::Value(2 | 3)),
+											premium_type: match ready.user.premium_type { model::Patch::Value(kind) => kind, _ => 0 },
 											user: ready.user.into_model(), guilds, channels, permissions,
 											read_state: client_core::read_state::Event::Snapshot {entries:read_entries,version:read_version,partial},
 											notifications, session_dnd: ready.sessions.as_ref().and_then(|s| s.dnd()), warnings,

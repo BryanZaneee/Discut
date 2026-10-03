@@ -4371,6 +4371,12 @@ profiles-message-placeholder = Message @{ $user }
 profiles-message-send = Send message
 profiles-message-sending = Opening direct message…
 user-menu-contents-start-a-call = Start a Call
+verification-show-complete-the-check-to-open-this-conversation = Complete the check to open this conversation.
+verification-show-discord-requires-a-security-check-before-you-can-message = Discord requires a security check before you can message this person.
+verification-show-complete-the-check-to-send-this-message = Complete the check to send this message.
+verification-show-discord-requires-a-security-check-before-this-message = Discord requires a security check before this message can be sent.
+profiles-message-busy = Waiting for another action to finish…
+profiles-message-offline = Reconnect to send a message
 
 voice-recipient-ring = Ring again
 voice-recipient-stop-ringing = Stop ringing

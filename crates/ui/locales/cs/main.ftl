@@ -4373,6 +4373,12 @@ profiles-message-placeholder = Zpráva pro @{ $user }
 profiles-message-send = Odeslat zprávu
 profiles-message-sending = Otevírání soukromé zprávy…
 user-menu-contents-start-a-call = Zahájit hovor
+verification-show-complete-the-check-to-open-this-conversation = Dokonči ověření a otevři tuto konverzaci.
+verification-show-discord-requires-a-security-check-before-you-can-message = Discord vyžaduje bezpečnostní ověření, než této osobě budeš moct napsat.
+verification-show-complete-the-check-to-send-this-message = Dokonči ověření a odešli tuto zprávu.
+verification-show-discord-requires-a-security-check-before-this-message = Discord vyžaduje bezpečnostní ověření, než bude možné tuto zprávu odeslat.
+profiles-message-busy = Čeká se na dokončení jiné akce…
+profiles-message-offline = Pro odeslání zprávy se znovu připoj
 
 voice-recipient-ring = Znovu zavolat
 voice-recipient-stop-ringing = Zastavit vyzvánění

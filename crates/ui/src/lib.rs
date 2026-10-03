@@ -4823,7 +4823,15 @@ impl MessagingUi {
 		}
 		self.contact_editor.show(&ctx, state, &mut commands);
 		self.drain_profile(state, &mut commands);
-		if let Some(user) = self.profile.open_user().cloned() {
+		// While the card's DM waits on a captcha, step aside for the dialog but keep its draft.
+		let direct_verifying = self.user_direct.is_some()
+			&& matches!(
+				state.verification(),
+				Some((client_core::captcha::Verification::Direct { .. }, _))
+			);
+		if let Some(user) = self.profile.open_user().cloned()
+			&& !direct_verifying
+		{
 			let profile_guild = self.server_settings.guild().or_else(|| {
 				state
 					.channels

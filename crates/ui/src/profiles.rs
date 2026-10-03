@@ -1568,6 +1568,8 @@ pub struct ProfileSession {
 	message_draft: String,
 	message_pending: bool,
 	message_ime: bool,
+	/// Last laid-out composer height, so the scrollable details leave room for it.
+	message_height: f32,
 	bio_identity: Option<egui::Id>,
 	bio_expanded: bool,
 	bio_revealed: u32,
@@ -1722,12 +1724,14 @@ impl ProfileSession {
 	}
 }
 
-/// Compact message editor; it retains one bounded draft until the caller accepts the send.
+/// Compact message composer; Enter sends, Shift+Enter adds a line. It retains one bounded
+/// draft until the caller accepts the send.
 fn message_input(
 	ui: &mut egui::Ui,
 	user: &User,
 	state: &State,
 	session: &mut ProfileSession,
+	theme: &Theme,
 ) -> Option<Action> {
 	let id = egui::Id::unique(("profile-message-input", state.generation, user.id));
 	let enabled = state.can_open_user_dm(user) && !session.message_pending;
@@ -1756,8 +1760,9 @@ fn message_input(
 			}
 		});
 	}
-	let enter = enabled
-		&& focused
+	// Plain Enter is always the send key here, even while a send is pending; only Shift+Enter
+	// inserts a line break.
+	let enter = focused
 		&& !ime_this_frame
 		&& !ui.input(|input| {
 			input.events.iter().any(|event| {
@@ -1778,66 +1783,140 @@ fn message_input(
 				} if modifiers.is_none())
 		})
 	}) && ui
-		.input_mut(|input| input.consume_key(egui::Modifiers::NONE, egui::Key::Enter));
-	let placeholder = if session.message_pending {
-		crate::i18n::translate("profiles-message-sending")
-	} else {
-		crate::i18n::translate_args("profiles-message-placeholder", &[("user", &user.name)])
-	};
-	let fill = ui.visuals().widgets.inactive.weak_bg_fill;
+		.input_mut(|input| input.consume_key(egui::Modifiers::NONE, egui::Key::Enter))
+		&& enabled;
+	let placeholder =
+		crate::i18n::translate_args("profiles-message-placeholder", &[("user", &user.name)]);
+	let colors = design::palette(ui);
+	let can_send = enabled && !ime_this_frame && !session.message_draft.trim().is_empty();
 	let mut clicked = false;
+	let top = ui.cursor().top();
 	egui::Frame::new()
-		.fill(fill)
-		.corner_radius(8)
-		.inner_margin(4)
+		// Profile theme colours keep the composer legible over bright or saturated gradients.
+		.fill(theme.panel)
+		.stroke(Stroke::new(
+			1.0,
+			if focused { colors.accent } else { theme.border },
+		))
+		.corner_radius(10)
+		.inner_margin(egui::Margin {
+			left: 10,
+			right: 4,
+			top: 4,
+			bottom: 4,
+		})
 		.show(ui, |ui| {
 			ui.horizontal(|ui| {
+				let button = 28.0;
 				let edit_width =
-					(ui.available_width() - 24.0 - ui.spacing().item_spacing.x).max(1.0);
-				ui.add_enabled(
-					enabled,
-					egui::TextEdit::singleline(&mut session.message_draft)
-						.id(id)
-						.char_limit(client_core::MAX_CONTENT)
-						.desired_width(edit_width)
-						.frame(egui::Frame::NONE)
-						.hint_text(placeholder),
+					(ui.available_width() - button - ui.spacing().item_spacing.x).max(1.0);
+				let row = ui.text_style_height(&egui::TextStyle::Body);
+				ui.allocate_ui_with_layout(
+					vec2(edit_width, button),
+					egui::Layout::left_to_right(egui::Align::Center),
+					|ui| {
+						egui::ScrollArea::vertical()
+							.id_salt(("profile-message-scroll", user.id))
+							.max_height(row * 4.0 + 8.0)
+							.stick_to_bottom(true)
+							.show(ui, |ui| {
+								ui.add_enabled(
+									enabled,
+									egui::TextEdit::multiline(&mut session.message_draft)
+										.id(id)
+										.char_limit(client_core::MAX_CONTENT)
+										.desired_width(edit_width)
+										.desired_rows(1)
+										.margin(vec2(0.0, (button - row) / 2.0))
+										.frame(egui::Frame::NONE)
+										.text_color(theme.text)
+										.hint_text(RichText::new(placeholder).color(theme.muted)),
+								);
+							});
+					},
 				);
-				clicked = ui
-					.add_enabled_ui(
-						enabled && !ime_this_frame && !session.message_draft.trim().is_empty(),
-						|ui| {
-							let (rect, response) =
-								ui.allocate_exact_size(Vec2::splat(24.0), egui::Sense::click());
-							let color = ui
-								.visuals()
-								.override_text_color
-								.unwrap_or(ui.visuals().text_color());
-							icons::paint(
-								ui.painter(),
-								Icon::Send,
-								rect.shrink(5.0),
-								if ui.is_enabled() {
-									color
+				ui.with_layout(egui::Layout::bottom_up(egui::Align::Center), |ui| {
+					let (rect, response) = ui.allocate_exact_size(
+						Vec2::splat(button),
+						if can_send {
+							egui::Sense::click()
+						} else {
+							egui::Sense::hover()
+						},
+					);
+					let label = crate::i18n::translate("profiles-message-send");
+					if session.message_pending {
+						egui::Spinner::new()
+							.size(16.0)
+							.color(theme.muted)
+							.paint_at(ui, rect.shrink(6.0));
+					} else {
+						if can_send {
+							ui.painter().circle_filled(
+								rect.center(),
+								button / 2.0,
+								if response.hovered() {
+									colors.accent.gamma_multiply(0.85)
 								} else {
-									color.gamma_multiply(0.4)
+									colors.accent
 								},
 							);
-							let label = crate::i18n::translate("profiles-message-send");
-							response.widget_info(|| {
-								egui::WidgetInfo::labeled(
-									egui::Role::Button,
-									ui.is_enabled(),
-									&label,
-								)
-							});
-							response.on_hover_text(label)
-						},
-					)
-					.inner
-					.clicked();
+						}
+						icons::paint(
+							ui.painter(),
+							Icon::Send,
+							rect.shrink(7.0),
+							if can_send {
+								colors.accent_text
+							} else {
+								theme.muted
+							},
+						);
+					}
+					if can_send {
+						response
+							.clone()
+							.on_hover_cursor(egui::CursorIcon::PointingHand);
+					}
+					response.widget_info(|| {
+						egui::WidgetInfo::labeled(egui::Role::Button, can_send, &label)
+					});
+					clicked = response.on_hover_text(label).clicked();
+				});
 			});
 		});
+	// One quiet status line: progress, why sending is unavailable, or the length budget.
+	let length = session.message_draft.chars().count();
+	let hint = if session.message_pending {
+		Some((
+			crate::i18n::translate("profiles-message-sending"),
+			theme.muted,
+		))
+	} else if !state.can_open_user_dm(user) {
+		Some((
+			crate::i18n::translate(if state.user_action_pending() {
+				"profiles-message-busy"
+			} else {
+				"profiles-message-offline"
+			}),
+			theme.text,
+		))
+	} else if length + 200 > client_core::MAX_CONTENT {
+		Some((
+			format!("{length} / {}", client_core::MAX_CONTENT),
+			if length >= client_core::MAX_CONTENT {
+				colors.danger
+			} else {
+				theme.muted
+			},
+		))
+	} else {
+		None
+	};
+	if let Some((text, color)) = hint {
+		ui.add(egui::Label::new(RichText::new(text).size(11.0).color(color)).truncate());
+	}
+	session.message_height = ui.cursor().top() - top;
 	// TextEdit caps Unicode characters, which also bounds UTF-8 bytes to four per character.
 	if session.message_draft.capacity() > client_core::MAX_CONTENT * 4 {
 		session.message_draft.shrink_to_fit();
@@ -2229,9 +2308,15 @@ pub fn show_with_session(
 					let message_target = !user.webhook
 						&& state.user.as_ref().is_some_and(|own| own.id != user.id)
 						&& state.user_blocked(user.id) != Some(true);
-					let has_action = state.user.as_ref().is_some_and(|own| own.id == user.id)
-						|| message_target || user.webhook;
-					let footer = if has_action { 40.0 } else { 0.0 };
+					let own = state.user.as_ref().is_some_and(|own| own.id == user.id);
+					let has_action = own || message_target || user.webhook;
+					let footer = if message_target && !own {
+						session.message_height.max(32.0) + 8.0
+					} else if has_action {
+						40.0
+					} else {
+						0.0
+					};
 					egui::Frame::new()
 						.fill(theme.panel)
 						.corner_radius(RADIUS)
@@ -2601,7 +2686,7 @@ pub fn show_with_session(
 							action = Some(Action::Edit);
 						}
 					} else if message_target {
-						if let Some(submitted) = message_input(ui, user, state, session) {
+						if let Some(submitted) = message_input(ui, user, state, session, &theme) {
 							action = Some(submitted);
 						}
 					} else if user.webhook
@@ -2804,7 +2889,8 @@ mod tests {
 			ctx.memory_mut(|memory| memory.request_focus(id));
 			let mut action = None;
 			ctx.run_ui(input(vec2(400.0, 200.0), events), |ui| {
-				action = message_input(ui, &user, &state, session);
+				let theme = Theme::new(&design::palette(ui), None);
+				action = message_input(ui, &user, &state, session, &theme);
 			})
 			.drop_without_applying_deltas();
 			action
@@ -2852,7 +2938,8 @@ mod tests {
 			ctx.memory_mut(|memory| memory.request_focus(id));
 			let mut action = None;
 			ctx.run_ui(input(vec2(400.0, 200.0), events), |ui| {
-				action = message_input(ui, &user, &state, session);
+				let theme = Theme::new(&design::palette(ui), None);
+				action = message_input(ui, &user, &state, session, &theme);
 			})
 			.drop_without_applying_deltas();
 			action

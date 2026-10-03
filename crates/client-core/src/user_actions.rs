@@ -92,9 +92,11 @@ pub fn establishes_friendship(action: &Action) -> bool {
 		|| matches!(action, Action::ResolveFriend { accept: true, .. })
 		|| matches!(action, Action::ProfileFriend { friend: true, .. })
 }
-/// The challenge identity for a friendship write, if it can require one.
+/// The challenge identity for a write that can require a user-solved captcha, if any.
 pub fn challenge_target(action: &Action) -> Option<crate::captcha::Target> {
 	match action {
+		// Opening a conversation with someone new is commonly gated by the service.
+		Action::OpenDm(user) => Some(crate::captcha::Target::Direct { user: *user }),
 		Action::AddFriend { username } => Some(crate::captcha::Target::Username {
 			username: username.clone(),
 		}),
@@ -104,6 +106,11 @@ pub fn challenge_target(action: &Action) -> Option<crate::captcha::Target> {
 		}
 		_ => None,
 	}
+}
+
+/// Whether one explicit retry of this write may carry a solved captcha.
+pub fn challengeable(action: &Action) -> bool {
+	challenge_target(action).is_some()
 }
 
 pub enum Event {
@@ -468,17 +475,49 @@ impl State {
 		}
 		self.request_user_action(Action::ResolveFriend { user, accept })
 	}
-	/// The one pending friendship write that is waiting on a user-solved challenge.
-	pub fn friend_challenge(&self) -> Option<(u64, &crate::captcha::Challenge)> {
+	/// The one pending account write that is waiting on a user-solved challenge.
+	pub fn account_challenge(&self) -> Option<(u64, &crate::captcha::Challenge)> {
 		let (action, request, _) = self.user_actions.pending.as_ref()?;
-		if !establishes_friendship(action) {
+		if !challengeable(action) {
 			return None;
 		}
 		let (at, challenge) = self.user_actions.challenge.as_ref()?;
 		(at.elapsed() < crate::captcha::LIFETIME).then_some((*request, challenge))
 	}
-	/// Builds the one explicit retry that resumes a solved friendship challenge.
-	pub fn resume_friend_challenge(
+	/// The user-visible flow for the pending account challenge.
+	pub(crate) fn account_verification(
+		&self,
+	) -> Option<(crate::captcha::Verification, &crate::captcha::Challenge)> {
+		let (request, challenge) = self.account_challenge()?;
+		let direct = matches!(self.user_actions.pending, Some((Action::OpenDm(_), _, _)));
+		Some((
+			if direct {
+				crate::captcha::Verification::Direct { request }
+			} else {
+				crate::captcha::Verification::Friend { request }
+			},
+			challenge,
+		))
+	}
+	/// Releases a challenged write that will not be resumed and reports why.
+	fn release_challenge(&mut self, cancelled: bool) {
+		self.user_actions.challenge = None;
+		let direct = matches!(self.user_actions.pending, Some((Action::OpenDm(_), _, _)));
+		self.user_actions.pending = None;
+		if direct {
+			self.user_actions.dm_origin = None;
+			self.user_actions.opened_dm = None;
+		}
+		self.user_actions.status = Some(match (direct, cancelled) {
+			(true, true) => "Verification cancelled; the conversation was not opened.",
+			(true, false) => "Verification expired; open the conversation again.",
+			(false, true) => "Verification cancelled; the friend request was not sent.",
+			(false, false) => "Verification expired; send the friend request again.",
+		});
+		self.status = self.user_actions.status.unwrap();
+	}
+	/// Builds the one explicit retry that resumes a solved account challenge.
+	pub fn resume_account_challenge(
 		&mut self,
 		request: u64,
 		solution: crate::captcha::Solution,
@@ -486,7 +525,7 @@ impl State {
 		if self.demo || !self.gateway_connected || self.auth != AuthState::Authenticated {
 			return None;
 		}
-		if self.friend_challenge()?.0 != request {
+		if self.account_challenge()?.0 != request {
 			return None;
 		}
 		let action = match self.user_actions.pending.as_ref() {
@@ -511,35 +550,24 @@ impl State {
 			})),
 		})
 	}
-	/// Cancels the pending friendship challenge and releases its write.
-	pub fn cancel_friend_challenge(&mut self, request: u64) {
+	/// Cancels the pending account challenge and releases its write.
+	pub fn cancel_account_challenge(&mut self, request: u64) {
 		if self
-			.friend_challenge()
+			.account_challenge()
 			.is_some_and(|(pending, _)| pending == request)
 		{
-			self.user_actions.challenge = None;
-			if let Some((action, _, _)) = self.user_actions.pending.take()
-				&& matches!(action, Action::Block { .. })
-			{
-				self.user_actions.bump_view();
-			}
-			self.user_actions.status =
-				Some("Verification cancelled; the friend request was not sent.");
-			self.status = self.user_actions.status.unwrap();
+			self.release_challenge(true);
 		}
 	}
-	/// Releases a friendship challenge that outlived its five-minute lifetime.
-	pub(crate) fn expire_friend_challenge(&mut self) {
+	/// Releases an account challenge that outlived its five-minute lifetime.
+	pub(crate) fn expire_account_challenge(&mut self) {
 		if self
 			.user_actions
 			.challenge
 			.as_ref()
 			.is_some_and(|(at, _)| at.elapsed() >= crate::captcha::LIFETIME)
 		{
-			self.user_actions.challenge = None;
-			self.user_actions.pending = None;
-			self.user_actions.status = Some("Verification expired; send the friend request again.");
-			self.status = self.user_actions.status.unwrap();
+			self.release_challenge(false);
 		}
 	}
 	/// Visible friends, filtered by the current relationship snapshot.
@@ -1301,7 +1329,7 @@ impl State {
 				let Some((pending, sequence, _)) = &self.user_actions.pending else {
 					return Ok(());
 				};
-				if *pending != action || *sequence != request || !establishes_friendship(&action) {
+				if *pending != action || *sequence != request || !challengeable(&action) {
 					return Ok(());
 				}
 				self.user_actions.status = None;
@@ -2428,13 +2456,13 @@ mod tests {
 				}),
 			});
 			assert_eq!(
-				state.friend_challenge().map(|(request, _)| request),
+				state.account_challenge().map(|(request, _)| request),
 				Some(request)
 			);
 			// A solution cannot resume a different request.
 			assert!(
 				state
-					.resume_friend_challenge(
+					.resume_account_challenge(
 						request.wrapping_add(1),
 						Solution::new("synthetic-solution".into()).unwrap()
 					)
@@ -2444,7 +2472,7 @@ mod tests {
 				action: resumed,
 				request: resumed_request,
 				captcha: Some(retry),
-			}) = state.resume_friend_challenge(
+			}) = state.resume_account_challenge(
 				request,
 				Solution::new("synthetic-solution".into()).unwrap(),
 			)
@@ -2455,10 +2483,10 @@ mod tests {
 			assert_ne!(resumed_request, request);
 			assert!(retry.matches_target(&challenge_target(&resumed).unwrap()));
 			// The challenge is consumed once.
-			assert!(state.friend_challenge().is_none());
+			assert!(state.account_challenge().is_none());
 			assert!(
 				state
-					.resume_friend_challenge(
+					.resume_account_challenge(
 						resumed_request,
 						Solution::new("synthetic-solution".into()).unwrap()
 					)
@@ -2494,8 +2522,8 @@ mod tests {
 					challenge: Box::new(challenge()),
 				}),
 			});
-			state.cancel_friend_challenge(request);
-			assert!(state.friend_challenge().is_none() && !state.user_action_pending());
+			state.cancel_account_challenge(request);
+			assert!(state.account_challenge().is_none() && !state.user_action_pending());
 			// Expiry releases the pending write so the user can send it again.
 			let Some(Command::UserAction {
 				action, request, ..
@@ -2513,8 +2541,8 @@ mod tests {
 			});
 			state.user_actions.challenge.as_mut().unwrap().0 =
 				std::time::Instant::now() - crate::captcha::LIFETIME;
-			state.expire_friend_challenge();
-			assert!(state.friend_challenge().is_none() && !state.user_action_pending());
+			state.expire_account_challenge();
+			assert!(state.account_challenge().is_none() && !state.user_action_pending());
 		}
 	}
 }

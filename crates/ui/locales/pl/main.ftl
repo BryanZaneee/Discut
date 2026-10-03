@@ -4354,6 +4354,12 @@ profiles-message-placeholder = Wiadomość do @{ $user }
 profiles-message-send = Wyślij wiadomość
 profiles-message-sending = Otwieranie wiadomości prywatnej…
 user-menu-contents-start-a-call = Rozpocznij rozmowę
+verification-show-complete-the-check-to-open-this-conversation = Dokończ weryfikację, aby otworzyć tę rozmowę.
+verification-show-discord-requires-a-security-check-before-you-can-message = Discord wymaga kontroli bezpieczeństwa, zanim napiszesz do tej osoby.
+verification-show-complete-the-check-to-send-this-message = Dokończ weryfikację, aby wysłać tę wiadomość.
+verification-show-discord-requires-a-security-check-before-this-message = Discord wymaga kontroli bezpieczeństwa przed wysłaniem tej wiadomości.
+profiles-message-busy = Oczekiwanie na zakończenie innej akcji…
+profiles-message-offline = Połącz się ponownie, aby wysłać wiadomość
 
 voice-recipient-ring = Zadzwoń ponownie
 voice-recipient-stop-ringing = Zatrzymaj dzwonienie

@@ -876,6 +876,7 @@ struct Desktop {
 	reading: reading_settings::ReadingSettings,
 	app_settings: app_settings::Settings,
 	font_picker: Option<std::sync::mpsc::Receiver<font_import::Selected>>,
+	font_families: Option<std::sync::mpsc::Receiver<Vec<String>>>,
 	updater: updater::Updater,
 	game_activity: toggle_setting::Settings,
 	registered_games: registered_games::Registered,
@@ -2008,6 +2009,16 @@ impl Desktop {
 			onboarding_demo::open(&mut state);
 		}
 		#[cfg(feature = "demo")]
+		if demo
+			&& std::env::args().any(|arg| arg == "--demo-server-invite")
+			&& let Some(guild) = state
+				.selected
+				.and_then(|id| state.channels.iter().find(|c| c.id == id))
+				.and_then(|c| c.guild)
+		{
+			messaging.preview_server_invite(&mut state, guild);
+		}
+		#[cfg(feature = "demo")]
 		if demo && std::env::args().any(|arg| arg == "--demo-server-settings") {
 			server_settings_demo::open(&mut state, &mut messaging);
 		}
@@ -2116,6 +2127,7 @@ impl Desktop {
 			reading,
 			app_settings,
 			font_picker: None,
+			font_families: None,
 			updater: updater::Updater::new(demo),
 			game_activity,
 			registered_games: if demo {
@@ -2547,15 +2559,31 @@ impl Desktop {
 				}
 			}
 		}
+		if let Some(families) = &self.font_families
+			&& let Ok(families) = families.try_recv()
+		{
+			self.font_families = None;
+			self.messaging.custom_font.families = Some(families);
+		}
+		// Listing is independent of a pending save, so it is never dropped while busy.
+		if matches!(
+			self.messaging.custom_font.request,
+			Some(ui::fonts::Action::List)
+		) {
+			self.messaging.custom_font.request = None;
+			if self.font_families.is_none() && self.messaging.custom_font.families.is_none() {
+				self.font_families = Some(font_import::installed(&self.runtime, ctx));
+			}
+		}
 		if let Some(action) = self.messaging.custom_font.request.take()
 			&& !self.messaging.custom_font.busy
 		{
 			match action {
-				ui::fonts::Action::Import => {
-					self.font_picker =
-						Some(font_import::choose(&self.runtime, ctx, self.window.clone()));
+				ui::fonts::Action::List => {}
+				ui::fonts::Action::Select(family) => {
+					self.font_picker = Some(font_import::load(&self.runtime, ctx, family));
 					self.messaging.custom_font.busy = true;
-					self.messaging.custom_font.status = "Choosing font…";
+					self.messaging.custom_font.status = "Loading font…";
 				}
 				ui::fonts::Action::Reset => self.save_font(ctx, None),
 			}

@@ -150,6 +150,13 @@ pub struct AttachmentPaste {
 	pub image: Option<std::sync::Arc<egui::ColorImage>>,
 }
 
+fn oversized_text(limit: u64) -> String {
+	crate::i18n::translate_args(
+		"public-upload-oversized",
+		&[("limit", &attachments::format_size(limit))],
+	)
+}
+
 fn thread_member_rows<'a>(
 	state: &'a State,
 	list: &'a model::MemberList,
@@ -691,6 +698,14 @@ impl MessagingUi {
 	#[cfg(feature = "demo")]
 	pub fn preview_forum(&mut self, forum: Id, tags: &[Id], draft: Option<&str>) {
 		self.forum.preview(forum, tags, draft);
+	}
+	/// Fixture-only: open the server invite dialog at startup, as the rail menu would.
+	#[cfg(any(test, feature = "demo"))]
+	pub fn preview_server_invite(&mut self, state: &mut State, guild: Id) {
+		if let Some(channel) = state.invite_channel(guild) {
+			self.guild = Some(guild);
+			self.server_menu.open_invite(state, guild, channel);
+		}
 	}
 	/// Fixture-only: open the Threads dialog for `parent` at startup, as the header control would.
 	#[cfg(any(test, feature = "demo"))]
@@ -2936,6 +2951,13 @@ impl MessagingUi {
 		emoji_picker::set_content_limit(max_content);
 		let new_content_valid =
 			model::message_options::valid(composer_content, max_content, self.attachment.is_some());
+		// Discord refuses any file over the account's limit, so such a message is never sent.
+		let upload_limit = state.upload_limit();
+		let oversized = !editing_here
+			&& self
+				.selected_files()
+				.iter()
+				.any(|(_, bytes)| *bytes > upload_limit);
 		// Suggestion rows can take focus on press; keep the editor alive until release
 		// so the shared member/channel/emoji popup can finish the click.
 		let suggestion_pointer = self.mention_menu.pointer_interacting(ctx, channel)
@@ -3037,6 +3059,7 @@ impl MessagingUi {
 				&& !self.upload_busy
 				&& !(state.demo && self.attachment.is_some())
 				&& new_content_valid
+				&& !oversized
 		};
 		if cap_top.is_some() {
 			// The cap and the input form one block: undo the automatic vertical item gap.
@@ -3056,7 +3079,7 @@ impl MessagingUi {
                     egui::pos2(ui.max_rect().right() + 10.0, ui.max_rect().top()),
                 );
                 if !editing_here && self.attachment.is_some() {
-                    self.attachment_tray(ui, state.can_send(channel), state.upload_limit());
+                    self.attachment_tray(ui, state.can_send(channel), upload_limit);
                 }
                 ui.horizontal(|ui| {
                     ui.spacing_mut().item_spacing.x = 8.0;
@@ -3435,6 +3458,8 @@ impl MessagingUi {
                                 }
                             } else if self.send_application_command(state, channel, commands)
                                 || self.handle_builtin_slash(state, channel, ctx, commands) {
+                            } else if oversized {
+                                self.toasts.push(design::Level::Error, oversized_text(upload_limit));
                             } else if !self.upload_busy && !(state.demo && self.attachment.is_some())
                                 && let Some(command) = state.prepare_send_with_attachments(&self.selected_files().iter().map(|(name, _)| name.as_str()).collect::<Vec<_>>()) {
                                 // Consume the selection in this UI pass, before desktop dispatch.
@@ -3480,8 +3505,11 @@ impl MessagingUi {
 		let textures = self.attachment_textures(ui.ctx());
 		ui.add_space(4.0);
 		let files = self.selected_files();
-		// Public hosting is only offered once the files would not fit Discord's upload limit.
-		let over_limit = files.iter().map(|(_, bytes)| *bytes).sum::<u64>() > upload_limit;
+		// Public hosting is only offered for files Discord would refuse.
+		if files.iter().any(|(_, bytes)| *bytes > upload_limit) {
+			design::notice(ui, design::Level::Error, &oversized_text(upload_limit));
+			ui.add_space(6.0);
+		}
 		egui::ScrollArea::horizontal()
 			.id_salt("pending-attachments")
 			.show(ui, |ui| {
@@ -3504,7 +3532,7 @@ impl MessagingUi {
 								{
 									self.remove_attachment_index = Some(index);
 								}
-								if over_limit
+								if *bytes > upload_limit
 									&& ui
 										.add_enabled_ui(!self.upload_busy && can_host, |ui| {
 											design::button(

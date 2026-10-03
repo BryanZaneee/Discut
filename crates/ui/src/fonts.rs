@@ -48,8 +48,56 @@ impl CustomFont {
 	}
 }
 
+/// One face as a standalone font file. A collection (`.ttc`) member is copied out with its own
+/// table directory, so the saved copy restores without a face index.
+pub fn standalone_face(data: &[u8], index: u32) -> Result<Vec<u8>, &'static str> {
+	use skrifa::raw::TableProvider as _;
+	const INVALID: &str = "This font cannot be read.";
+	let font = skrifa::FontRef::from_index(data, index).map_err(|_| INVALID)?;
+	let _ = font.head().map_err(|_| INVALID)?;
+	let records = font.table_directory().table_records();
+	if records.is_empty() || records.len() > 1024 {
+		return Err(INVALID);
+	}
+	let header = 12 + 16 * records.len();
+	let size = records.iter().try_fold(header, |size, record| {
+		size.checked_add((record.length() as usize).next_multiple_of(4))
+	});
+	if size.is_none_or(|size| size > MAX_CUSTOM_FONT_BYTES) {
+		return Err("Choose a font up to 8 MiB.");
+	}
+	let count = records.len() as u16;
+	let selector = 15 - count.leading_zeros() as u16;
+	let range = 16u16 << selector;
+	let mut bytes = Vec::with_capacity(size.unwrap_or_default());
+	bytes.extend(font.table_directory().sfnt_version().to_be_bytes());
+	for value in [count, range, selector, count * 16 - range] {
+		bytes.extend(value.to_be_bytes());
+	}
+	let mut offset = header;
+	for record in records {
+		bytes.extend(record.tag().to_be_bytes());
+		bytes.extend(record.checksum().to_be_bytes());
+		bytes.extend((offset as u32).to_be_bytes());
+		bytes.extend(record.length().to_be_bytes());
+		offset += (record.length() as usize).next_multiple_of(4);
+	}
+	for record in records {
+		let start = record.offset() as usize;
+		let table = start
+			.checked_add(record.length() as usize)
+			.and_then(|end| data.get(start..end))
+			.ok_or(INVALID)?;
+		bytes.extend_from_slice(table);
+		bytes.resize(bytes.len().next_multiple_of(4), 0);
+	}
+	Ok(bytes)
+}
+
 pub enum Action {
-	Import,
+	/// Enumerate the installed families once the font settings are first shown.
+	List,
+	Select(String),
 	Reset,
 }
 
@@ -59,11 +107,18 @@ pub struct Settings {
 	pub busy: bool,
 	pub status: &'static str,
 	pub request: Option<Action>,
+	/// Installed family names, sorted; `None` until the platform list arrives.
+	pub families: Option<Vec<String>>,
+	listed: bool,
+	query: String,
 }
 
 impl Settings {
 	pub(super) fn show(&mut self, ui: &mut egui::Ui) {
 		use crate::design;
+		if !std::mem::replace(&mut self.listed, true) {
+			self.request = Some(Action::List);
+		}
 		design::group(ui, &crate::i18n::translate("fonts-show-typography"), |ui| {
 			ui.add_enabled_ui(!self.busy, |ui| {
 				design::row(
@@ -71,22 +126,15 @@ impl Settings {
 					"fonts-show-interface-font",
 					Some(self.name.as_deref().unwrap_or("fonts-show-inter-default")),
 					|ui| {
-						if design::text_action(ui, &crate::i18n::translate("fonts-show-reset"))
-							.clicked()
+						if self.name.is_some()
+							&& design::text_action(ui, &crate::i18n::translate("fonts-show-reset"))
+								.clicked()
 						{
 							self.request = Some(Action::Reset);
 						}
-						if design::button(
-							ui,
-							&crate::i18n::translate("fonts-show-import-font"),
-							design::ButtonKind::Outline,
-						)
-						.clicked()
-						{
-							self.request = Some(Action::Import);
-						}
 					},
 				);
+				self.family_list(ui);
 			});
 			design::hint(
 				ui,
@@ -99,6 +147,92 @@ impl Settings {
 				design::hint(ui, self.status);
 			}
 		});
+	}
+
+	/// Searchable installed families; only visible rows are laid out.
+	fn family_list(&mut self, ui: &mut egui::Ui) {
+		use crate::design;
+		const ROW: f32 = 30.0;
+		let colors = design::palette(ui);
+		let Some(families) = &self.families else {
+			ui.horizontal(|ui| {
+				ui.spinner();
+				ui.label(
+					egui::RichText::new(crate::i18n::translate("fonts-show-loading"))
+						.color(colors.muted),
+				);
+			});
+			return;
+		};
+		design::input(
+			ui,
+			egui::TextEdit::singleline(&mut self.query)
+				.hint_text(crate::i18n::translate("fonts-show-search"))
+				.char_limit(64),
+		);
+		let query = self.query.trim().to_lowercase();
+		let matches: Vec<&String> = families
+			.iter()
+			.filter(|name| query.is_empty() || name.to_lowercase().contains(&query))
+			.collect();
+		if matches.is_empty() {
+			design::hint(
+				ui,
+				&crate::i18n::translate(if families.is_empty() {
+					"fonts-show-none-installed"
+				} else {
+					"fonts-show-no-match"
+				}),
+			);
+			return;
+		}
+		let mut picked = None;
+		egui::Frame::new()
+			.fill(colors.base)
+			.stroke(egui::Stroke::new(1.0, colors.border))
+			.corner_radius(8)
+			.inner_margin(4)
+			.show(ui, |ui| {
+				egui::ScrollArea::vertical()
+					.id_salt("installed-fonts")
+					.max_height(ROW * 8.0)
+					.auto_shrink([false, true])
+					.show_rows(ui, ROW, matches.len(), |ui, rows| {
+						ui.spacing_mut().item_spacing.y = 0.0;
+						for name in &matches[rows] {
+							let selected = self.name.as_deref() == Some(name.as_str());
+							let (rect, response) = ui.allocate_exact_size(
+								egui::vec2(ui.available_width(), ROW),
+								egui::Sense::click(),
+							);
+							let fill = if selected {
+								colors.accent.gamma_multiply(0.22)
+							} else if response.hovered() {
+								colors.hover
+							} else {
+								egui::Color32::TRANSPARENT
+							};
+							ui.painter().rect_filled(rect, 6, fill);
+							ui.painter().text(
+								rect.left_center() + egui::vec2(10.0, 0.0),
+								egui::Align2::LEFT_CENTER,
+								name.as_str(),
+								egui::FontId::proportional(14.0),
+								if selected {
+									colors.text_strong
+								} else {
+									colors.text
+								},
+							);
+							if response.clicked() && !selected {
+								picked = Some((*name).clone());
+							}
+						}
+					});
+			});
+		if let Some(name) = picked {
+			self.request = Some(Action::Select(name));
+		}
 	}
 }
 

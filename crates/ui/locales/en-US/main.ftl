@@ -3445,7 +3445,6 @@ settings-close-control-close-settings-esc = Close settings (Esc)
 # Context: colour_preset_settings
 settings-colour-preset-settings-colour-preset = Colour preset
 # Context: colour_preset_settings
-settings-colour-preset-settings-saved-with-your-appearance-gradient-presets-always-use-dark-text = Saved with your appearance. Gradient presets always use dark text.
 # Context: storage_page
 settings-storage-page-clear-cache = Clear cache
 # Context: storage_page
@@ -4161,7 +4160,6 @@ voice-voice-processing-controls-start-the-microphone-test-or-join-a-call-to-see 
 # Context: voice_processing_controls
 voice-voice-processing-controls-suppression-strength = Suppression strength
 # Context: voice_settings_content
-voice-voice-settings-content-audio-preferences-are-saved-on-this-device-your-microphone-starts = Audio preferences are saved on this device. Your microphone starts only when you join a call or start testing.
 # Context: voice_settings_content
 voice-voice-settings-content-camera = Camera
 # Context: voice_settings_content

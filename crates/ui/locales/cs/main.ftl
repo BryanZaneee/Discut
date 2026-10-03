@@ -3444,7 +3444,6 @@ settings-close-control-close-settings-esc = Zavřít nastavení (Esc)
 # Context: colour_preset_settings
 settings-colour-preset-settings-colour-preset = Přednastavená barva
 # Context: colour_preset_settings
-settings-colour-preset-settings-saved-with-your-appearance-gradient-presets-always-use-dark-text = Ušetřeno s vaším vzhledem. Předvolby přechodu vždy používají tmavý text.
 # Context: storage_page
 settings-storage-page-clear-cache = Vymazat mezipaměť
 # Context: storage_page
@@ -4161,7 +4160,6 @@ voice-voice-processing-controls-start-the-microphone-test-or-join-a-call-to-see 
 # Context: voice_processing_controls
 voice-voice-processing-controls-suppression-strength = Síla potlačení
 # Context: voice_settings_content
-voice-voice-settings-content-audio-preferences-are-saved-on-this-device-your-microphone-starts = Předvolby zvuku jsou uloženy v tomto zařízení. Váš mikrofon se spustí, pouze když se připojíte k hovoru nebo začnete testovat.
 # Context: voice_settings_content
 voice-voice-settings-content-camera = Fotoaparát
 # Context: voice_settings_content

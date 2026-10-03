@@ -3445,7 +3445,6 @@ settings-close-control-close-settings-esc = Закрыть настройки (E
 # Context: colour_preset_settings
 settings-colour-preset-settings-colour-preset = Предустановка цвета
 # Context: colour_preset_settings
-settings-colour-preset-settings-saved-with-your-appearance-gradient-presets-always-use-dark-text = Сэкономил на своем внешнем виде. В настройках градиента всегда используется темный текст.
 # Context: storage_page
 settings-storage-page-clear-cache = Очистить кеш
 # Context: storage_page
@@ -4162,7 +4161,6 @@ voice-voice-processing-controls-start-the-microphone-test-or-join-a-call-to-see 
 # Context: voice_processing_controls
 voice-voice-processing-controls-suppression-strength = Сила подавления
 # Context: voice_settings_content
-voice-voice-settings-content-audio-preferences-are-saved-on-this-device-your-microphone-starts = Настройки звука сохраняются на этом устройстве. Ваш микрофон включается только тогда, когда вы присоединяетесь к вызову или начинаете тестирование.
 # Context: voice_settings_content
 voice-voice-settings-content-camera = Камера
 # Context: voice_settings_content

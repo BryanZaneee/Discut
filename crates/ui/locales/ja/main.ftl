@@ -3445,7 +3445,6 @@ settings-close-control-close-settings-esc = 設定を閉じる (Esc)
 # Context: colour_preset_settings
 settings-colour-preset-settings-colour-preset = カラープリセット
 # Context: colour_preset_settings
-settings-colour-preset-settings-saved-with-your-appearance-gradient-presets-always-use-dark-text = あなたの容姿とともに保存されました。グラデーション プリセットでは常に暗いテキストが使用されます。
 # Context: storage_page
 settings-storage-page-clear-cache = キャッシュをクリアする
 # Context: storage_page
@@ -4157,7 +4156,6 @@ voice-voice-processing-controls-start-the-microphone-test-or-join-a-call-to-see 
 # Context: voice_processing_controls
 voice-voice-processing-controls-suppression-strength = 抑制力
 # Context: voice_settings_content
-voice-voice-settings-content-audio-preferences-are-saved-on-this-device-your-microphone-starts = オーディオ設定はこのデバイスに保存されます。マイクは、通話に参加するかテストを開始するときにのみ起動します。
 # Context: voice_settings_content
 voice-voice-settings-content-camera = カメラ
 # Context: voice_settings_content

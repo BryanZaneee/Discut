@@ -3444,7 +3444,6 @@ settings-close-control-close-settings-esc = Fermer les paramètres (Esc)
 # Context: colour_preset_settings
 settings-colour-preset-settings-colour-preset = Couleur prédéfinie
 # Context: colour_preset_settings
-settings-colour-preset-settings-saved-with-your-appearance-gradient-presets-always-use-dark-text = Enregistré avec votre apparence. Les préréglages de dégradé utilisent toujours du texte sombre.
 # Context: storage_page
 settings-storage-page-clear-cache = Vider le cache
 # Context: storage_page
@@ -4160,7 +4159,6 @@ voice-voice-processing-controls-start-the-microphone-test-or-join-a-call-to-see 
 # Context: voice_processing_controls
 voice-voice-processing-controls-suppression-strength = Force de suppression
 # Context: voice_settings_content
-voice-voice-settings-content-audio-preferences-are-saved-on-this-device-your-microphone-starts = Les préférences audio sont enregistrées sur cet appareil. Votre microphone démarre uniquement lorsque vous rejoignez un appel ou démarrez un test.
 # Context: voice_settings_content
 voice-voice-settings-content-camera = Caméra
 # Context: voice_settings_content

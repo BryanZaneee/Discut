@@ -1796,93 +1796,90 @@ fn message_input(
 		.fill(theme.panel)
 		.stroke(Stroke::new(
 			1.0,
-			if focused { colors.accent } else { theme.border },
+			// A quiet focus cue in the profile's own text colour; accent blue clashes with themes.
+			if focused { theme.muted } else { theme.border },
 		))
 		.corner_radius(10)
 		.inner_margin(egui::Margin {
-			left: 10,
-			right: 4,
-			top: 4,
-			bottom: 4,
+			left: 12,
+			right: 5,
+			top: 5,
+			bottom: 5,
 		})
 		.show(ui, |ui| {
 			ui.horizontal(|ui| {
-				let button = 28.0;
+				let button = 30.0;
 				let edit_width =
 					(ui.available_width() - button - ui.spacing().item_spacing.x).max(1.0);
 				let row = ui.text_style_height(&egui::TextStyle::Body);
-				ui.allocate_ui_with_layout(
-					vec2(edit_width, button),
-					egui::Layout::left_to_right(egui::Align::Center),
-					|ui| {
-						egui::ScrollArea::vertical()
-							.id_salt(("profile-message-scroll", user.id))
-							.max_height(row * 4.0 + 8.0)
-							.stick_to_bottom(true)
-							.show(ui, |ui| {
-								ui.add_enabled(
-									enabled,
-									egui::TextEdit::multiline(&mut session.message_draft)
-										.id(id)
-										.char_limit(client_core::MAX_CONTENT)
-										.desired_width(edit_width)
-										.desired_rows(1)
-										.margin(vec2(0.0, (button - row) / 2.0))
-										.frame(egui::Frame::NONE)
-										.text_color(theme.text)
-										.hint_text(RichText::new(placeholder).color(theme.muted)),
-								);
-							});
+				// Shrinks to one line and scrolls past four; the row stays as tall as the button.
+				egui::ScrollArea::vertical()
+					.id_salt(("profile-message-scroll", user.id))
+					.max_width(edit_width)
+					.max_height(row * 4.0 + button - row)
+					.min_scrolled_height(button)
+					.auto_shrink([false, true])
+					.stick_to_bottom(true)
+					.show(ui, |ui| {
+						ui.add_enabled(
+							enabled,
+							egui::TextEdit::multiline(&mut session.message_draft)
+								.id(id)
+								.char_limit(client_core::MAX_CONTENT)
+								.desired_width(edit_width)
+								.desired_rows(1)
+								.margin(vec2(0.0, ((button - row) / 2.0).max(0.0)))
+								.frame(egui::Frame::NONE)
+								.text_color(theme.text)
+								.hint_text(RichText::new(placeholder).color(theme.muted)),
+						);
+					});
+				let (rect, response) = ui.allocate_exact_size(
+					Vec2::splat(button),
+					if can_send {
+						egui::Sense::click()
+					} else {
+						egui::Sense::hover()
 					},
 				);
-				ui.with_layout(egui::Layout::bottom_up(egui::Align::Center), |ui| {
-					let (rect, response) = ui.allocate_exact_size(
-						Vec2::splat(button),
-						if can_send {
-							egui::Sense::click()
-						} else {
-							egui::Sense::hover()
-						},
-					);
-					let label = crate::i18n::translate("profiles-message-send");
-					if session.message_pending {
-						egui::Spinner::new()
-							.size(16.0)
-							.color(theme.muted)
-							.paint_at(ui, rect.shrink(6.0));
-					} else {
-						if can_send {
-							ui.painter().circle_filled(
-								rect.center(),
-								button / 2.0,
-								if response.hovered() {
-									colors.accent.gamma_multiply(0.85)
-								} else {
-									colors.accent
-								},
-							);
-						}
-						icons::paint(
-							ui.painter(),
-							Icon::Send,
-							rect.shrink(7.0),
-							if can_send {
-								colors.accent_text
+				let label = crate::i18n::translate("profiles-message-send");
+				if session.message_pending {
+					egui::Spinner::new()
+						.size(16.0)
+						.color(theme.muted)
+						.paint_at(ui, rect.shrink(7.0));
+				} else {
+					if can_send {
+						ui.painter().circle_filled(
+							rect.center(),
+							button / 2.0,
+							if response.hovered() {
+								colors.accent.gamma_multiply(0.85)
 							} else {
-								theme.muted
+								colors.accent
 							},
 						);
 					}
-					if can_send {
-						response
-							.clone()
-							.on_hover_cursor(egui::CursorIcon::PointingHand);
-					}
-					response.widget_info(|| {
-						egui::WidgetInfo::labeled(egui::Role::Button, can_send, &label)
-					});
-					clicked = response.on_hover_text(label).clicked();
+					icons::paint(
+						ui.painter(),
+						Icon::Send,
+						rect.shrink(8.0),
+						if can_send {
+							colors.accent_text
+						} else {
+							theme.muted.gamma_multiply(0.7)
+						},
+					);
+				}
+				if can_send {
+					response
+						.clone()
+						.on_hover_cursor(egui::CursorIcon::PointingHand);
+				}
+				response.widget_info(|| {
+					egui::WidgetInfo::labeled(egui::Role::Button, can_send, &label)
 				});
+				clicked = response.on_hover_text(label).clicked();
 			});
 		});
 	// One quiet status line: progress, why sending is unavailable, or the length budget.

@@ -4006,6 +4006,11 @@ impl Desktop {
 						.cloned()
 						.ok_or(Failure::Protocol),
 				},
+				// The offline fixture never issues challenges, so it never resumes one.
+				Command::VerifiedSend { nonce, .. } => Event::SendResult {
+					nonce,
+					result: Err(Failure::Protocol),
+				},
 				Command::Forward {
 					message,
 					channel,

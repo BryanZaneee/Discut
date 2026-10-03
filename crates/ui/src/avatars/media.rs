@@ -866,6 +866,31 @@ fn pick(media: &model::EmbedMedia, animate: bool) -> Option<(&str, bool)> {
 }
 
 impl Avatars {
+	/// Synchronized favorite whose media is a clip or a Discord-hosted file: it plays like a
+	/// gifv embed, covering its picker tile.
+	pub(crate) fn paint_gif_media(
+		&mut self,
+		ui: &mut egui::Ui,
+		gif: &model::Gif,
+		rect: egui::Rect,
+		demo: bool,
+	) {
+		let media = model::EmbedMedia {
+			url: Some(gif.preview.clone()),
+			width: gif.width,
+			height: gif.height,
+			..Default::default()
+		};
+		self.paint_media(
+			ui,
+			&media,
+			rect,
+			Some([gif.width, gif.height]),
+			demo,
+			Surface::Banner,
+		);
+	}
+
 	/// Service dimensions when present, otherwise the largest decoded rendition.
 	pub(crate) fn media_dimensions(&mut self, media: &model::EmbedMedia) -> Option<[u32; 2]> {
 		if media.width > 0 && media.height > 0 {

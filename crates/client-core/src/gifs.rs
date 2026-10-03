@@ -279,7 +279,10 @@ impl State {
 				// Keep distinct local fallback entries before filling remaining remote slots.
 				for gif in previous {
 					if !previous_remote.contains(&gif.url) {
-						let current = favorites.iter().find(|remote| remote.url == gif.url);
+						// A local still preview outranks the synchronized clip for the same URL.
+						let current = favorites.iter().find(|remote| {
+							remote.url == gif.url && !model::valid_gif_preview(&gif.preview)
+						});
 						self.gifs.favorites.push(current.cloned().unwrap_or(gif));
 					}
 				}
@@ -353,7 +356,8 @@ impl State {
 				}
 				if gif.valid()
 					&& !removed.contains(&gif.url)
-					&& !self.gifs.sync_remote.contains(&gif.url)
+					&& (!self.gifs.sync_remote.contains(&gif.url)
+						|| model::valid_gif_preview(&gif.preview))
 					&& !self.is_gif_favorite(&gif)
 				{
 					self.gifs.favorites.push(gif);

@@ -3358,6 +3358,19 @@ impl MessagingUi {
                                         demo,
                                     )
                                 };
+                                // Multiline edits wrap their hint; a pre-laid galley keeps a
+                                // long channel name on one elided line.
+                                let hint = if draft.is_empty() {
+                                    let mut job = egui::text::LayoutJob::simple_singleline(
+                                        placeholder.clone(),
+                                        egui::TextStyle::Body.resolve(ui.style()),
+                                        ui.visuals().weak_text_color(),
+                                    );
+                                    job.wrap = egui::text::TextWrapping::truncate_at_width(ui.available_width());
+                                    egui::WidgetText::from(ui.painter().layout_job(job))
+                                } else {
+                                    egui::WidgetText::default()
+                                };
                                 let output = TextEdit::multiline(draft)
                                     .interactive(keyboard_enabled)
                                     .layouter(&mut layouter)
@@ -3373,7 +3386,7 @@ impl MessagingUi {
                                     .min_size(egui::vec2(0.0, ui.spacing().interact_size.y))
                                     .align(egui::Align2::LEFT_CENTER)
                                     .frame(egui::Frame::NONE)
-                                    .hint_text(placeholder.as_str())
+                                    .hint_text(hint)
                                     .show(ui);
                                 rich_layout.paint(ui, &output);
                                 output

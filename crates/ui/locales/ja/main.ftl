@@ -4334,6 +4334,12 @@ lib-composer-onboarding-rules-pending = チャットを始めるには、この�
 lib-composer-onboarding-incomplete = 参加を完了すると、さらにチャンネルが開放されます。
 # Context: composer
 lib-composer-onboarding-complete = オンボーディングを完了
+profiles-show-view-full-bio = 自己紹介をすべて表示
+profiles-show-hide-full-bio = 自己紹介を折りたたむ
+profiles-message-placeholder = @{ $user } にメッセージ
+profiles-message-send = メッセージを送信
+profiles-message-sending = ダイレクトメッセージを開いています…
+user-menu-contents-start-a-call = 通話を開始
 
 voice-recipient-ring = もう一度呼び出す
 voice-recipient-stop-ringing = 呼び出しを停止

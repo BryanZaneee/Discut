@@ -4349,6 +4349,12 @@ lib-composer-onboarding-rules-pending = Примите правила серве
 lib-composer-onboarding-incomplete = Завершите вступление, чтобы открыть больше каналов.
 # Context: composer
 lib-composer-onboarding-complete = Завершить знакомство
+profiles-show-view-full-bio = Показать полное описание
+profiles-show-hide-full-bio = Скрыть полное описание
+profiles-message-placeholder = Сообщение @{ $user }
+profiles-message-send = Отправить сообщение
+profiles-message-sending = Открытие личных сообщений…
+user-menu-contents-start-a-call = Начать звонок
 
 voice-recipient-ring = Позвонить снова
 voice-recipient-stop-ringing = Перестать звонить

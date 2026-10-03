@@ -4345,6 +4345,13 @@ lib-composer-onboarding-rules-pending = Acepta las reglas de este servidor para 
 lib-composer-onboarding-incomplete = Termina de unirte a este servidor para desbloquear más canales.
 # Context: composer
 lib-composer-onboarding-complete = Completar bienvenida
+profiles-show-view-full-bio = Ver biografía completa
+profiles-show-hide-full-bio = Ocultar biografía completa
+profiles-message-placeholder = Mensaje a @{ $user }
+profiles-message-send = Enviar mensaje
+profiles-message-sending = Abriendo mensaje directo…
+user-menu-contents-start-a-call = Iniciar llamada
+
 voice-recipient-ring = Volver a llamar
 voice-recipient-stop-ringing = Dejar de llamar
 voice-recipient-ringing = Llamando…

@@ -4367,6 +4367,12 @@ lib-composer-onboarding-rules-pending = Přijmi pravidla tohoto serveru, abys mo
 lib-composer-onboarding-incomplete = Dokonči připojení k serveru a odemkni další kanály.
 # Context: composer
 lib-composer-onboarding-complete = Dokončit uvítání
+profiles-show-view-full-bio = Zobrazit celý profilový text
+profiles-show-hide-full-bio = Skrýt celý profilový text
+profiles-message-placeholder = Zpráva pro @{ $user }
+profiles-message-send = Odeslat zprávu
+profiles-message-sending = Otevírání soukromé zprávy…
+user-menu-contents-start-a-call = Zahájit hovor
 
 voice-recipient-ring = Znovu zavolat
 voice-recipient-stop-ringing = Zastavit vyzvánění

@@ -1346,6 +1346,7 @@ impl MessagingUi {
 		let lazy = list.lazy;
 		let start = list.start;
 		let guild = list.guild;
+		let voice_users = profiles::voice_users(state);
 		let guild_or_channel = guild.unwrap_or(channel);
 		let member_key = (state.generation, guild_or_channel, list.request);
 		let reset_scroll = self.member_extent.is_none_or(|(key, _)| key != member_key);
@@ -1441,6 +1442,8 @@ impl MessagingUi {
 							let (status, custom, activities, clients) =
 								profiles::member_presence(state, member, guild);
 							let subtitle = profiles::subtitle(custom, activities);
+							let in_voice = voice_users.contains(&member.user.id);
+							let voice_label = in_voice.then(|| language.text("member-in-voice"));
 							let online =
 								status.is_some_and(|s| matches!(s, "online" | "idle" | "dnd"));
 							let (rect, response) = ui.allocate_exact_size(
@@ -1452,14 +1455,19 @@ impl MessagingUi {
 									egui::Role::Button,
 									true,
 									format!(
-										"{name}, {}, {}",
+										"{name}, {}{}{}",
 										status.map_or_else(
 											|| crate::i18n::translate(
 												"friends-presence-unavailable"
 											),
 											profiles::presence_label,
 										),
-										subtitle.as_deref().unwrap_or_default()
+										subtitle
+											.as_ref()
+											.map_or_else(String::new, |text| format!(", {text}")),
+										voice_label
+											.as_ref()
+											.map_or_else(String::new, |text| format!(", {text}"))
 									),
 								)
 							});
@@ -1545,32 +1553,45 @@ impl MessagingUi {
 										},
 									);
 								};
-								if let Some(subtitle) = subtitle {
+								if subtitle.is_some() || in_voice {
 									ui.vertical(|ui| {
 										ui.spacing_mut().item_spacing.y = 1.0;
 										ui.spacing_mut().interact_size.y = 0.0;
 										show_name(ui);
-										ui.horizontal(|ui| {
-											ui.spacing_mut().item_spacing.x = 4.0;
-											if activities.first().is_some_and(profiles::is_spotify)
-											{
-												icons::inline(
+										ui.allocate_ui_with_layout(
+											egui::vec2(ui.available_width(), 14.0),
+											egui::Layout::left_to_right(egui::Align::Center),
+											|ui| {
+												ui.spacing_mut().item_spacing.x = 4.0;
+												profiles::voice_badge(
 													ui,
-													icons::Icon::Spotify,
-													12.0,
-													colors.positive,
+													in_voice,
+													subtitle.is_some(),
 												);
-											}
-											ui.add(
-												egui::Label::new(
-													RichText::new(subtitle)
-														.size(12.0)
-														.color(colors.muted),
-												)
-												.truncate()
-												.selectable(false),
-											);
-										});
+												if let Some(subtitle) = subtitle {
+													if activities
+														.first()
+														.is_some_and(profiles::is_spotify)
+													{
+														icons::inline(
+															ui,
+															icons::Icon::Spotify,
+															12.0,
+															colors.positive,
+														);
+													}
+													ui.add(
+														egui::Label::new(
+															RichText::new(subtitle)
+																.size(12.0)
+																.color(colors.muted),
+														)
+														.truncate()
+														.selectable(false),
+													);
+												}
+											},
+										);
 									});
 								} else {
 									show_name(ui);
@@ -2318,6 +2339,11 @@ impl MessagingUi {
 								profiles::presence(state, user.id, None);
 							profiles::subtitle(custom, activities)
 						});
+					let in_voice = channel
+						.as_ref()
+						.filter(|_| dm)
+						.and_then(|channel| channel.recipients.first())
+						.is_some_and(|user| profiles::voice_users(state).contains(&user.id));
 					let name_height = ui
 						.painter()
 						.layout_no_wrap(
@@ -2338,6 +2364,11 @@ impl MessagingUi {
 							.size()
 							.y
 					});
+					let subtitle_height = if in_voice {
+						subtitle_height.max(16.0)
+					} else {
+						subtitle_height
+					};
 					ui.vertical(|ui| {
 						ui.add_space(
 							((ui.available_height() - name_height - subtitle_height) / 2.0)
@@ -2351,14 +2382,20 @@ impl MessagingUi {
 							.truncate(),
 						);
 						{
-							if let Some(text) = subtitle {
-								ui.add(
-									egui::Label::new(
-										RichText::new(&text).size(12.0).color(colors.muted),
-									)
-									.truncate(),
-								)
-								.on_hover_text(text);
+							if subtitle.is_some() || in_voice {
+								ui.horizontal(|ui| {
+									ui.spacing_mut().item_spacing.x = 4.0;
+									profiles::voice_badge(ui, in_voice, subtitle.is_some());
+									if let Some(text) = subtitle {
+										ui.add(
+											egui::Label::new(
+												RichText::new(&text).size(12.0).color(colors.muted),
+											)
+											.truncate(),
+										)
+										.on_hover_text(text);
+									}
+								});
 							}
 						}
 					});
@@ -8022,6 +8059,282 @@ mod composer_tests {
 		);
 		assert_eq!(messaging.draft_changes, [Id(1), Id(1)]);
 	}
+}
+
+/// Offline guild/private-call member-row check; no service or audio access.
+#[cfg(debug_assertions)]
+pub fn debug_member_voice_status_check(mut state: State, mut private: State) {
+	let entry = state.voice.roster[1].clone();
+	state.voice.roster = vec![entry.clone()];
+	state.voice.active = None;
+	let text_channel = state
+		.channels
+		.iter()
+		.find(|channel| channel.guild == Some(entry.guild) && channel.kind == 0)
+		.unwrap()
+		.id;
+	let mut member = entry.member.clone().unwrap();
+	member.custom_status = Some("Synthetic status".into());
+	state.selected = Some(text_channel);
+	state.gateway_connected = true;
+	state.members = Some(model::MemberList {
+		guild: Some(entry.guild),
+		channel: text_channel,
+		request: 0,
+		start: 0,
+		slots: vec![Some(model::MemberSlot::Person(member))],
+		total: 1,
+		lazy: false,
+		freshness: model::Freshness::Fresh,
+		groups: vec![],
+		ranges: vec![],
+	});
+	let mut view = MessagingUi {
+		language: i18n::Language::English,
+		..Default::default()
+	};
+	let ctx = egui::Context::default();
+	let render = |view: &mut MessagingUi, state: &mut State| {
+		let output = ctx.run_ui(
+			egui::RawInput {
+				screen_rect: Some(egui::Rect::from_min_size(
+					egui::Pos2::ZERO,
+					egui::vec2(240.0, 100.0),
+				)),
+				..Default::default()
+			},
+			|ui| view.member_rows(ui, state, &mut vec![]),
+		);
+		let labels = output
+			.shapes
+			.iter()
+			.filter_map(|shape| match &shape.shape {
+				egui::Shape::Text(text) => Some(text.galley.text().to_owned()),
+				_ => None,
+			})
+			.collect::<Vec<_>>();
+		output.drop_without_applying_deltas();
+		labels
+	};
+	for _ in 0..2 {
+		let labels = render(&mut view, &mut state);
+		assert!(labels.iter().any(|text| text == "In voice"));
+		assert!(labels.iter().any(|text| text == "Synthetic status"));
+	}
+	state.gateway_connected = false;
+	assert!(
+		!render(&mut view, &mut state)
+			.iter()
+			.any(|text| text == "In voice")
+	);
+	state.gateway_connected = true;
+	state.voice.roster[0].guild = Id(999);
+	assert!(
+		!render(&mut view, &mut state)
+			.iter()
+			.any(|text| text == "In voice")
+	);
+	state.voice.roster[0].guild = entry.guild;
+	state.voice.roster.clear();
+	assert!(
+		!render(&mut view, &mut state)
+			.iter()
+			.any(|text| text == "In voice")
+	);
+	state.voice.roster.push(entry.clone());
+	state.channels.retain(|channel| channel.id != entry.channel);
+	assert!(
+		!render(&mut view, &mut state)
+			.iter()
+			.any(|text| text == "In voice")
+	);
+
+	let channel = private.selected.unwrap();
+	let user = private.channel(channel).unwrap().recipients[0].clone();
+	private.gateway_connected = true;
+	private.members = Some(model::MemberList {
+		guild: None,
+		channel,
+		request: 0,
+		start: 0,
+		slots: vec![Some(model::MemberSlot::Person(model::Member {
+			user: user.clone(),
+			roles: vec![],
+			nick: None,
+			status: Some("online".into()),
+			custom_status: Some("Synthetic status".into()),
+			activities: vec![],
+			clients: Default::default(),
+		}))],
+		total: 1,
+		lazy: false,
+		freshness: Freshness::Fresh,
+		groups: vec![],
+		ranges: vec![],
+	});
+	// The peer is in a shared server, while the viewer is looking at their DM.
+	let mut server_entry = entry.clone();
+	server_entry.participant.user = user.id;
+	private.voice.roster = vec![server_entry];
+	assert!(
+		render(&mut view, &mut private)
+			.iter()
+			.any(|text| text == "In voice")
+	);
+	private.apply(client_core::Envelope {
+		generation: private.generation,
+		event: client_core::Event::UserAction(client_core::user_actions::Event::Friends(Some(
+			vec![(user.clone(), "synthetic".into())],
+		))),
+	});
+	private.direct_presences.push(model::MemberPresence {
+		user: user.id,
+		status: Some("online".into()),
+		custom_status: Some("Synthetic status".into()),
+		activities: vec![],
+		clients: Default::default(),
+	});
+	let check_cards = |view: &mut MessagingUi, state: &mut State, header: bool| {
+		let check_dm_alignment = |output: &egui::FullOutput| {
+			let text_rect = |label: &str| {
+				output
+					.shapes
+					.iter()
+					.find_map(|shape| match &shape.shape {
+						egui::Shape::Text(text) if text.galley.text() == label => {
+							Some(egui::Rect::from_min_size(text.pos, text.galley.size()))
+						}
+						_ => None,
+					})
+					.unwrap()
+			};
+			let name = text_rect(&user.name);
+			let status = text_rect("Synthetic status");
+			let avatar = text_rect("RS"); // The synthetic peer's avatar initials.
+			assert!(status.top() >= name.bottom(), "DM status overlaps its name");
+			assert!(
+				(name.union(status).center().y - avatar.center().y).abs() < 1.0,
+				"DM name/status block is not centered beside its avatar"
+			);
+		};
+		for surface in ["friends", "profile", "dm-list", "dm-header"]
+			.into_iter()
+			.filter(|surface| header || *surface != "dm-header")
+		{
+			for frame in 0..2 {
+				let output = ctx.run_ui(
+					egui::RawInput {
+						screen_rect: Some(egui::Rect::from_min_size(
+							egui::Pos2::ZERO,
+							egui::vec2(800.0, 700.0),
+						)),
+						..Default::default()
+					},
+					|ui| match surface {
+						"friends" => view.friends_page(ui, state, &mut vec![]),
+						"profile" => {
+							profiles::show(
+								ui,
+								&user,
+								None,
+								state,
+								&mut view.avatars,
+								&mut None,
+								&mut markdown::FormatCache::default(),
+								true,
+								egui::pos2(50.0, 50.0),
+							);
+						}
+						"dm-list" => {
+							view.channel_list(ui, state);
+						}
+						_ => view.channel_header_row(ui, state, false, false, false, &mut vec![]),
+					},
+				);
+				let found = output.shapes.iter().any(|shape| {
+					matches!(&shape.shape,
+				egui::Shape::Text(text) if text.galley.text() == "In voice")
+				});
+				if surface == "dm-list" && frame == 1 {
+					check_dm_alignment(&output);
+					let voice = std::mem::take(&mut state.voice);
+					let status_only = ctx.run_ui(egui::RawInput::default(), |ui| {
+						view.channel_list(ui, state);
+					});
+					check_dm_alignment(&status_only);
+					status_only.drop_without_applying_deltas();
+					state.voice = voice;
+				}
+				output.drop_without_applying_deltas();
+				if frame == 1 {
+					assert!(found, "shared-server voice badge missing from {surface}");
+				}
+			}
+		}
+	};
+	check_cards(&mut view, &mut private, true);
+	private.gateway_connected = false;
+	assert!(!profiles::voice_users(&private).contains(&user.id));
+	private.gateway_connected = true;
+	let guild = private
+		.guilds
+		.iter()
+		.find(|guild| guild.id == entry.guild)
+		.unwrap()
+		.clone();
+	private.guilds.retain(|guild| guild.id != entry.guild);
+	assert!(!profiles::voice_users(&private).contains(&user.id));
+	private.guilds.push(guild);
+	private.voice.roster.clear();
+	assert!(
+		!render(&mut view, &mut private)
+			.iter()
+			.any(|text| text == "In voice")
+	);
+	private.demo = false;
+	private.apply_voice(client_core::voice::Event::Call {
+		channel,
+		ringing: Some(vec![]),
+		unavailable: false,
+		participants: Some(vec![client_core::voice::Participant {
+			user: user.id,
+			muted: false,
+			deafened: false,
+			server_muted: false,
+			server_deafened: false,
+			video: false,
+			streaming: false,
+		}]),
+	});
+	private.demo = true;
+	for _ in 0..2 {
+		assert!(
+			render(&mut view, &mut private)
+				.iter()
+				.any(|text| text == "In voice")
+		);
+	}
+	private.selected = Some(entry.channel);
+	assert!(profiles::voice_users(&private).contains(&user.id));
+	check_cards(&mut view, &mut private, false);
+	private.selected = Some(channel);
+	private.demo = false;
+	private.apply_voice(client_core::voice::Event::Call {
+		channel,
+		ringing: None,
+		participants: Some(vec![]),
+		unavailable: false,
+	});
+	private.demo = true;
+	assert!(
+		!render(&mut view, &mut private)
+			.iter()
+			.any(|text| text == "In voice")
+	);
+
+	println!(
+		"Member voice status debug check passed: shared-server voice across member rows, friends, profile, DM list and header; private calls, disconnect and departure. Synthetic egui rendering only."
+	);
 }
 
 #[cfg(debug_assertions)]

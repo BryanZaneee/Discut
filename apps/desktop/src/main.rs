@@ -2056,7 +2056,11 @@ impl Desktop {
 		}
 		// The GPU surface and X11 visual are selected at startup. Opaque launches
 		// keep the same native/compositor path as builds without window effects.
-		let tray_window = tray_window::State::default();
+		// KWin hiding runs its D-Bus worker on the application runtime.
+		let tray_window = {
+			let _runtime = runtime.enter();
+			tray_window::State::default()
+		};
 		Ok(Self {
 			proxy_auth: proxy_auth::Authentication::default(),
 			api_proxy: tokio::sync::watch::channel(None).0,

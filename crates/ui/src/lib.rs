@@ -3083,8 +3083,27 @@ impl MessagingUi {
                 if !editing_here && self.attachment.is_some() {
                     self.attachment_tray(ui, state.can_send(channel), upload_limit);
                 }
+                // Tall drafts stack the actions in bottom-aligned columns so the text keeps the
+                // width. Last pass's visible draft height decides.
+                let stack_id = composer_id.with("stacked-actions");
+                let (stacked, draft_height) = ctx.data(|d| d.get_temp::<(bool, f32)>(stack_id)).unwrap_or_default();
+                let column = |ui: &mut egui::Ui, add: &mut dyn FnMut(&mut egui::Ui)| {
+                    if stacked {
+                        ui.allocate_ui_with_layout(
+                            egui::vec2(28.0, draft_height),
+                            egui::Layout::bottom_up(egui::Align::Center),
+                            |ui| {
+                                ui.spacing_mut().item_spacing.y = 4.0;
+                                add(ui);
+                            },
+                        );
+                    } else {
+                        add(ui);
+                    }
+                };
                 ui.horizontal(|ui| {
                     ui.spacing_mut().item_spacing.x = 8.0;
+                    column(ui, &mut |ui| {
                     // An active application command shows its app in place of the attach button.
                     let attach = if !editing_here && self.slash_commands.composer_badge(ui, state, &mut self.avatars) {
                         None
@@ -3124,8 +3143,11 @@ impl MessagingUi {
                                 }
                             });
                     }
+                    });
                     ui.with_layout(egui::Layout::right_to_left(egui::Align::Center), |ui| {
                         ui.spacing_mut().item_spacing.x = 4.0;
+                        let mut actions = None;
+                        column(ui, &mut |ui| {
                         let send_button = ui
                             .add_enabled_ui(can_send, |ui| {
                                 icons::button(
@@ -3198,6 +3220,9 @@ impl MessagingUi {
                             }
                             None => None,
                         };
+                        actions = Some((send, pick));
+                        });
+                        let (send, pick) = actions.expect("composer actions ran");
                         let edit = ui.with_layout(egui::Layout::left_to_right(egui::Align::Center), |ui| {
                             ui.vertical(|ui| {
                                 ui.set_width(ui.available_width());
@@ -3454,6 +3479,18 @@ impl MessagingUi {
                         edit.response
                             }).inner
                         }).inner;
+                        // Stack once three buttons fit beside the draft; unstack only at one line,
+                        // so the width gained by stacking cannot flip the layout back and forth.
+                        // The text edit reports its full content height; the scroll area shows at most half the viewport.
+                        let height = edit.rect.height().min(ctx.viewport_rect().height() * 0.5);
+                        let stacked = if height >= 3.0 * 28.0 + 8.0 {
+                            true
+                        } else if height <= ui.spacing().interact_size.y + 1.0 {
+                            false
+                        } else {
+                            stacked
+                        };
+                        ctx.data_mut(|d| d.insert_temp(stack_id, (stacked, height)));
                         if std::mem::take(&mut self.slash_commands.retry)
                             && let Some(command) = state.request_application_commands(channel, true) {
                             commands.push(command);

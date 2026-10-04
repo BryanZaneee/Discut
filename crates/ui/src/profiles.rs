@@ -442,6 +442,8 @@ fn activity_elapsed(start: u64, now: u64) -> Option<String> {
 const WIDTH: f32 = 340.0;
 const PAD: f32 = 12.0;
 const AVATAR: f32 = 80.0;
+/// Card-coloured ring separating the profile avatar from the banner.
+const AVATAR_RING: f32 = 6.0;
 const RADIUS: u8 = 12;
 /// Diameter of the translucent action circles laid over the banner.
 const CIRCLE: f32 = 32.0;
@@ -726,10 +728,19 @@ pub(crate) fn presence_color(status: &str) -> Color32 {
 		_ => Color32::from_rgb(128, 132, 142),
 	}
 }
+/// Dot radius and ring width. Banner avatars punch the dot out with the same ring they use
+/// against the banner; list avatars keep a thin ring.
+fn presence_badge_metrics(rect: Rect) -> (f32, f32) {
+	if rect.width() >= AVATAR {
+		(rect.width() * 0.16, AVATAR_RING)
+	} else {
+		((rect.width() * 0.2).clamp(6.0, 10.0), 2.0)
+	}
+}
 fn presence_badge_rect(rect: Rect) -> Rect {
-	let radius = (rect.width() * 0.2).clamp(6.0, 10.0);
+	let (radius, ring) = presence_badge_metrics(rect);
 	let center = rect.right_bottom() - Vec2::splat(radius + 0.5);
-	Rect::from_center_size(center, Vec2::splat((radius + 2.0) * 2.0))
+	Rect::from_center_size(center, Vec2::splat((radius + ring) * 2.0))
 }
 fn pointer_on_presence(status: Option<&str>, avatar: Rect, pointer: Option<egui::Pos2>) -> bool {
 	status.is_some() && pointer.is_some_and(|pos| presence_badge_rect(avatar).contains(pos))
@@ -741,10 +752,11 @@ pub(crate) fn presence_badge(
 	clients: model::ClientPlatforms,
 	ring: Color32,
 ) {
+	let (radius, ring_width) = presence_badge_metrics(rect);
+	let center = rect.right_bottom() - Vec2::splat(radius + 0.5);
+	ui.painter()
+		.circle_filled(center, radius + ring_width, ring);
 	if clients.mobile {
-		let radius = (rect.width() * 0.2).clamp(6.0, 10.0);
-		let center = rect.right_bottom() - Vec2::splat(radius + 0.5);
-		ui.painter().circle_filled(center, radius + 2.0, ring);
 		icons::paint(
 			ui.painter(),
 			Icon::DeviceMobile,
@@ -752,7 +764,8 @@ pub(crate) fn presence_badge(
 			presence_color(status),
 		);
 	} else {
-		design::presence_dot(ui, rect, presence_color(status), ring);
+		ui.painter()
+			.circle_filled(center, radius, presence_color(status));
 	}
 	ui.allocate_rect(presence_badge_rect(rect), egui::Sense::hover())
 		.on_hover_text(presence_label(status));
@@ -2196,8 +2209,11 @@ pub fn show_with_session(
 					}));
 				}
 			}
-			ui.painter()
-				.circle_filled(avatar_rect.center(), AVATAR * 0.5 + 6.0, theme.card);
+			ui.painter().circle_filled(
+				avatar_rect.center(),
+				AVATAR * 0.5 + AVATAR_RING,
+				theme.card,
+			);
 			let pointer_on_presence = pointer_on_presence(
 				status,
 				avatar_rect,

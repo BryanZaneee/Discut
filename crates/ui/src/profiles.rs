@@ -77,7 +77,7 @@ pub(crate) fn voice_badge(ui: &mut egui::Ui, in_voice: bool, has_status: bool) {
 	ui.scope(|ui| {
 		ui.set_max_width(width);
 		ui.add(
-			egui::Label::new(RichText::new(&label).size(12.0).color(colors.positive))
+			egui::Label::new(RichText::new(&label).size(12.0).color(colors.muted))
 				.truncate()
 				.selectable(false),
 		)
@@ -728,18 +728,19 @@ pub(crate) fn presence_color(status: &str) -> Color32 {
 		_ => Color32::from_rgb(128, 132, 142),
 	}
 }
-/// Dot radius and ring width. Banner avatars punch the dot out with the same ring they use
-/// against the banner; list avatars keep a thin ring.
-fn presence_badge_metrics(rect: Rect) -> (f32, f32) {
-	if rect.width() >= AVATAR {
-		(rect.width() * 0.16, AVATAR_RING)
+/// Dot radius, ring width and centre. Banner avatars use a ~19 px dot tucked onto the avatar's
+/// lower-right rim; list avatars keep a thin ring in the corner.
+fn presence_badge_metrics(rect: Rect) -> (f32, f32, egui::Pos2) {
+	let (radius, ring, inset) = if rect.width() >= AVATAR {
+		(rect.width() * 0.12, 4.0, rect.width() * 0.15)
 	} else {
-		((rect.width() * 0.2).clamp(6.0, 10.0), 2.0)
-	}
+		let radius = (rect.width() * 0.17).clamp(5.0, 10.0);
+		(radius, 2.0, radius + 0.5)
+	};
+	(radius, ring, rect.right_bottom() - Vec2::splat(inset))
 }
 fn presence_badge_rect(rect: Rect) -> Rect {
-	let (radius, ring) = presence_badge_metrics(rect);
-	let center = rect.right_bottom() - Vec2::splat(radius + 0.5);
+	let (radius, ring, center) = presence_badge_metrics(rect);
 	Rect::from_center_size(center, Vec2::splat((radius + ring) * 2.0))
 }
 fn pointer_on_presence(status: Option<&str>, avatar: Rect, pointer: Option<egui::Pos2>) -> bool {
@@ -752,8 +753,7 @@ pub(crate) fn presence_badge(
 	clients: model::ClientPlatforms,
 	ring: Color32,
 ) {
-	let (radius, ring_width) = presence_badge_metrics(rect);
-	let center = rect.right_bottom() - Vec2::splat(radius + 0.5);
+	let (radius, ring_width, center) = presence_badge_metrics(rect);
 	ui.painter()
 		.circle_filled(center, radius + ring_width, ring);
 	if clients.mobile {
@@ -1584,7 +1584,6 @@ pub struct ProfileSession {
 	/// Last laid-out composer height, so the scrollable details leave room for it.
 	message_height: f32,
 	bio_identity: Option<egui::Id>,
-	bio_expanded: bool,
 	bio_revealed: u32,
 }
 
@@ -1599,7 +1598,6 @@ impl ProfileSession {
 		self.message_pending = false;
 		self.message_ime = false;
 		self.bio_identity = None;
-		self.bio_expanded = false;
 		self.bio_revealed = 0;
 	}
 
@@ -1942,8 +1940,7 @@ fn message_input(
 	}
 }
 
-/// Render the original markup into a clipped three-line preview. Truncating source could turn
-/// an unfinished spoiler or Markdown link into visible text or a different destination.
+/// Render the whole biography; spoiler reveals reset when the card shows another bio.
 #[allow(clippy::too_many_arguments)]
 fn biography(
 	ui: &mut egui::Ui,
@@ -1958,52 +1955,22 @@ fn biography(
 	let identity = egui::Id::unique((user, bio));
 	if session.bio_identity != Some(identity) {
 		session.bio_identity = Some(identity);
-		session.bio_expanded = false;
 		session.bio_revealed = 0;
 	}
-	let preview_height = 3.0 * ui.text_style_height(&egui::TextStyle::Body);
 	let mut linked = ProfileSession::default();
-	let mut render = |ui: &mut egui::Ui| {
-		let mut surface = crate::select::Surface::new(ui, "profile-bio");
-		formatted.get(user, bio).show_references(
-			ui,
-			opening,
-			&[],
-			None,
-			&mut linked,
-			(&[], &mut None, &state.guilds, &[]),
-			(avatars, state.demo, &mut session.bio_revealed),
-			&mut surface,
-			crate::design::MessageCardSurface::Opaque,
-		);
-		surface.finish(ui);
-	};
-	let overflowing = if session.bio_expanded {
-		render(ui);
-		true
-	} else {
-		let clip = Rect::from_min_size(ui.cursor().min, vec2(ui.available_width(), preview_height));
-		let mut preview = ui.new_child(
-			UiBuilder::new()
-				.id_salt("profile-bio-preview")
-				.max_rect(clip),
-		);
-		preview.set_clip_rect(ui.clip_rect().intersect(clip));
-		render(&mut preview);
-		let height = preview.min_rect().height();
-		ui.allocate_space(vec2(ui.available_width(), height.min(preview_height)));
-		height > preview_height + 0.5 || bio.chars().count() > 200
-	};
-	if overflowing {
-		let label = if session.bio_expanded {
-			"profiles-show-hide-full-bio"
-		} else {
-			"profiles-show-view-full-bio"
-		};
-		if ui.small_button(crate::i18n::translate(label)).clicked() {
-			session.bio_expanded = !session.bio_expanded;
-		}
-	}
+	let mut surface = crate::select::Surface::new(ui, "profile-bio");
+	formatted.get(user, bio).show_references(
+		ui,
+		opening,
+		&[],
+		None,
+		&mut linked,
+		(&[], &mut None, &state.guilds, &[]),
+		(avatars, state.demo, &mut session.bio_revealed),
+		&mut surface,
+		crate::design::MessageCardSurface::Opaque,
+	);
+	surface.finish(ui);
 	linked.open_user().cloned()
 }
 
@@ -3024,75 +2991,25 @@ mod tests {
 	}
 
 	#[test]
-	fn compact_bio_preserves_spoilers_and_expands_within_the_profile_scroll() {
-		let mut state = test_support::demo_state();
-		state.selected = None;
-		let mut user = test_support::message(1, Id(22)).author;
-		user.id = Id(991);
-		let mut data = synthetic(&user, None);
-		data.bio = format!(
-			"First line.\nSecond line.\nThird line.\n{}\nhttps://example.com/full",
-			"More biography.\n".repeat(15)
-		);
-		let profile = ProfileView {
-			user: user.id,
-			guild: None,
-			request: 1,
-			loading: false,
-			error: None,
-			data: Some(data),
-		};
+	fn biography_keeps_spoilers_hidden() {
+		let state = test_support::demo_state();
+		let user = test_support::message(1, Id(22)).author;
 		let ctx = egui::Context::default();
 		let mut avatars = Avatars::default();
 		let mut session = ProfileSession::default();
 		let mut formatted = FormatCache::default();
-		let size = vec2(500.0, 850.0);
-		{
-			let mut render = |session: &mut ProfileSession, size| {
-				let output = ctx.run_ui(input(size, vec![]), |ui| {
-					show_with_session(
-						ui,
-						&user,
-						Some(&profile),
-						&state,
-						&mut avatars,
-						&mut None,
-						&mut formatted,
-						true,
-						pos2(20.0, 40.0),
-						session,
-					);
-				});
-				let rect = ctx
-					.memory(|memory| memory.area_rect(egui::Id::unique("user-profile-popout")))
-					.unwrap();
-				output.drop_without_applying_deltas();
-				rect
-			};
-			let mut collapsed = Rect::NOTHING;
-			for _ in 0..3 {
-				collapsed = render(&mut session, size);
-			}
-			session.bio_expanded = true;
-			let mut expanded = Rect::NOTHING;
-			for _ in 0..3 {
-				expanded = render(&mut session, size);
-			}
-			assert!(
-				expanded.height() > collapsed.height() + 100.0,
-				"collapsed biography must make the card smaller"
-			);
-			for _ in 0..3 {
-				expanded = render(&mut session, vec2(400.0, 500.0));
-			}
-			assert!(
-				expanded.bottom() <= 493.0,
-				"expanded details keep the message editor in the viewport"
-			);
-		}
 		let mut painted = String::new();
-		let output = ctx.run_ui(input(size, vec![]), |ui| {
-			biography(ui, user.id, "before ||private text that must stay hidden even across several wrapped lines and a truncation boundary|| after", &state, &mut avatars, &mut None, &mut formatted, &mut session);
+		let output = ctx.run_ui(input(vec2(500.0, 850.0), vec![]), |ui| {
+			biography(
+				ui,
+				user.id,
+				"before ||private text that must stay hidden even across several wrapped lines|| after",
+				&state,
+				&mut avatars,
+				&mut None,
+				&mut formatted,
+				&mut session,
+			);
 		});
 		for shape in &output.shapes {
 			text(&shape.shape, &mut painted);

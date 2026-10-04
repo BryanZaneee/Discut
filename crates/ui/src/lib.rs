@@ -2358,11 +2358,21 @@ impl MessagingUi {
 								profiles::presence(state, user.id, None);
 							profiles::subtitle(custom, activities)
 						});
-					let in_voice = channel
-						.as_ref()
-						.filter(|_| dm)
-						.and_then(|channel| channel.recipients.first())
-						.is_some_and(|user| profiles::user_in_voice(state, user.id));
+					let in_call = state.voice.active.as_ref().is_some_and(|call| {
+						Some(call.channel) == state.selected
+							&& matches!(
+								call.phase,
+								client_core::voice::Phase::Connected
+									| client_core::voice::Phase::Waiting
+							)
+					});
+					// The "In a call" label beside the name already says it while we share the call.
+					let in_voice = !in_call
+						&& channel
+							.as_ref()
+							.filter(|_| dm)
+							.and_then(|channel| channel.recipients.first())
+							.is_some_and(|user| profiles::user_in_voice(state, user.id));
 					let name_height = ui
 						.painter()
 						.layout_no_wrap(
@@ -2394,6 +2404,8 @@ impl MessagingUi {
 								.max(0.0),
 						);
 						ui.spacing_mut().item_spacing.y = 1.0;
+						// Keep the status row at its text height so the measured centring holds.
+						ui.spacing_mut().interact_size.y = 0.0;
 						ui.add(
 							egui::Label::new(
 								design::semibold(ui, name, 16.0).color(colors.text_strong),
@@ -2417,14 +2429,6 @@ impl MessagingUi {
 								});
 							}
 						}
-					});
-					let in_call = state.voice.active.as_ref().is_some_and(|call| {
-						Some(call.channel) == state.selected
-							&& matches!(
-								call.phase,
-								client_core::voice::Phase::Connected
-									| client_core::voice::Phase::Waiting
-							)
 					});
 					if in_call {
 						ui.add_space(4.0);

@@ -4334,8 +4334,6 @@ lib-composer-onboarding-rules-pending = Sohbete başlamak için bu sunucunun kur
 lib-composer-onboarding-incomplete = Daha fazla kanalın kilidini açmak için sunucuya katılımı tamamla.
 # Context: composer
 lib-composer-onboarding-complete = Tanıtımı tamamla
-profiles-show-view-full-bio = Biyografinin tamamını görüntüle
-profiles-show-hide-full-bio = Tam biyografiyi gizle
 profiles-message-placeholder = @{ $user } kullanıcısına mesaj
 profiles-message-send = Mesaj gönder
 profiles-message-sending = Direkt mesaj açılıyor…

@@ -4365,8 +4365,6 @@ lib-composer-onboarding-rules-pending = Accept this server's rules to start chat
 lib-composer-onboarding-incomplete = Finish joining this server to unlock more channels.
 # Context: composer
 lib-composer-onboarding-complete = Complete Onboarding
-profiles-show-view-full-bio = View Full Bio
-profiles-show-hide-full-bio = Hide Full Bio
 profiles-message-placeholder = Message @{ $user }
 profiles-message-send = Send message
 profiles-message-sending = Opening direct message…

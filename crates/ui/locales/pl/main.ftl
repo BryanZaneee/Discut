@@ -4348,8 +4348,6 @@ lib-composer-onboarding-rules-pending = Zaakceptuj zasady tego serwera, aby zacz
 lib-composer-onboarding-incomplete = Dokończ dołączanie do serwera, aby odblokować więcej kanałów.
 # Context: composer
 lib-composer-onboarding-complete = Dokończ wprowadzenie
-profiles-show-view-full-bio = Pokaż pełny opis
-profiles-show-hide-full-bio = Ukryj pełny opis
 profiles-message-placeholder = Wiadomość do @{ $user }
 profiles-message-send = Wyślij wiadomość
 profiles-message-sending = Otwieranie wiadomości prywatnej…

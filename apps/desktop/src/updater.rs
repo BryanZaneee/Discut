@@ -129,7 +129,7 @@ impl Updater {
 				self.demo_available = true;
 				view.log = demo_log();
 				self.status =
-					"Synthetic preview: Serein 99.0.0 is available. No network request was made."
+					"Synthetic preview: Discut 99.0.0 is available. No network request was made."
 						.into();
 			}
 			if download && self.demo_available {
@@ -162,12 +162,8 @@ impl Updater {
 			view.available = false;
 			view.ready = false;
 			view.progress = None;
-			view.status = if cfg!(debug_assertions) {
-				"Update checks are disabled in debug builds."
-			} else {
-				"Load update preferences or choose your update settings to enable checking."
-			}
-			.into();
+			view.status =
+				"Discut updates are manual; upstream releases are never installed.".into();
 			return false;
 		}
 		if self.channel != Some(view.nightly) {
@@ -204,27 +200,27 @@ impl Updater {
 							Ok(Outcome::Checked(package, log)) => {
 								self.log = Some(log);
 								self.status = package.as_ref().map_or_else(
-									|| "Serein is up to date on this channel.".into(),
+									|| "Discut is up to date on this channel.".into(),
 									|p| {
 										if install::flatpak_session() {
 											format!(
-												"Serein {} is available. Update with `flatpak update` or your Software center.",
+												"Discut {} is available. Update with `flatpak update` or your Software center.",
 												p.version,
 											)
 										} else if install::nix_session() {
 											format!(
-												"Serein {} is available. Update it through Nix.",
+												"Discut {} is available. Update it through Nix.",
 												p.version,
 											)
 										} else if let Some(cmd) =
 											install::linux_package_manager_update_command()
 										{
 											format!(
-												"Serein {} is available. Run `{cmd}` to update.",
+												"Discut {} is available. Run `{cmd}` to update.",
 												p.version,
 											)
 										} else {
-											format!("Serein {} is available.", p.version)
+											format!("Discut {} is available.", p.version)
 										}
 									},
 								);
@@ -243,7 +239,7 @@ impl Updater {
 								self.armed = true;
 								self.close_requested = true;
 								self.status =
-									"Update ready. Close Serein to install and restart.".into();
+									"Update ready. Close Discut to install and restart.".into();
 							}
 							Err(error) => {
 								self.auto_download = false;
@@ -307,7 +303,7 @@ impl Updater {
 					.expect("a supported platform's checked package has a downloadable archive")
 					.size;
 				self.auto_download = false;
-				self.status = format!("Downloading Serein {}…", package.version);
+				self.status = format!("Downloading Discut {}…", package.version);
 				self.start(runtime, ctx, total, move |cancel, progress| {
 					download_package(package, cancel, progress)
 				});
@@ -445,7 +441,7 @@ fn client() -> Result<reqwest::Client, String> {
 	reqwest::Client::builder()
 		.https_only(true)
 		.no_proxy()
-		.user_agent(concat!("Serein/", env!("CARGO_PKG_VERSION")))
+		.user_agent(concat!("Discut/", env!("CARGO_PKG_VERSION")))
 		.connect_timeout(Duration::from_secs(10))
 		.read_timeout(Duration::from_secs(30))
 		.timeout(Duration::from_secs(600))
@@ -691,7 +687,7 @@ fn select_release(
 			release.tag_name
 		);
 		if asset.browser_download_url != expected {
-			return Err("The asset is not from the Serein release repository.".into());
+			return Err("The asset is not from the Discut release repository.".into());
 		}
 		Ok(asset.clone())
 	};

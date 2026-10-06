@@ -28,7 +28,7 @@ description-appearance = Тема, цвета, оконные эффекты и 
 description-chat = Как ведут себя сообщения, медиа, ссылки и прокрутка.
 description-messaging-permissions = Контролируйте, кто может связаться с вами и как фильтруются сообщения.
 description-notifications = Выберите, какие уведомления вы будете получать и как они будут отображаться.
-description-registered-games = Делитесь тем, во что играете, и исправляйте или добавляйте игры, найденные Serein.
+description-registered-games = Делитесь тем, во что играете, и исправляйте или добавляйте игры, найденные Discut.
 description-voice = Микрофон, динамики, камера и обработка голоса.
 description-keybinds = Сочетания клавиш для Серейн.
 description-storage = Что Серейн хранит на этом устройстве.
@@ -52,7 +52,7 @@ general-start-minimized-description = Начните в фоновом режи�
 general-startup-unavailable = Автоматический запуск доступен в Windows и macOS.
 general-window = Окно
 general-hide-decorations = Скрыть украшения на окнах
-general-hide-decorations-description = Удалите строку заголовка и границы системы. Используйте оконный менеджер, чтобы переместить, изменить размер или закрыть Serein.
+general-hide-decorations-description = Удалите строку заголовка и границы системы. Используйте оконный менеджер, чтобы переместить, изменить размер или закрыть Discut.
 general-hide-title-bar = Скрыть строку заголовка Серейн
 general-hide-title-bar-description = Вместо этого используйте системную строку заголовка и кнопки окна.
 general-keep-menu-bar = Держите Серейн в строке меню
@@ -1613,7 +1613,7 @@ main-sign-in-disclosures-about-serein = О Серейн
 # Context: sign_in_disclosures
 main-sign-in-disclosures-connect-with-this-token = Подключиться с помощью этого токена
 # Context: sign_in_disclosures
-main-sign-in-disclosures-for-owners-who-already-hold-a-valid-discord-session-token = Для владельцев, у которых уже есть действующий токен сеанса Discord, например, из другой установки Serein, вошедшей в систему. Пароли и 2FA здесь никогда не используются; это полностью обходит размещенную страницу входа в Discord.
+main-sign-in-disclosures-for-owners-who-already-hold-a-valid-discord-session-token = Для владельцев, у которых уже есть действующий токен сеанса Discord, например, из другой установки Discut, вошедшей в систему. Пароли и 2FA здесь никогда не используются; это полностью обходит размещенную страницу входа в Discord.
 # Context: sign_in_disclosures
 main-sign-in-disclosures-forget-saved-login = Забыть сохраненный логин
 # Context: sign_in_disclosures
@@ -3369,7 +3369,7 @@ settings-activity-added-games = Добавленные игры
 # Context: activity_settings
 settings-activity-no-games-added = Нет добавленных игр
 # Context: activity_settings
-settings-activity-hidden = Скрыто. Serein не будет обнаруживать эту игру.
+settings-activity-hidden = Скрыто. Discut не будет обнаруживать эту игру.
 # Context: activity_settings
 settings-activity-detected = Обнаружено автоматически
 # Context: activity_settings
@@ -3391,7 +3391,7 @@ settings-activity-click-to-rename = Нажмите, чтобы переимен�
 # Context: activity_settings
 settings-activity-add-a-game = Добавить игру
 # Context: activity_settings
-settings-activity-choose-program = Выберите запущенную программу. Serein будет показывать её как вашу игру, когда она запущена.
+settings-activity-choose-program = Выберите запущенную программу. Discut будет показывать её как вашу игру, когда она запущена.
 # Context: activity_settings
 settings-activity-search-programs = Поиск запущенных программ
 # Context: activity_settings
@@ -3450,11 +3450,11 @@ settings-storage-page-clear-cache = Очистить кеш
 # Context: storage_page
 settings-storage-page-local-storage = Локальное хранилище
 # Context: storage_page
-settings-storage-page-messages-and-drafts-are-cached-on-this-device-inside-bounded = Сообщения и черновики кэшируются на этом устройстве в ограниченных файлах, изолированных от учетной записи. Данные кэша не шифруются Serein; сохраненные токены входа используют хранилище учетных данных ОС.
+settings-storage-page-messages-and-drafts-are-cached-on-this-device-inside-bounded = Сообщения и черновики кэшируются на этом устройстве в ограниченных файлах, изолированных от учетной записи. Данные кэша не шифруются Discut; сохраненные токены входа используют хранилище учетных данных ОС.
 # Context: storage_page
 settings-storage-page-removes-cached-messages-and-media-drafts-and-your-login-stay = Удаляет кэшированные сообщения и медиа. Черновики и ваш логин остаются.
 # Context: storage_page
-settings-storage-page-serein-does-not-collect-telemetry-or-upload-diagnostics-discord-retains = Serein не собирает телеметрию и не загружает диагностические данные. Discord сохраняет данные на стороне сервиса в соответствии со своей собственной политикой.
+settings-storage-page-serein-does-not-collect-telemetry-or-upload-diagnostics-discord-retains = Discut не собирает телеметрию и не загружает диагностические данные. Discord сохраняет данные на стороне сервиса в соответствии со своей собственной политикой.
 # Context: storage_page
 settings-storage-page-your-privacy = Ваша конфиденциальность
 
@@ -3879,7 +3879,7 @@ updates-update-settings-release-channel = Канал выпуска
 # Context: update_settings
 updates-update-settings-restart-to-update = Перезапустите, чтобы обновить
 # Context: update_settings
-updates-update-settings-serein-was-installed-via-your-distribution-run-this-in-a = Serein был установлен через ваш дистрибутив. Запустите это в терминале для обновления.
+updates-update-settings-serein-was-installed-via-your-distribution-run-this-in-a = Discut был установлен через ваш дистрибутив. Запустите это в терминале для обновления.
 # Context: update_settings
 updates-update-settings-support-diagnostics = Поддержка и диагностика
 # Context: update_log
@@ -4338,7 +4338,7 @@ onboarding-rules-heading = Правила сервера
 # Context: rules
 onboarding-rules-review = Модератор проверит эти ответы, прежде чем вы сможете писать.
 # Context: field
-onboarding-field-unsupported = Сервер задаёт вопрос, который Serein пока не умеет показывать. Завершите вступление в приложении Discord.
+onboarding-field-unsupported = Сервер задаёт вопрос, который Discut пока не умеет показывать. Завершите вступление в приложении Discord.
 # Context: field
 onboarding-field-agree = Я прочитал(а) правила и согласен(на) с ними
 

@@ -514,6 +514,12 @@ impl MessagingUi {
 				.collect();
 			let mut channel_rows =
 				rows(state, scope, &roster, &collapsed, self.show_hidden_channels);
+			channel_rows.retain(|row| match row {
+				Row::Channel(channel, ..) | Row::Category(channel, ..) => {
+					self.channel_preferences.channel_included(channel)
+				}
+				_ => true,
+			});
 			if hide_muted {
 				channel_rows.retain(|row| {
 					!matches!(row, Row::Channel(channel, ..) if Some(channel.id) != state.selected && state.guild_channel_muted(channel.id) == Some(true))
@@ -738,7 +744,7 @@ impl MessagingUi {
 								state.unread_count(channel.id)
 							};
 							let enabled = visible && (channel.supports_text() || forum);
-							// Kinds Serein cannot render keep Discord's own destination.
+							// Kinds Discut cannot render keep Discord's own destination.
 							let external = (!channel.supports_text() && !forum)
 								.then(|| crate::markdown::discord_url(channel, None))
 								.flatten()
@@ -1394,6 +1400,41 @@ mod tests {
 				"channel_list: channels=10000, guild_channels=100, churn={churn}, frames={FRAMES}, samples_ms={samples:?}"
 			);
 		}
+	}
+
+	#[test]
+	fn local_selection_hides_pinned_and_regular_rows_and_restores_cached_navigation() {
+		let mut state = test_support::demo_state();
+		let mut view = MessagingUi::default();
+		let mut preferences = model::ChannelPreferences::default();
+		preferences.set(Shortcut::Pinned, Id(22), true);
+		preferences.set_channel_included(Id(22), false);
+		preferences.set_channel_included(Id(29), false);
+		view.restore_channel_preferences(preferences.clone());
+		let ctx = egui::Context::default();
+		let frame = |view: &mut MessagingUi, state: &mut State| {
+			ctx.run_ui(Default::default(), |ui| {
+				view.channel_list(ui, state);
+			})
+			.drop_without_applying_deltas();
+			view.channel_cache
+				.rows
+				.iter()
+				.filter_map(|row| match row {
+					CachedRow::Channel(index, ..) => Some(state.channels[*index].id),
+					_ => None,
+				})
+				.collect::<Vec<_>>()
+		};
+		let ids = frame(&mut view, &mut state);
+		assert!(!ids.contains(&Id(22)) && !ids.contains(&Id(29)));
+		assert!(ids.contains(&Id(40)));
+		preferences.excluded_channels.clear();
+		view.restore_channel_preferences(preferences);
+		let ids = frame(&mut view, &mut state);
+		assert_eq!(ids.iter().filter(|id| **id == Id(22)).count(), 1);
+		assert_eq!(ids.iter().filter(|id| **id == Id(29)).count(), 1);
+		assert!(view.channel_preferences.pinned.contains(&Id(22)));
 	}
 
 	#[test]

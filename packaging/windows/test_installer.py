@@ -52,7 +52,7 @@ def check_shortcut(shortcut, executable):
         try:
             assert ctypes.c_ushort.from_buffer(value).value == 31
             app_id = ctypes.c_void_p.from_buffer(value, 8).value
-            assert ctypes.wstring_at(app_id) == "cz.viceverse.serein"
+            assert ctypes.wstring_at(app_id) == "app.discut.desktop"
         finally:
             ole.PropVariantClear(value)
     finally:
@@ -77,12 +77,12 @@ def main():
     compiler = shutil.which("makensis") or r"C:\Program Files (x86)\NSIS\makensis.exe"
     programs = ctypes.create_unicode_buffer(1024)
     ctypes.OleDLL("shell32").SHGetFolderPathW(None, 2, None, 0, programs)
-    shortcut = Path(programs.value) / "Serein.lnk"
-    uninstall_key = r"Software\Microsoft\Windows\CurrentVersion\Uninstall\Serein"
-    assert not shortcut.exists(), "Refusing to overwrite an existing Serein shortcut"
+    shortcut = Path(programs.value) / "Discut.lnk"
+    uninstall_key = r"Software\Microsoft\Windows\CurrentVersion\Uninstall\Discut"
+    assert not shortcut.exists(), "Refusing to overwrite an existing Discut shortcut"
     try:
         with winreg.OpenKey(winreg.HKEY_CURRENT_USER, uninstall_key):
-            raise AssertionError("Refusing to overwrite an existing Serein installation")
+            raise AssertionError("Refusing to overwrite an existing Discut installation")
     except FileNotFoundError:
         pass
     with tempfile.TemporaryDirectory(prefix="serein-installer-offline-") as temporary:
@@ -100,7 +100,7 @@ def main():
                         f"-DOUTPUT_DIR={output}", str(repository / "packaging/windows/installer.nsi")],
                        cwd=repository, check=True, timeout=120)
         setup = output / "serein-0.0.0-offline-setup.exe"
-        installed = root / "Installed Serein žluťoučký"
+        installed = root / "Installed Discut žluťoučký"
         uninstaller = installed / "uninstall.exe"
         copied_uninstaller = root / "uninstall-test.exe"
 

@@ -1,5 +1,5 @@
 //! Device-local pinned and favorite channels as sidebar rosters. Menus record an `Intent`;
-//! `MessagingUi::apply_shortcut` is the only writer of `channel_preferences` in this crate.
+//! `MessagingUi::apply_shortcut` records shortcut changes; local selection shares these preferences.
 use crate::MessagingUi;
 use client_core::State;
 use model::{Channel, ChannelPreferences, Id, PreferenceEdit, Shortcut};
@@ -103,6 +103,7 @@ impl<'a> Roster<'a> {
 		for channel in &state.channels {
 			if let Some(&(index, position)) = rank.get(&channel.id)
 				&& scope.admits(channel, state)
+				&& prefs.channel_included(channel)
 				&& (show_hidden || state.can_view(channel.id))
 			{
 				buckets[index].push((position, channel));

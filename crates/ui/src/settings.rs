@@ -36,7 +36,7 @@ enum Page {
 }
 impl Page {
 	/// Every page in sidebar order; the narrow-window page picker lists them the same way.
-	const ALL: [Self; 14] = [
+	const ALL: [Self; 10] = [
 		Self::Account,
 		Self::Profile,
 		Self::MessagingPermissions,
@@ -46,15 +46,11 @@ impl Page {
 		Self::Notifications,
 		Self::Voice,
 		Self::Keybinds,
-		Self::Activity,
 		Self::General,
-		Self::Updates,
-		Self::Themes,
-		Self::Extensions,
 	];
 	/// Sidebar sections: account-level choices first, then how this app looks and behaves,
 	/// then community add-ons.
-	const SECTIONS: [(&'static str, &'static [Self]); 3] = [
+	const SECTIONS: [(&'static str, &'static [Self]); 2] = [
 		(
 			"section-user",
 			&[
@@ -72,12 +68,9 @@ impl Page {
 				Self::Notifications,
 				Self::Voice,
 				Self::Keybinds,
-				Self::Activity,
 				Self::General,
-				Self::Updates,
 			],
 		),
-		("section-customization", &[Self::Themes, Self::Extensions]),
 	];
 	fn label_key(self) -> &'static str {
 		match self {
@@ -132,7 +125,7 @@ impl Page {
 				"appearance customization font typography import ttf otf primary accent hex window effects transparency blur theme dark light system mode zoom scale layout sidebar width people members member list reset colour color preset"
 			}
 			Self::Chat => {
-				"chat messages media reading animate animated gifs autoplay hide image links confirm confirmation external browser smooth scrolling scroll speed motion trackpad wheel hidden channels channel list reset"
+				"chat conversations selection choose bring servers groups direct messages media reading animate animated gifs autoplay hide image links confirm confirmation external browser smooth scrolling scroll speed motion trackpad wheel hidden channels channel list reset"
 			}
 			Self::MessagingPermissions => {
 				"messaging permissions spam filters direct messages dm friend requests personalized connected games"
@@ -451,7 +444,7 @@ impl MessagingUi {
 										commands,
 									),
 									Page::Appearance => self.appearance_settings(ui, state.demo),
-									Page::Chat => self.chat_settings(ui, state.demo),
+									Page::Chat => self.chat_settings(ui, state),
 									Page::MessagingPermissions => {
 										self.messaging_permissions_settings(ui, state, commands)
 									}
@@ -579,7 +572,7 @@ impl MessagingUi {
 				self.settings_logout(ui, state.demo);
 				ui.add_space(12.0);
 				ui.label(
-					RichText::new(format!("Serein {}", self.build.version))
+					RichText::new(format!("Discut {}", self.build.version))
 						.size(12.0)
 						.color(colors.muted),
 				);
@@ -1041,8 +1034,9 @@ impl MessagingUi {
 		self.layout_settings(ui, demo);
 	}
 
-	fn chat_settings(&mut self, ui: &mut egui::Ui, demo: bool) {
-		self.chat_reading_settings(ui, demo);
+	fn chat_settings(&mut self, ui: &mut egui::Ui, state: &mut State) {
+		self.conversation_selection(ui, state);
+		self.chat_reading_settings(ui, state.demo);
 		design::group(
 			ui,
 			&crate::i18n::translate("settings-chat-settings-channel-list"),

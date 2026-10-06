@@ -4411,12 +4411,22 @@ mod tests {
 				);
 			},
 		);
-		assert!(output.platform_output.commands.is_empty());
+		let platform_commands = output.platform_output.commands.clone();
 		let mut labels = vec![];
 		for shape in &output.shapes {
 			collect(&shape.shape, &mut labels, actual_glyphs);
 		}
 		output.drop_without_applying_deltas();
+		// egui reports settled label selections separately from explicit clipboard copies.
+		// Its native backend ignores PRIMARY selections on macOS; keep rejecting every
+		// actual clipboard/link command, and preserve the stricter check on other OSes.
+		assert!(
+			platform_commands.iter().all(|command| matches!(
+				command,
+				egui::OutputCommand::TextSelectionSettled(_) if cfg!(target_os = "macos")
+			)),
+			"Unexpected clipboard or link command: {platform_commands:?}"
+		);
 		labels
 	}
 
@@ -6594,7 +6604,20 @@ mod tests {
 						)
 					},
 				);
-				assert!(output.platform_output.commands.is_empty());
+				// egui-winit ignores PRIMARY selection notifications on macOS;
+				// all explicit clipboard/link commands remain forbidden.
+				assert!(
+					output
+						.platform_output
+						.commands
+						.iter()
+						.all(|command| matches!(
+							command,
+							egui::OutputCommand::TextSelectionSettled(_) if cfg!(target_os = "macos")
+						)),
+					"Unexpected clipboard or link command: {:?}",
+					output.platform_output.commands
+				);
 				let mut labels = vec![];
 				for shape in &output.shapes {
 					collect(&shape.shape, &mut labels);

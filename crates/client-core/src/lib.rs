@@ -2433,6 +2433,20 @@ impl State {
 			self.observe_dm_reopened(channel.id);
 			self.observe_group_change(channel.id, true);
 		}
+		if matches!(&envelope.event, Event::Unavailable(_))
+			|| matches!(&envelope.event, Event::RecipientRemoved { user, .. } if self.user.as_ref().is_some_and(|me| me.id == *user))
+		{
+			self.invalidate_pending_group_creation();
+		}
+		match &envelope.event {
+			Event::RecipientAdded { channel, user } => {
+				self.observe_group_recipient(*channel, user.id)
+			}
+			Event::RecipientRemoved { channel, user } => {
+				self.observe_group_recipient(*channel, *user)
+			}
+			_ => {}
+		}
 		if let Event::ChannelChanged(patch) = &envelope.event
 			&& (!matches!(patch.name, Patch::Absent)
 				|| !matches!(patch.icon, Patch::Absent)
@@ -3870,6 +3884,7 @@ impl Event {
 			self,
 			Event::Ready { .. }
 				| Event::Startup(_)
+				| Event::GroupAction(group_actions::Event::Managed { result: Ok(_), .. })
 				| Event::GroupAction(group_actions::Event::Written {
 					result: Ok(None),
 					..
@@ -3925,6 +3940,9 @@ impl Event {
 					.as_ref()
 					.map_or(0, model::messaging_permissions::Snapshot::bytes),
 				Self::InviteChallenge { challenge, .. } => challenge.bytes(),
+				Self::GroupAction(group_actions::Event::Managed { result, .. }) => {
+					result.as_ref().map_or(0, |channel| channel.bytes())
+				}
 				Self::GroupAction(group_actions::Event::Written {
 					result: Ok(Some(patch)),
 					..

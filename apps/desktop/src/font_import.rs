@@ -176,16 +176,16 @@ pub fn debug_check() {
 		assert!(definitions.font_data.contains_key("Noto Sans CJK JP"));
 		assert_eq!(
 			definitions.families[&FontFamily::Proportional][0],
-			"Serein Custom"
+			"Discut Custom"
 		);
 		assert_eq!(
-			definitions.font_data["Serein Custom"].bytes(),
+			definitions.font_data["Discut Custom"].bytes(),
 			replacement.bytes()
 		);
 		assert!(
 			!definitions.families[&FontFamily::Monospace]
 				.iter()
-				.any(|name| name.starts_with("Serein Custom"))
+				.any(|name| name.starts_with("Discut Custom"))
 		);
 	});
 	ui::fonts::apply_custom(&ctx, None);
@@ -201,7 +201,7 @@ pub fn debug_check() {
 				.font_data
 				.contains_key("Noto Sans CJK JP")
 		);
-		assert!(!fonts.definitions().font_data.contains_key("Serein Custom"));
+		assert!(!fonts.definitions().font_data.contains_key("Discut Custom"));
 	});
 	println!(
 		"Font debug check passed: bounded import, invalid input, saved copy, replacement during CJK loading, reset, and saved decoration preference."

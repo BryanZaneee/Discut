@@ -36,7 +36,7 @@ pub use login_linux::LoginView;
 
 /// Logical height of the native header the desktop app draws above the login webview.
 pub const LOGIN_HEADER_HEIGHT: f32 = 56.0;
-const SERVICE: &str = "cz.viceverse.serein";
+const SERVICE: &str = "app.discut.desktop";
 #[cfg(not(feature = "development-data"))]
 const ACCOUNT: &str = "discord-session";
 #[cfg(feature = "development-data")]
@@ -70,7 +70,7 @@ pub(crate) fn ensure_webkit_locale() -> Result<(), &'static str> {
 		|| std::env::var_os("FLATPAK_ID").is_some();
 	if flatpak && !gtk4::glib::charset().0 {
 		return Err(
-			"Serein Flatpak login/verification requires a UTF-8 locale. Repair runtime languages and restart Serein; see Flatpak troubleshooting.",
+			"Discut Flatpak login/verification requires a UTF-8 locale. Repair runtime languages and restart Discut; see Flatpak troubleshooting.",
 		);
 	}
 	Ok(())
@@ -125,7 +125,7 @@ mod flatpak_locale_tests {
 				child.env("SEREIN_TEST_WEBKIT_INITIALIZE_GTK", "1");
 			}
 			if mode != "native" {
-				child.env("FLATPAK_ID", "cz.viceverse.serein");
+				child.env("FLATPAK_ID", "app.discut.desktop");
 			}
 			let output = child.output().unwrap();
 			assert!(

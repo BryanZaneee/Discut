@@ -1,5 +1,17 @@
 # Discord compatibility — checked 2026-09-10
 
+## Discut fork status — October 6, 2026
+
+Discut inherits the implementation discussed below, but its live account, chat and
+call acceptance checks are pending. Group creation and recipient additions/removals
+use unofficial ordinary-user routes; local HTTP/state tests do not establish service
+compatibility. See the [Discut acceptance checklist](discut-mvp.md).
+
+The new conversation selector filters the service-provided navigation catalog locally.
+It does not change Discord memberships, notification settings, or the metadata received
+from Discord. Its bounded per-account preferences are saved in the existing local
+channel-preferences row; old rows default to including all conversations.
+
 
 ## GIF favorite synchronization — October 2, 2026
 

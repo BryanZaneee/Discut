@@ -1,5 +1,9 @@
 # CPU/RAM deep dive — October 2, 2026
 
+> This report is inherited from Serein. Discut's local Mac observations, workload
+> limitations and raw samples are in [Discut resource measurements](discut-performance.md).
+> The measurements below are not Discut live-account or call benchmarks.
+
 Baseline `f16bc92fde374b91c5482daf802992f2373ee74c`, compared with the runtime
 changes delivered alongside this report. Both revisions were measured on macOS
 27.0 (26A428), Apple M1 MacBookAir10,1, 16 GiB RAM, pinned Rust 1.98.1 and locked

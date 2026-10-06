@@ -269,7 +269,7 @@ impl MessagingUi {
 				);
 				crate::icons::paint(
 					ui.painter(),
-					crate::icons::Icon::Serein,
+					crate::icons::Icon::Discut,
 					rect.shrink(10.5),
 					colors.text.lerp_to_gamma(colors.accent_text, lit),
 				);
@@ -312,6 +312,9 @@ impl MessagingUi {
 							let Some(channel) = state.channel(self.rail_cache.direct[index]) else {
 								continue;
 							};
+							if !self.channel_preferences.channel_included(channel) {
+								continue;
+							}
 							let in_call = Some(channel.id) == call;
 							let response = if channel.kind == 3 {
 								self.avatars.show_group_rail(ui, channel, 48.0, state.demo)

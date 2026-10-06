@@ -191,11 +191,11 @@ fn resolve_data_dir(configured: Option<OsString>, default: Option<PathBuf>) -> R
 fn default_data_dir() -> Option<PathBuf> {
 	#[cfg(feature = "development-data")]
 	{
-		dirs::data_local_dir().map(|root| root.join("serein-development"))
+		dirs::data_local_dir().map(|root| root.join("discut-development"))
 	}
 	#[cfg(not(feature = "development-data"))]
 	{
-		dirs::data_local_dir().map(|root| root.join("serein"))
+		dirs::data_local_dir().map(|root| root.join("discut"))
 	}
 }
 
@@ -218,7 +218,7 @@ fn create_data_dir(root: &Path) -> Result<()> {
 
 /// Shared root for local application data. Developers may select an isolated absolute path.
 pub fn data_dir() -> std::result::Result<PathBuf, StoreError> {
-	resolve_data_dir(std::env::var_os("SEREIN_DATA_DIR"), default_data_dir())
+	resolve_data_dir(std::env::var_os("DISCUT_DATA_DIR"), default_data_dir())
 }
 
 /// Reject excess entries during parsing, before allocating a whole malformed array.

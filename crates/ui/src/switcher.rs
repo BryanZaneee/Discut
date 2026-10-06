@@ -131,7 +131,16 @@ pub(super) fn channel_matches(
 	labels_match(labels, words, label, matched)
 }
 
+#[cfg(test)]
 fn candidates(state: &State, query: &str) -> Vec<Candidate> {
+	included_candidates(state, query, &model::ChannelPreferences::default())
+}
+
+fn included_candidates(
+	state: &State,
+	query: &str,
+	preferences: &model::ChannelPreferences,
+) -> Vec<Candidate> {
 	let query = bounded(query).to_lowercase();
 	let words: Vec<_> = query.split_whitespace().collect();
 	// One reused buffer instead of a lowercase copy of every label per keystroke.
@@ -142,7 +151,12 @@ fn candidates(state: &State, query: &str) -> Vec<Candidate> {
 	let mut found: Vec<_> = state
 		.channels
 		.iter()
-		.filter(|c| (c.supports_text() || c.kind == 2) && state.can_view(c.id) && matches(c))
+		.filter(|c| {
+			preferences.channel_included(c)
+				&& (c.supports_text() || c.kind == 2)
+				&& state.can_view(c.id)
+				&& matches(c)
+		})
 		.collect();
 	// Current conversation first, then the most recently active ones.
 	recent_first(&mut found, RESULTS, |c| {
@@ -433,11 +447,16 @@ impl Switcher {
 		ctx.request_repaint();
 	}
 
+	pub(super) fn invalidate(&mut self) {
+		self.searched = None;
+	}
+
 	pub(super) fn show(
 		&mut self,
 		ctx: &egui::Context,
 		state: &State,
 		avatars: &mut Avatars,
+		preferences: &model::ChannelPreferences,
 	) -> Option<Target> {
 		if !self.open {
 			let modal = ctx.memory(|memory| memory.top_modal_layer());
@@ -573,7 +592,7 @@ impl Switcher {
 				.as_ref()
 				.is_none_or(|(query, at)| *query != self.query || !(0.0..1.0).contains(&(now - at)))
 			{
-				self.choices = candidates(state, &self.query);
+				self.choices = included_candidates(state, &self.query, preferences);
 				self.searched = Some((self.query.clone(), now));
 			}
 			let choices = &self.choices;
@@ -700,6 +719,38 @@ impl Switcher {
 mod tests {
 	use super::*;
 
+	#[test]
+	fn local_selection_filters_servers_dms_and_groups_without_changing_catalog() {
+		let state = test_support::demo_state();
+		let mut prefs = model::ChannelPreferences::default();
+		let group = Id(29);
+		let direct = Id(40);
+		prefs.set_guild_included(Id(10), false);
+		prefs.set_channel_included(group, false);
+		prefs.set_channel_included(direct, false);
+		let choices = included_candidates(&state, "", &prefs);
+		assert!(
+			choices
+				.iter()
+				.any(|choice| choice.target == Target::Channel(Id(22)))
+		);
+		assert!(choices.iter().all(|choice| match choice.target {
+			Target::Channel(id) => prefs.channel_included(state.channel(id).unwrap()),
+			Target::Friend(_) => true,
+		}));
+		assert!(state.channel(group).is_some() && state.channel(direct).is_some());
+		prefs.excluded_guilds.clear();
+		prefs.excluded_channels.clear();
+		for id in [group, direct] {
+			let name = state.conversation_name(state.channel(id).unwrap());
+			assert!(
+				included_candidates(&state, name, &prefs)
+					.iter()
+					.any(|choice| choice.target == Target::Channel(id))
+			);
+		}
+	}
+
 	fn state() -> State {
 		let mut state = test_support::demo_state();
 		state.channels = (1..=30)
@@ -803,7 +854,12 @@ mod tests {
 						..Default::default()
 					},
 					|ui| {
-						result = switcher.show(&ctx, &state, &mut avatars);
+						result = switcher.show(
+							&ctx,
+							&state,
+							&mut avatars,
+							&model::ChannelPreferences::default(),
+						);
 						ui.add(egui::TextEdit::singleline(&mut previous_text).id(prior));
 					},
 				);

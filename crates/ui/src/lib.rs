@@ -60,11 +60,13 @@ mod formatting;
 mod forum;
 mod forum_settings;
 mod friends;
+mod group_create;
 mod group_menu;
 mod guild_folders;
 mod highlight;
 pub mod icons;
 mod invites;
+mod local_selection;
 mod local_time;
 mod markdown;
 mod member_search;
@@ -211,6 +213,7 @@ fn thread_member_rows<'a>(
 
 #[derive(Default)]
 pub struct MessagingUi {
+	local_selection: local_selection::Selection,
 	poll_creator: polls::Creator,
 	pub language: i18n::Language,
 	forwarding: forwarding::ForwardDialog,
@@ -230,6 +233,7 @@ pub struct MessagingUi {
 	pub own_presence_expires: Option<u64>,
 	pub own_presence_changed: bool,
 	pub own_presence_status: &'static str,
+	group_manager: group_create::GroupManager,
 	group_menu: group_menu::GroupMenu,
 	server_menu: server_menu::ServerMenu,
 	channel_menu: channel_menu::ChannelMenu,
@@ -859,7 +863,7 @@ impl MessagingUi {
 				Some(Ok(model::InvitePreview {
 					guild: Id(424242),
 					embed: model::Embed {
-						title: Some("Serein community".into()),
+						title: Some("Discut community".into()),
 						..Default::default()
 					},
 				})),
@@ -996,6 +1000,7 @@ impl MessagingUi {
 			self.last_channels_seed = true;
 			self.last_channel_recorded = None;
 			self.channel_cache.invalidate();
+			self.switcher.invalidate();
 		}
 	}
 	/// Direct messages and servers each remember whether the wide member list is open.
@@ -1809,6 +1814,9 @@ impl MessagingUi {
 						}
 					}
 				}
+				if ui.button("Choose conversations…").clicked() {
+					self.preview_settings("chat");
+				}
 				let select = self.channel_list(ui, state);
 				if let Some((guild, channel, user)) = self.stream_preview_request.take()
 					&& let Some(command) = state.request_stream_preview(guild, channel, user)
@@ -2336,6 +2344,7 @@ impl MessagingUi {
 						}
 					}
 				}
+				self.group_controls(ui, state, commands);
 				if let Some(channel) = state.selected.filter(|_| {
 					channel
 						.as_ref()
@@ -3961,7 +3970,10 @@ impl MessagingUi {
 		}
 		self.finish_user_direct(state, direct_origin, &mut commands);
 		self.finish_slash_direct(state);
-		if let Some(target) = self.switcher.show(&ctx, state, &mut self.avatars) {
+		if let Some(target) =
+			self.switcher
+				.show(&ctx, state, &mut self.avatars, &self.channel_preferences)
+		{
 			match target {
 				switcher::Target::Channel(channel) => {
 					if state.selected != Some(channel)
@@ -5099,6 +5111,18 @@ impl MessagingUi {
 mod composer_tests {
 	use super::*;
 	use client_core::MAX_CONTENT;
+
+	fn assert_no_clipboard_or_link_commands(commands: &[egui::OutputCommand]) {
+		// Settled selections target PRIMARY on X11/Wayland, which egui-winit ignores
+		// on macOS. Keep rejecting every explicit copy/link and all other platforms.
+		assert!(
+			commands.iter().all(|command| matches!(
+				command,
+				egui::OutputCommand::TextSelectionSettled(_) if cfg!(target_os = "macos")
+			)),
+			"Unexpected clipboard or link command: {commands:?}"
+		);
+	}
 
 	#[test]
 	fn paste_into_an_idle_conversation_focuses_composer_without_sending() {
@@ -6372,7 +6396,7 @@ mod composer_tests {
 					},
 					|ui| commands = view.show(ui, state),
 				);
-				assert!(output.platform_output.commands.is_empty());
+				assert_no_clipboard_or_link_commands(&output.platform_output.commands);
 				assert!(
 					!commands.iter().any(|command| matches!(
 						command,
@@ -6546,7 +6570,7 @@ mod composer_tests {
 					},
 					|ui| commands = view.show(ui, state),
 				);
-				assert!(output.platform_output.commands.is_empty());
+				assert_no_clipboard_or_link_commands(&output.platform_output.commands);
 				assert!(!commands.iter().any(|command| matches!(
 					command,
 					Command::History { .. }
@@ -6651,7 +6675,7 @@ mod composer_tests {
 					},
 					|ui| commands = view.show(ui, state),
 				);
-				assert!(output.platform_output.commands.is_empty());
+				assert_no_clipboard_or_link_commands(&output.platform_output.commands);
 				assert!(!commands.iter().any(|command| matches!(
 					command,
 					Command::Send { .. }

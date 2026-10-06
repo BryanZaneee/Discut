@@ -4,9 +4,9 @@ use std::sync::{Arc, Mutex, Weak};
 
 pub const MAX_CUSTOM_FONT_BYTES: usize = 8 * 1024 * 1024;
 const CUSTOM: [&str; 3] = [
-	"Serein Custom",
-	"Serein Custom Medium",
-	"Serein Custom SemiBold",
+	"Discut Custom",
+	"Discut Custom Medium",
+	"Discut Custom SemiBold",
 ];
 const DEFINITIONS_KEY: &str = "serein-font-definitions";
 

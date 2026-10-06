@@ -41,6 +41,130 @@ mod tests {
 	use model::{PreferenceEdit, Shortcut};
 
 	#[test]
+	fn toggling_all_lists_preserves_valid_bounded_retained_capacity() {
+		let store =
+			LocalStore::initialize(rusqlite::Connection::open_in_memory().unwrap()).unwrap();
+		let mut value = ChannelPreferences::default();
+		for list in 0..5 {
+			for enabled in [true, false] {
+				for id in 1..=ChannelPreferences::MAX_ENTRIES as u64 {
+					let edit = match list {
+						0 => value.set(Shortcut::Favorite, Id(id), enabled),
+						1 => value.set(Shortcut::Pinned, Id(id), enabled),
+						2 => value.set_category_collapsed(Id(id), enabled),
+						3 => value.set_guild_included(Id(id), !enabled),
+						_ => value.set_channel_included(Id(id), !enabled),
+					};
+					assert_eq!(edit, PreferenceEdit::Changed);
+					assert!(value.is_valid());
+				}
+				store.save_channel_preferences(Id(1), &value).unwrap();
+				assert_eq!(store.channel_preferences(Id(1)).unwrap(), value);
+			}
+		}
+		assert_eq!(value, ChannelPreferences::default());
+	}
+
+	#[test]
+	fn local_exclusions_migrate_round_trip_and_share_existing_bounds() {
+		let mut store =
+			LocalStore::initialize(rusqlite::Connection::open_in_memory().unwrap()).unwrap();
+		let legacy: ChannelPreferences =
+			serde_json::from_str(r#"{"favorites":["9"],"pinned":[],"collapsed_categories":[]}"#)
+				.unwrap();
+		assert!(legacy.excluded_channels.is_empty() && legacy.excluded_guilds.is_empty());
+		assert!(legacy.guild_included(Id(10)));
+		store.save_channel_preferences(Id(2), &legacy).unwrap();
+		let mut value = legacy.clone();
+		assert_eq!(
+			value.set_guild_included(Id(10), false),
+			PreferenceEdit::Changed
+		);
+		assert_eq!(
+			value.set_guild_included(Id(10), false),
+			PreferenceEdit::Unchanged
+		);
+		assert!(!value.guild_included(Id(10)));
+		assert_eq!(
+			value.set_channel_included(Id(20), false),
+			PreferenceEdit::Changed
+		);
+		assert_eq!(
+			value.set_channel_included(Id(0), false),
+			PreferenceEdit::Unchanged
+		);
+		store.save_channel_preferences(Id(1), &value).unwrap();
+		assert_eq!(store.channel_preferences(Id(1)).unwrap(), value);
+		assert_eq!(store.channel_preferences(Id(2)).unwrap(), legacy);
+		assert!(value.forget(Id(20)));
+		assert!(value.excluded_channels.is_empty());
+		assert_eq!(
+			value.set_guild_included(Id(10), true),
+			PreferenceEdit::Changed
+		);
+		assert_eq!(
+			value.set_guild_included(Id(10), true),
+			PreferenceEdit::Unchanged
+		);
+		assert_eq!(value.favorites, legacy.favorites);
+		for id in 100..355 {
+			assert_eq!(
+				value.set_channel_included(Id(id), false),
+				PreferenceEdit::Changed
+			);
+		}
+		for edit in [
+			value.set_guild_included(Id(99), false),
+			value.set_channel_included(Id(999), false),
+			value.set(Shortcut::Pinned, Id(21), true),
+			value.set_category_collapsed(Id(22), true),
+		] {
+			assert_eq!(edit, PreferenceEdit::CapacityReached);
+		}
+		store.save_channel_preferences(Id(1), &value).unwrap();
+		assert_eq!(
+			value.set_channel_included(Id(100), true),
+			PreferenceEdit::Changed
+		);
+		assert_eq!(
+			value.set_guild_included(Id(99), false),
+			PreferenceEdit::Changed
+		);
+		assert!(value.is_valid());
+		value.excluded_guilds.push(Id(99));
+		assert_eq!(
+			store.save_channel_preferences(Id(1), &value),
+			Err(StoreError::Capacity)
+		);
+		value.excluded_guilds.pop();
+		value.excluded_channels[0] = Id(0);
+		assert_eq!(
+			store.save_channel_preferences(Id(1), &value),
+			Err(StoreError::Capacity)
+		);
+		store.forget_account(Id(1)).unwrap();
+		assert_eq!(
+			store.channel_preferences(Id(1)).unwrap(),
+			ChannelPreferences::default()
+		);
+		assert_eq!(store.channel_preferences(Id(2)).unwrap(), legacy);
+
+		let mut worst = ChannelPreferences::default();
+		for offset in 0..ChannelPreferences::MAX_ENTRIES as u64 {
+			assert_eq!(
+				worst.set_channel_included(Id(u64::MAX - offset), false),
+				PreferenceEdit::Changed
+			);
+		}
+		for offset in 0..ChannelPreferences::MAX_LAST_CHANNELS as u64 {
+			worst.remember_channel(Id(u64::MAX - offset), Id(u64::MAX - offset));
+		}
+		assert!(serde_json::to_vec(&worst).unwrap().len() <= ChannelPreferences::MAX_JSON_BYTES);
+		store.save_channel_preferences(Id(3), &worst).unwrap();
+		assert_eq!(store.channel_preferences(Id(3)).unwrap(), worst);
+	}
+
+	#[test]
 	fn collapsed_categories_round_trip_are_bounded_and_cleared_only_for_the_account() {
 		let mut store =
 			LocalStore::initialize(rusqlite::Connection::open_in_memory().unwrap()).unwrap();

@@ -7,7 +7,14 @@ use model::{ChannelPatch, Id, Patch};
 
 pub const MAX_ICON_DATA_URI: usize = 22 + 4 * (256_usize * 1024).div_ceil(3);
 
+#[derive(Clone)]
 pub enum Action {
+	Create(Vec<Id>),
+	Recipient {
+		channel: Id,
+		user: Id,
+		add: bool,
+	},
 	Leave(Id),
 	Edit {
 		channel: Id,
@@ -19,12 +26,26 @@ pub enum Action {
 impl Action {
 	pub fn channel(&self) -> Id {
 		match self {
-			Self::Leave(channel) | Self::Edit { channel, .. } => *channel,
+			Self::Create(_) => Id(0),
+			Self::Leave(channel) | Self::Edit { channel, .. } | Self::Recipient { channel, .. } => {
+				*channel
+			}
 		}
 	}
 	pub fn valid(&self) -> bool {
+		if let Self::Create(users) = self {
+			return (2..=9).contains(&users.len())
+				&& users.capacity() <= 16
+				&& users.iter().all(|id| id.0 != 0)
+				&& users
+					.iter()
+					.collect::<std::collections::BTreeSet<_>>()
+					.len() == users.len();
+		}
 		self.channel().0 != 0
 			&& match self {
+				Self::Create(_) => unreachable!(),
+				Self::Recipient { user, .. } => user.0 != 0,
 				Self::Leave(_) => true,
 				Self::Edit { name, icon, .. } => {
 					(name.is_some() || !matches!(icon, Patch::Absent))
@@ -52,6 +73,11 @@ impl Action {
 	}
 }
 pub enum Event {
+	Managed {
+		channel: Id,
+		request: u64,
+		result: Result<Box<model::Channel>, Failure>,
+	},
 	Written {
 		channel: Id,
 		request: u64,
@@ -60,6 +86,8 @@ pub enum Event {
 }
 #[derive(Default)]
 pub struct Actions {
+	creation_invalidated: bool,
+	management: Option<Action>,
 	sequence: u64,
 	// channel, request, leaving, renaming, newer service change observed
 	pending: Option<(Id, u64, bool, bool, bool)>,
@@ -69,6 +97,7 @@ pub struct Actions {
 impl Actions {
 	pub(crate) fn reset(&mut self) {
 		*self = Self {
+			management: None,
 			sequence: self.sequence,
 			// READY can follow a canceled write without changing session generation.
 			// Keep its bounded outcome so an open editor can leave the busy state.
@@ -79,6 +108,101 @@ impl Actions {
 	}
 }
 impl State {
+	/// Offline adapter for native fixtures; callers must already be in demo mode.
+	pub fn demo_group_action(&self, action: Action, request: u64) -> Event {
+		let channel = action.channel();
+		if !self.demo {
+			return Event::Written {
+				channel,
+				request,
+				result: Err(Failure::Forbidden),
+			};
+		}
+		match action {
+			Action::Create(users) => {
+				let result = self
+					.channels
+					.iter()
+					.map(|c| c.id.0)
+					.max()
+					.unwrap_or(0)
+					.checked_add(1)
+					.ok_or(Failure::Capacity)
+					.and_then(|id| {
+						let recipients: Option<Vec<_>> =
+							users.iter().map(|id| self.friend(*id).cloned()).collect();
+						let recipients = recipients.ok_or(Failure::Forbidden)?;
+						Ok(Box::new(model::Channel {
+							id: Id(id),
+							guild: None,
+							kind: 3,
+							name: "New group".into(),
+							icon: None,
+							last_message: None,
+							parent_id: None,
+							position: 0,
+							recipients,
+							member_list_id: None,
+							tags: None,
+							message_count: None,
+						}))
+					});
+				Event::Managed {
+					channel,
+					request,
+					result,
+				}
+			}
+			Action::Recipient { user, add, .. } => {
+				let result = self
+					.channel(channel)
+					.cloned()
+					.ok_or(Failure::Forbidden)
+					.and_then(|mut group| {
+						group.recipients.retain(|member| member.id != user);
+						if add {
+							group
+								.recipients
+								.push(self.friend(user).cloned().ok_or(Failure::Forbidden)?);
+						}
+						Ok(Box::new(group))
+					});
+				Event::Managed {
+					channel,
+					request,
+					result,
+				}
+			}
+			Action::Leave(_) => Event::Written {
+				channel,
+				request,
+				result: Ok(None),
+			},
+			Action::Edit { name, icon, .. } => Event::Written {
+				channel,
+				request,
+				result: Ok(Some(ChannelPatch {
+					id: channel,
+					name: name.map_or(Patch::Absent, Patch::Value),
+					icon: match icon {
+						Patch::Absent => self
+							.channel(channel)
+							.and_then(|c| c.icon.clone())
+							.map_or(Patch::Null, Patch::Value),
+						Patch::Null => Patch::Null,
+						Patch::Value(_) => Patch::Value("aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa".into()),
+					},
+					last_message: Patch::Absent,
+					parent_id: Patch::Absent,
+					position: Patch::Absent,
+					kind: Patch::Absent,
+					message_count: Patch::Absent,
+					tags: Patch::Absent,
+				})),
+			},
+		}
+	}
+
 	pub fn group_action_pending(&self) -> bool {
 		self.group_actions.pending.is_some()
 	}
@@ -141,15 +265,53 @@ impl State {
 			icon,
 		})
 	}
+
+	/// Explicit creation only, limited to existing friends and Discord's ordinary group size.
+	pub fn create_group(&mut self, users: Vec<Id>) -> Option<Command> {
+		self.request_group_action(Action::Create(users))
+	}
+	pub fn change_group_recipient(&mut self, channel: Id, user: Id, add: bool) -> Option<Command> {
+		self.request_group_action(Action::Recipient { channel, user, add })
+	}
 	fn request_group_action(&mut self, action: Action) -> Option<Command> {
 		let channel = action.channel();
-		if self.group_action_pending() || !self.is_group_dm(channel) {
+		if self.group_action_pending() || (channel != Id(0) && !self.is_group_dm(channel)) {
 			return None;
 		}
 		if !action.valid() {
 			self.group_actions.status = Some((
 				channel,
-				"Use a group name of 1–100 characters and a supported icon",
+				"Check the group name, icon, and selection of 2–9 distinct friends",
+			));
+			return None;
+		}
+		let allowed = match &action {
+			Action::Create(users) => users.iter().all(|id| {
+				self.friend(*id).is_some() && self.user.as_ref().is_none_or(|me| me.id != *id)
+			}),
+			Action::Recipient { user, add, .. } => {
+				self.user.as_ref().is_none_or(|me| me.id != *user)
+					&& self.channel(channel).is_some_and(|group| {
+						let present = group.recipients.iter().any(|u| u.id == *user);
+						if *add {
+							!present
+								&& self.friend(*user).is_some()
+								&& group
+									.recipients
+									.iter()
+									.filter(|u| self.user.as_ref().is_none_or(|me| me.id != u.id))
+									.count() < 9
+						} else {
+							present
+						}
+					})
+			}
+			_ => true,
+		};
+		if !allowed {
+			self.group_actions.status = Some((
+				channel,
+				"Choose an eligible friend or group member; use Leave group to remove yourself",
 			));
 			return None;
 		}
@@ -158,6 +320,9 @@ impl State {
 				Some((channel, "Group actions unavailable while disconnected"));
 			return None;
 		}
+		self.group_actions.management =
+			matches!(&action, Action::Create(_) | Action::Recipient { .. }).then(|| action.clone());
+		self.group_actions.creation_invalidated = false;
 		self.group_actions.sequence = self.group_actions.sequence.wrapping_add(1);
 		let request = self.group_actions.sequence;
 		self.group_actions.pending = Some((
@@ -172,13 +337,31 @@ impl State {
 		Some(Command::GroupAction { action, request })
 	}
 	pub(crate) fn cancel_group_action(&mut self) {
+		self.group_actions.management = None;
 		if let Some((channel, request, _, _, _)) = self.group_actions.pending.take() {
 			self.group_actions.status =
 				Some((channel, "Outcome unknown; check Discord before retrying"));
 			self.group_actions.completed = Some((channel, request, false));
 		}
 	}
+	/// The create response ID is unknown until REST returns. Conservatively reject a late
+	/// response if any channel disappears during the request; do not resurrect lost access.
+	pub(crate) fn invalidate_pending_group_creation(&mut self) {
+		if matches!(&self.group_actions.management, Some(Action::Create(_))) {
+			self.group_actions.creation_invalidated = true;
+		}
+	}
+	pub(crate) fn observe_group_recipient(&mut self, channel: Id, user: Id) {
+		if matches!(&self.group_actions.management, Some(Action::Recipient { channel: target, user: recipient, .. }) if *target == channel && *recipient == user)
+			&& let Some((_, _, _, _, observed)) = &mut self.group_actions.pending
+		{
+			*observed = true;
+		}
+	}
 	pub(crate) fn observe_group_change(&mut self, channel: Id, recreated: bool) {
+		if self.group_actions.management.is_some() && !recreated {
+			return;
+		}
 		if let Some((target, _, leaving, _, observed)) = &mut self.group_actions.pending
 			&& *target == channel
 			&& (recreated || !*leaving)
@@ -186,12 +369,108 @@ impl State {
 			*observed = true;
 		}
 	}
+	fn apply_group_management(
+		&mut self,
+		channel: Id,
+		request: u64,
+		result: Result<Box<model::Channel>, Failure>,
+	) -> Result<(), &'static str> {
+		let Some((target, sequence, _, _, observed)) = self.group_actions.pending else {
+			return Ok(());
+		};
+		if channel != target || request != sequence {
+			return Ok(());
+		}
+		let Some(action) = self.group_actions.management.take() else {
+			return Ok(());
+		};
+		self.group_actions.pending = None;
+		let result = result.and_then(|group| {
+			let unique: std::collections::BTreeSet<_> =
+				group.recipients.iter().map(|u| u.id).collect();
+			let shape = group.id.0 != 0
+				&& group.guild.is_none()
+				&& group.kind == 3
+				&& group.recipients.len() <= 10
+				&& group.bytes() <= 64 * 1024
+				&& unique.len() == group.recipients.len()
+				&& group.recipients.iter().all(|u| u.id.0 != 0 && !u.webhook);
+			let matches = match &action {
+				Action::Create(users) => {
+					!self.group_actions.creation_invalidated
+						&& users.iter().all(|id| unique.contains(id))
+						&& unique.iter().all(|id| {
+							users.contains(id) || self.user.as_ref().is_some_and(|me| me.id == *id)
+						})
+				}
+				Action::Recipient { user, add, .. } => {
+					group.id == channel && unique.contains(user) == *add
+				}
+				_ => false,
+			};
+			if shape && matches {
+				Ok(group)
+			} else {
+				Err(Failure::Ambiguous)
+			}
+		});
+		self.group_actions.completed = Some((channel, request, result.is_ok()));
+		let status = match result {
+			Err(failure) => {
+				if failure.ends_session() {
+					self.fail(failure);
+				}
+				failure.label()
+			}
+			Ok(group) => {
+				let event = match action {
+					Action::Create(_) if self.channel(group.id).is_none() => {
+						Some(crate::Event::ChannelCreated(*group))
+					}
+					Action::Recipient {
+						user, add: true, ..
+					} if !observed => group
+						.recipients
+						.iter()
+						.find(|u| u.id == user)
+						.cloned()
+						.map(|user| crate::Event::RecipientAdded { channel, user }),
+					Action::Recipient {
+						user, add: false, ..
+					} if !observed => Some(crate::Event::RecipientRemoved { channel, user }),
+					_ => None,
+				};
+				if let Some(event) = event {
+					self.apply(crate::Envelope {
+						generation: self.generation,
+						event,
+					});
+				}
+				"Group updated; open it from Direct Messages"
+			}
+		};
+		self.group_actions.status = Some((channel, status));
+		self.status = status;
+		Ok(())
+	}
+
 	pub(crate) fn apply_group_action(&mut self, event: Event) -> Result<(), &'static str> {
+		if let Event::Managed {
+			channel,
+			request,
+			result,
+		} = event
+		{
+			return self.apply_group_management(channel, request, result);
+		}
 		let Event::Written {
 			channel,
 			request,
 			result,
-		} = event;
+		} = event
+		else {
+			unreachable!()
+		};
 		let Some((target, sequence, leaving, renaming, observed)) = self.group_actions.pending
 		else {
 			return Ok(());
@@ -200,6 +479,7 @@ impl State {
 			return Ok(());
 		}
 		self.group_actions.pending = None;
+		self.group_actions.management = None;
 		let result = result.and_then(|patch| {
 			if leaving && patch.is_none() {
 				return Ok(None);
@@ -272,6 +552,194 @@ impl State {
 mod tests {
 	use super::*;
 	use crate::{Envelope, Event as CoreEvent};
+	fn user(id: u64) -> model::User {
+		model::User {
+			id: Id(id),
+			name: format!("Friend{id}"),
+			avatar: None,
+			webhook: false,
+			kind: Default::default(),
+			discriminator: 0,
+			primary_guild: None,
+		}
+	}
+	fn friends_state() -> State {
+		let mut s = state();
+		s.user = Some(user(1));
+		s.apply_user_action(crate::user_actions::Event::Relationships(Some(vec![])))
+			.unwrap();
+		s.apply_user_action(crate::user_actions::Event::Friends(Some(
+			(2..=12)
+				.map(|id| (user(id), format!("friend{id}")))
+				.collect(),
+		)))
+		.unwrap();
+		s
+	}
+	fn finish_demo(s: &mut State, command: Command) {
+		let Command::GroupAction { action, request } = command else {
+			panic!("group command expected")
+		};
+		let event = s.demo_group_action(action, request);
+		s.apply(Envelope {
+			generation: s.generation,
+			event: CoreEvent::GroupAction(event),
+		});
+	}
+	#[test]
+	fn create_and_manage_groups_require_explicit_bounded_eligible_actions() {
+		let mut s = friends_state();
+		assert!(s.create_group(vec![Id(2)]).is_none());
+		assert!(s.create_group(vec![Id(2), Id(2)]).is_none());
+		assert!(s.create_group(vec![Id(1), Id(2)]).is_none());
+		assert!(s.create_group(vec![Id(2), Id(99)]).is_none());
+		assert!(s.create_group((2..=11).map(Id).collect()).is_none());
+		let command = s.create_group(vec![Id(2), Id(3)]).unwrap();
+		assert_eq!(s.channels.len(), 1); // No optimistic creation.
+		assert!(s.create_group(vec![Id(4), Id(5)]).is_none());
+		finish_demo(&mut s, command);
+		assert_eq!(s.channels.len(), 2);
+		let channel = s.channels.iter().find(|g| g.id != Id(10)).unwrap().id;
+		assert_eq!(s.channel(channel).unwrap().recipients.len(), 2);
+		assert!(s.change_group_recipient(channel, Id(1), false).is_none());
+		assert!(s.change_group_recipient(channel, Id(2), true).is_none());
+		assert!(s.change_group_recipient(channel, Id(99), true).is_none());
+		let add = s.change_group_recipient(channel, Id(4), true).unwrap();
+		assert_eq!(s.channel(channel).unwrap().recipients.len(), 2);
+		finish_demo(&mut s, add);
+		assert_eq!(s.channel(channel).unwrap().recipients.len(), 3);
+		let remove = s.change_group_recipient(channel, Id(4), false).unwrap();
+		finish_demo(&mut s, remove);
+		assert_eq!(s.channel(channel).unwrap().recipients.len(), 2);
+		s.demo = false;
+		assert!(s.create_group(vec![Id(2), Id(3)]).is_none());
+		assert!(s.change_group_recipient(channel, Id(4), true).is_none());
+	}
+	#[test]
+	fn delayed_create_never_resurrects_group_after_gateway_access_loss() {
+		for removed_by_self_event in [false, true] {
+			let mut s = friends_state();
+			let Command::GroupAction { action, request } =
+				s.create_group(vec![Id(2), Id(3)]).unwrap()
+			else {
+				unreachable!()
+			};
+			let response = s.demo_group_action(action, request);
+			let Event::Managed {
+				result: Ok(group), ..
+			} = &response
+			else {
+				unreachable!()
+			};
+			let channel = group.id;
+			s.apply(Envelope {
+				generation: s.generation,
+				event: CoreEvent::ChannelCreated((**group).clone()),
+			});
+			assert!(s.channel(channel).is_some());
+			let removal = if removed_by_self_event {
+				CoreEvent::RecipientRemoved {
+					channel,
+					user: Id(1),
+				}
+			} else {
+				CoreEvent::Unavailable(channel)
+			};
+			s.apply(Envelope {
+				generation: s.generation,
+				event: removal,
+			});
+			assert!(s.channel(channel).is_none());
+			s.apply(Envelope {
+				generation: s.generation,
+				event: CoreEvent::GroupAction(response),
+			});
+			assert!(s.channel(channel).is_none());
+			assert_eq!(s.group_action_completed(Id(0), request), Some(false));
+			assert_eq!(
+				s.group_action_status(Id(0)),
+				Some(Failure::Ambiguous.label())
+			);
+		}
+	}
+
+	#[test]
+	fn full_group_accepts_a_naturally_grown_bounded_selection() {
+		let mut selected = Vec::new();
+		for id in 2..=10 {
+			selected.push(Id(id));
+		}
+		assert_eq!(selected.len(), 9);
+		let mut s = friends_state();
+		let command = s.create_group(selected).unwrap();
+		finish_demo(&mut s, command);
+		assert!(s.channels.iter().any(|group| group.recipients.len() == 9));
+	}
+
+	#[test]
+	fn group_management_rejects_wrong_roster_stale_completion_and_preserves_newer_events() {
+		let mut s = friends_state();
+		let first = s.create_group(vec![Id(2), Id(3)]).unwrap();
+		let Command::GroupAction { action, request } = first else {
+			unreachable!()
+		};
+		let mut event = s.demo_group_action(action, request);
+		if let Event::Managed {
+			result: Ok(group), ..
+		} = &mut event
+		{
+			group.recipients.push(user(99));
+		}
+		s.apply_group_action(event).unwrap();
+		assert_eq!(s.channels.len(), 1);
+		assert_eq!(s.group_action_completed(Id(0), request), Some(false));
+		let first = s.create_group(vec![Id(2), Id(3)]).unwrap();
+		s.cancel_group_action();
+		let second = s.create_group(vec![Id(4), Id(5)]).unwrap();
+		finish_demo(&mut s, first);
+		assert_eq!(s.channels.len(), 1);
+		assert!(s.group_action_pending());
+		finish_demo(&mut s, second);
+		let channel = s.channels.iter().find(|g| g.id != Id(10)).unwrap().id;
+		let add = s.change_group_recipient(channel, Id(6), true).unwrap();
+		let Command::GroupAction { action, request } = add else {
+			unreachable!()
+		};
+		let stale = s.demo_group_action(action, request);
+		s.apply(Envelope {
+			generation: s.generation,
+			event: CoreEvent::RecipientAdded {
+				channel,
+				user: user(6),
+			},
+		});
+		s.apply(Envelope {
+			generation: s.generation,
+			event: CoreEvent::RecipientRemoved {
+				channel,
+				user: Id(6),
+			},
+		});
+		s.apply_group_action(stale).unwrap();
+		assert!(
+			!s.channel(channel)
+				.unwrap()
+				.recipients
+				.iter()
+				.any(|u| u.id == Id(6))
+		);
+		let add = s.change_group_recipient(channel, Id(6), true).unwrap();
+		s.command_rejected(add);
+		assert!(!s.group_action_pending());
+		assert!(
+			!s.channel(channel)
+				.unwrap()
+				.recipients
+				.iter()
+				.any(|u| u.id == Id(6))
+		);
+	}
+
 	fn state() -> State {
 		State {
 			demo: true,

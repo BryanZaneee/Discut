@@ -778,6 +778,8 @@ mod tests {
 			favorites: vec![Id(19)],
 			pinned: vec![Id(20)],
 			collapsed_categories: vec![Id(21)],
+			excluded_guilds: vec![Id(24)],
+			excluded_channels: vec![Id(25)],
 			last_channels: vec![(Id(22), Id(23))],
 		};
 		store

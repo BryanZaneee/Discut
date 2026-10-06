@@ -414,6 +414,7 @@ impl MessagingUi {
 						rule.y_range(),
 						egui::Stroke::new(1.0, colors.border),
 					);
+					self.group_controls(ui, state, commands);
 					for (tab, title) in [
 						(Tab::Online, language.text("friends-online")),
 						(Tab::All, language.text("friends-all")),

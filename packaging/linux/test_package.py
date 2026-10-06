@@ -1,4 +1,4 @@
-"""Synthetic native package regression check; never launches Serein or installs it."""
+"""Synthetic native package regression check; never launches Discut or installs it."""
 
 from pathlib import Path
 import argparse
@@ -59,6 +59,8 @@ class NativePackageTest(unittest.TestCase):
                         shutil.copyfile(artifact, ARTIFACTS / artifact.name)
                 if FORMAT == "dir":
                     listing = "\n".join(packaging.payload_files(staged / "linux-root"))
+                    self.assertIn("usr/share/applications/app.discut.desktop.desktop", listing)
+                    self.assertNotIn("cz.viceverse.serein.desktop", listing)
                     for excluded in ["debug.log", "stale.log", "stale.deb", "previous.deb", "stale-nested.log"]:
                         self.assertNotIn(excluded, listing)
                     self.assertIn("licenses/voice/", listing)
@@ -76,6 +78,8 @@ class NativePackageTest(unittest.TestCase):
             self.assertIn("gstreamer1.0-plugins-good", packaging.output(
                 "dpkg-deb", "--field", str(artifact), "Depends").split(", "))
             listing = packaging.output("dpkg-deb", "--contents", str(artifact))
+            self.assertIn("usr/share/applications/app.discut.desktop.desktop", listing)
+            self.assertNotIn("cz.viceverse.serein.desktop", listing)
             for excluded in ["debug.log", "stale.log", "stale.deb", "previous.deb", "stale-nested.log"]:
                 self.assertNotIn(excluded, listing)
             self.assertNotIn("usr/share/doc/serein/docs/", listing)

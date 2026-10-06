@@ -176,7 +176,10 @@ fn own_activity_panel_and_setting_render_and_clear() {
 						if frame == 2 {
 							assert_eq!(text.contains("Playing osu!"), enabled, "{text}");
 							if settings {
-								assert!(text.contains("Share game activity"), "{text}");
+								assert!(
+									!text.contains("Share game activity"),
+									"Removed settings must stay hidden: {text}"
+								);
 							}
 						}
 					}

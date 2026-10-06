@@ -690,11 +690,7 @@ impl DiscordApi {
 					.map(Box::new),
 			}),
 			Command::GroupAction { action, request } => {
-				Event::GroupAction(client_core::group_actions::Event::Written {
-					channel: action.channel(),
-					request,
-					result: self.group_action(action).await,
-				})
+				Event::GroupAction(self.execute_group_action(action, request).await)
 			}
 			Command::JoinInvite {
 				code,

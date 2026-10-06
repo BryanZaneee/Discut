@@ -227,14 +227,20 @@ const MOSAIC_PREVIEW: f32 = 38.0;
 const MOSAIC_ICON: f32 = 18.0;
 const MOSAIC_GAP: f32 = 2.0;
 
-fn folder_mosaic<'a>(folder: &Folder, state: &'a State) -> [Option<&'a model::Guild>; MOSAIC] {
+fn folder_mosaic<'a>(
+	folder: &Folder,
+	state: &'a State,
+	preferences: &model::ChannelPreferences,
+) -> [Option<&'a model::Guild>; MOSAIC] {
 	let mut slots = [None; MOSAIC];
 	let mut filled = 0;
 	for id in &folder.guild_ids {
 		if filled == MOSAIC {
 			break;
 		}
-		if let Some(guild) = state.guild(*id) {
+		if preferences.guild_included(*id)
+			&& let Some(guild) = state.guild(*id)
+		{
 			slots[filled] = Some(guild);
 			filled += 1;
 		}
@@ -374,6 +380,24 @@ impl MessagingUi {
 		let call_guild = state.voice.active.as_ref().and_then(|call| call.guild);
 		for index in 0..self.folder_ui.rows.len() {
 			let (item, group) = self.folder_ui.rows[index];
+			let included = match item {
+				Item::Server(id) => self.channel_preferences.guild_included(id),
+				Item::Folder(id) => state.guild_folders.as_ref().is_some_and(|settings| {
+					settings
+						.folders
+						.iter()
+						.find(|folder| folder.id == Some(id))
+						.is_some_and(|folder| {
+							folder.guild_ids.iter().any(|id| {
+								state.guild(*id).is_some()
+									&& self.channel_preferences.guild_included(*id)
+							})
+						})
+				}),
+			};
+			if !included {
+				continue;
+			}
 			if group.map(|g| g.0) != background.as_ref().map(|b| b.0) {
 				background = group.map(|(id, rgb)| {
 					let tint = Color32::from_rgb((rgb >> 16) as u8, (rgb >> 8) as u8, rgb as u8);
@@ -469,18 +493,22 @@ impl MessagingUi {
 									&mut self.avatars,
 									rect,
 									fill,
-									folder_mosaic(folder, state),
+									folder_mosaic(folder, state, &self.channel_preferences),
 									state.demo,
 								);
 							}
 
-							let unread = folder
+							let unread = folder.guild_ids.iter().any(|g| {
+								self.channel_preferences.guild_included(*g)
+									&& self.rail_cache.guild_badge(*g).0
+							});
+							let count = folder
 								.guild_ids
 								.iter()
-								.any(|g| self.rail_cache.guild_badge(*g).0);
-							let count = folder.guild_ids.iter().fold(0u32, |sum, g| {
-								sum.saturating_add(self.rail_cache.guild_badge(*g).1)
-							});
+								.filter(|g| self.channel_preferences.guild_included(**g))
+								.fold(0u32, |sum, g| {
+									sum.saturating_add(self.rail_cache.guild_badge(*g).1)
+								});
 							// Always tracked so the pill shrinks away when the folder opens.
 							rail_indicator(
 								ui,
@@ -491,13 +519,15 @@ impl MessagingUi {
 								!open && unread,
 							);
 							if !open {
-								let own = call_guild.is_some_and(|g| folder.guild_ids.contains(&g));
+								let own = call_guild.is_some_and(|g| {
+									self.channel_preferences.guild_included(g)
+										&& folder.guild_ids.contains(&g)
+								});
 								if own
-									|| folder
-										.guild_ids
-										.iter()
-										.any(|g| self.rail_cache.guild_voice(*g))
-								{
+									|| folder.guild_ids.iter().any(|g| {
+										self.channel_preferences.guild_included(*g)
+											&& self.rail_cache.guild_voice(*g)
+									}) {
 									voice_badge(ui, rect, own);
 								}
 							}
@@ -508,6 +538,14 @@ impl MessagingUi {
 								if open { 0 } else { count },
 								colors.base,
 							);
+							let visible_count = folder
+								.guild_ids
+								.iter()
+								.filter(|id| {
+									self.channel_preferences.guild_included(**id)
+										&& state.guild(**id).is_some()
+								})
+								.count();
 							let name = folder.name.as_deref().unwrap_or("Server folder");
 							response.widget_info(|| {
 								egui::WidgetInfo::labeled(
@@ -515,7 +553,7 @@ impl MessagingUi {
 									true,
 									format!(
 										"{name}, {} {}, {}",
-										folder.guild_ids.len(),
+										visible_count,
 										crate::i18n::translate(
 											"guild-folders-server-folders-servers"
 										),
@@ -534,7 +572,7 @@ impl MessagingUi {
 							}
 							design::rail_name(
 								&response,
-								format!("{name} · {} servers", folder.guild_ids.len()),
+								format!("{name} · {visible_count} servers"),
 							);
 							response
 						}
@@ -748,7 +786,7 @@ impl MessagingUi {
 									&mut self.avatars,
 									rect,
 									tint,
-									folder_mosaic(folder, state),
+									folder_mosaic(folder, state, &self.channel_preferences),
 									state.demo,
 								);
 							}

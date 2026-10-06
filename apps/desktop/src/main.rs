@@ -46,6 +46,8 @@ mod registered_games;
 mod rendering_demo;
 mod screen;
 #[cfg(feature = "demo")]
+mod screenshot_demo;
+#[cfg(feature = "demo")]
 mod server_settings_demo;
 #[cfg(feature = "demo")]
 mod slash_demo;
@@ -68,6 +70,15 @@ use model::Delivery;
 use std::{sync::Arc, time::Duration};
 use zeroize::Zeroizing;
 
+// Product boundary: no extension host, game detection or Spotify presence workers.
+const OPTIONAL_INTEGRATIONS: bool = false;
+
+fn initial_api_proxy() -> Option<discord_api::proxy::ApiProxy> {
+	// None deliberately waits for extension proxy configuration. With integrations
+	// disabled there is no loader to resolve it, so normal account requests use Direct.
+	(!OPTIONAL_INTEGRATIONS).then_some(discord_api::proxy::ApiProxy::Direct)
+}
+
 /// Sign-in header strip: doubles as the window drag region, so it clears the traffic lights.
 const SIGN_IN_HEADER_HEIGHT: f32 = if cfg!(target_os = "windows") {
 	44.0
@@ -77,6 +88,19 @@ const SIGN_IN_HEADER_HEIGHT: f32 = if cfg!(target_os = "windows") {
 
 /// Run explicit offline checks before native startup, or launch the configured desktop client.
 fn main() -> eframe::Result {
+	if let Some(path) =
+		std::env::args().find_map(|arg| arg.strip_prefix("--demo-screenshot=").map(str::to_owned))
+		&& (!cfg!(feature = "demo")
+			|| !std::env::args().any(|arg| arg == "--demo")
+			|| std::path::Path::new(&path)
+				.extension()
+				.is_none_or(|ext| ext != "png"))
+	{
+		eprintln!(
+			"--demo-screenshot requires a demo-enabled build, --demo, and a .png output path"
+		);
+		std::process::exit(2);
+	}
 	#[cfg(all(debug_assertions, feature = "demo"))]
 	if std::env::args().any(|arg| arg == "--demo")
 		&& std::env::args().any(|arg| arg == "--demo-check-window-geometry")
@@ -397,14 +421,14 @@ fn main() -> eframe::Result {
 				}))
 				.with_min_inner_size([760.0, 520.0])
 				.with_active(!start_minimized)
-				.with_app_id("cz.viceverse.serein");
+				.with_app_id("app.discut.desktop");
 			#[cfg(any(target_os = "windows", target_os = "linux"))]
 			let builder = builder
 				.with_icon(eframe::icon_data::from_png_bytes(icon).expect("bundled app icon"));
 			if cfg!(target_os = "macos") {
 				// Discord-style inline title bar: traffic lights sit over the app's own strip.
 				// eframe swaps in the egui logo when no icon is set; an empty icon keeps the
-				// bundle's Serein.icns in the Dock and app switcher.
+				// bundle's inherited Serein.icns in the Dock and app switcher.
 				builder
 					.with_icon(egui::IconData::default())
 					.with_title_shown(false)
@@ -464,7 +488,7 @@ fn main() -> eframe::Result {
 		..Default::default()
 	};
 	eframe::run_native(
-		"Serein",
+		"Discut",
 		options,
 		Box::new(move |cc| {
 			let desktop =
@@ -809,7 +833,7 @@ impl Drop for FrameMetrics {
 			let _ = writeln!(
 				std::io::stderr(),
 				// Preserve the legacy diagnostic label; elapsed callback time is wall time.
-				"[Serein frames] callbacks={} without_input={} cpu_us_buckets(1000,2000,4000,8000,16000,32000,64000,above)={:?} reflows(total,consecutive)={:?}",
+				"[Discut frames] callbacks={} without_input={} cpu_us_buckets(1000,2000,4000,8000,16000,32000,64000,above)={:?} reflows(total,consecutive)={:?}",
 				self.frames,
 				self.inputless,
 				self.buckets,
@@ -832,7 +856,31 @@ impl SessionEnd {
 		self == Self::Logout
 	}
 }
+const CHANNEL_PREFERENCES_SAVE_ERROR: &str = "Could not save channel preferences.";
+
+/// One deferred account change, consumed only when the latest local choices have settled.
+fn ready_session_end(
+	pending: &mut Option<SessionEnd>,
+	messaging: &ui::MessagingUi,
+) -> Result<Option<SessionEnd>, ()> {
+	if pending.is_none() {
+		return Ok(None);
+	}
+	if pending.is_some_and(SessionEnd::forgets) {
+		return Ok(pending.take());
+	}
+	if messaging.channel_preferences_changed || messaging.channel_preferences_save_pending {
+		return Ok(None);
+	}
+	if messaging.channel_preferences_status == CHANNEL_PREFERENCES_SAVE_ERROR {
+		pending.take();
+		return Err(());
+	}
+	Ok(pending.take())
+}
+
 struct Desktop {
+	deferred_session_end: Option<SessionEnd>,
 	proxy_auth: proxy_auth::Authentication,
 	api_proxy: tokio::sync::watch::Sender<Option<discord_api::proxy::ApiProxy>>,
 	extensions: extension_bridge::Bridge,
@@ -868,6 +916,8 @@ struct Desktop {
 	monitor_geometry: Option<(Option<egui::Rect>, Option<f32>)>,
 	monitor_period: Option<Duration>,
 	frame_metrics: FrameMetrics,
+	#[cfg(feature = "demo")]
+	demo_screenshot: screenshot_demo::Capture,
 	#[cfg(feature = "demo")]
 	rendering_demo: Option<rendering_demo::RenderingDemo>,
 	avatars: Option<avatars::AvatarWorker>,
@@ -1400,6 +1450,7 @@ impl Desktop {
 		if demo && std::env::args().any(|arg| arg == "--demo-group-dm") {
 			// Existing synthetic group conversation; no account or call is opened.
 			let _ = state.select(model::Id(29));
+			test_support::load_page(&mut state, None);
 		}
 		#[cfg(feature = "demo")]
 		if demo && std::env::args().any(|arg| arg == "--demo-voice-failed") {
@@ -2076,8 +2127,9 @@ impl Desktop {
 			tray_window::State::default()
 		};
 		Ok(Self {
+			deferred_session_end: None,
 			proxy_auth: proxy_auth::Authentication::default(),
-			api_proxy: tokio::sync::watch::channel(None).0,
+			api_proxy: tokio::sync::watch::channel(initial_api_proxy()).0,
 			extensions: extension_bridge::Bridge::default(),
 			extension_close_pending: false,
 			login: None,
@@ -2124,6 +2176,8 @@ impl Desktop {
 			monitor_period: None,
 			frame_metrics: FrameMetrics::new(frame_sample),
 			#[cfg(feature = "demo")]
+			demo_screenshot: screenshot_demo::Capture::new(demo),
+			#[cfg(feature = "demo")]
 			rendering_demo: (demo && std::env::args().any(|arg| arg == "--demo-rendering"))
 				.then(rendering_demo::RenderingDemo::default),
 			avatars: None,
@@ -2148,7 +2202,7 @@ impl Desktop {
 			font_families: None,
 			updater: updater::Updater::new(demo),
 			game_activity,
-			registered_games: if demo {
+			registered_games: if demo || !OPTIONAL_INTEGRATIONS {
 				registered_games::Registered::default()
 			} else {
 				registered_games::Registered::load()
@@ -2279,6 +2333,7 @@ impl Desktop {
 	/// Ends the current session. Only logging out removes this account's local data and
 	/// saved login; switching and adding keep both so the account stays in the switcher.
 	fn end_session(&mut self, ctx: &egui::Context, intent: SessionEnd) {
+		self.deferred_session_end = None;
 		self.captcha.close();
 		self.notification_runtime.clear(&self.window);
 		self.messaging.image_sharing_enabled = false;
@@ -2393,6 +2448,25 @@ impl Desktop {
 		}
 	}
 	fn finish_session_end(&mut self, ctx: &egui::Context, intent: SessionEnd) {
+		if !self.fixture_only && !self.state.demo {
+			self.deferred_session_end = Some(intent);
+			match ready_session_end(&mut self.deferred_session_end, &self.messaging) {
+				Ok(Some(_)) => {}
+				Ok(None) => {
+					self.confirming_logout = false;
+					self.messaging.toasts.push(
+						ui::design::Level::Info,
+						"Saving conversation choices before changing accounts…",
+					);
+					return;
+				}
+				Err(()) => {
+					self.confirming_logout = false;
+					self.messaging.toasts.push(ui::design::Level::Error, "Account unchanged: conversation choices could not be saved. Retry saving in Chat settings before switching.");
+					return;
+				}
+			}
+		}
 		self.end_session(ctx, intent);
 		if let SessionEnd::Switch(account) = intent {
 			self.begin_switch(account);
@@ -3508,38 +3582,7 @@ impl Desktop {
 					result: Ok(()),
 				}),
 				Command::GroupAction { action, request } => {
-					use client_core::group_actions::{Action, Event as GroupEvent};
-					use model::Patch;
-					let channel = action.channel();
-					let patch = match action {
-						Action::Leave(_) => None,
-						Action::Edit { name, icon, .. } => Some(model::ChannelPatch {
-							id: channel,
-							name: name.map_or(Patch::Absent, Patch::Value),
-							icon: match icon {
-								Patch::Absent => self
-									.state
-									.channel(channel)
-									.and_then(|c| c.icon.clone())
-									.map_or(Patch::Null, Patch::Value),
-								Patch::Null => Patch::Null,
-								Patch::Value(_) => {
-									Patch::Value("aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa".into())
-								}
-							},
-							last_message: Patch::Absent,
-							parent_id: Patch::Absent,
-							position: Patch::Absent,
-							kind: Patch::Absent,
-							message_count: Patch::Absent,
-							tags: Patch::Absent,
-						}),
-					};
-					Event::GroupAction(GroupEvent::Written {
-						channel,
-						request,
-						result: Ok(patch),
-					})
+					Event::GroupAction(self.state.demo_group_action(action, request))
 				}
 				Command::MarkRead {
 					channel,
@@ -4237,7 +4280,7 @@ impl Desktop {
 					ui.painter().rect_filled(mark, 14, p.accent);
 					ui::icons::paint(
 						ui.painter(),
-						ui::icons::Icon::Serein,
+						ui::icons::Icon::Discut,
 						mark.shrink(13.0),
 						p.accent_text,
 					);
@@ -4332,7 +4375,7 @@ impl Desktop {
 							ui.painter().rect_filled(mark, 6, p.accent);
 							ui::icons::paint(
 								ui.painter(),
-								ui::icons::Icon::Serein,
+								ui::icons::Icon::Discut,
 								mark.shrink(5.0),
 								p.accent_text,
 							);
@@ -4505,7 +4548,7 @@ impl Desktop {
 						if returning {
 							ui::design::secondary_icon_button(ui, ui::icons::Icon::Plus, label)
 						} else {
-							ui::design::primary_icon_button(ui, ui::icons::Icon::Serein, label)
+							ui::design::primary_icon_button(ui, ui::icons::Icon::Discut, label)
 						}
 					})
 					.inner;
@@ -4552,7 +4595,7 @@ impl Desktop {
 			ui.painter().rect_filled(mark, 13, p.accent);
 			ui::icons::paint(
 				ui.painter(),
-				ui::icons::Icon::Serein,
+				ui::icons::Icon::Discut,
 				mark.shrink(11.0),
 				p.accent_text,
 			);
@@ -5125,14 +5168,14 @@ impl Desktop {
 						if self.messaging.custom_font.busy && self.font_picker.is_none() {
 							self.messaging.custom_font.busy = false;
 							self.messaging.custom_font.status =
-								"Local storage worker stopped. Restart Serein to save fonts.";
+								"Local storage worker stopped. Restart Discut to save fonts.";
 						}
 						if self.messaging.channel_preferences_reload
 							|| self.messaging.channel_preferences_load_pending
 						{
 							self.messaging.channel_preferences_reload = false;
 							self.messaging.channel_preferences_load_pending = false;
-							self.messaging.channel_preferences_status = "Local storage worker stopped; restart Serein to restore channel preferences.";
+							self.messaging.channel_preferences_status = "Local storage worker stopped; restart Discut to restore channel preferences.";
 						}
 						presence_cache_stopped = self.presence_load_pending;
 						break;
@@ -5309,7 +5352,7 @@ impl Desktop {
 					self.messaging.channel_preferences_status = if result.is_ok() {
 						""
 					} else {
-						"Could not save channel preferences."
+						CHANNEL_PREFERENCES_SAVE_ERROR
 					};
 				}
 				cache::Outcome::GifFavorites(favorites) => {
@@ -5446,7 +5489,7 @@ impl Desktop {
 						// Nothing could have been saved without a credential store.
 						Err(platform::CredentialError::NoStore) => "",
 						Err(_) => {
-							"Could not remove the Serein saved login in your OS credential manager"
+							"Could not remove the Discut saved login in your OS credential manager"
 						}
 					};
 				}
@@ -5743,7 +5786,7 @@ impl Desktop {
 					// One extra fixed-label terminal line per enabled scope; closed stderr is OK.
 					let _ = writeln!(
 						std::io::stderr(),
-						"[Serein {scope}] Session stopped: {}",
+						"[Discut {scope}] Session stopped: {}",
 						failure.label()
 					);
 				}
@@ -6005,10 +6048,7 @@ impl eframe::App for Desktop {
 			ctx,
 			&self.runtime,
 			&mut self.messaging.updates,
-			!cfg!(debug_assertions)
-				&& !self.fixture_only
-				&& !self.state.demo
-				&& (self.app_settings.loaded || self.app_settings.state.touched),
+			false, /* Discut must never install an upstream Serein release. */
 		) {
 			// Installing needs a real exit, so this close must not stop at the tray.
 			self.tray_window.quit(ctx);
@@ -6029,14 +6069,16 @@ impl eframe::App for Desktop {
 			self.captcha.close();
 			self.messaging.verification.active = false;
 		}
-		self.extensions.tick(
-			&mut self.state,
-			&mut self.messaging,
-			ctx,
-			&self.runtime,
-			&self.window,
-			self.fixture_only,
-		);
+		if OPTIONAL_INTEGRATIONS {
+			self.extensions.tick(
+				&mut self.state,
+				&mut self.messaging,
+				ctx,
+				&self.runtime,
+				&self.window,
+				self.fixture_only,
+			);
+		}
 		if self.extensions.api_proxy_ready() {
 			let route = self.proxy_auth.tick(
 				self.extensions.api_proxy(),
@@ -6198,6 +6240,10 @@ impl eframe::App for Desktop {
 	}
 	fn ui(&mut self, ui: &mut egui::Ui, frame: &mut eframe::Frame) {
 		let ctx = ui.ctx().clone();
+		#[cfg(feature = "demo")]
+		if self.fixture_only {
+			self.demo_screenshot.tick(&ctx);
+		}
 		let title_bar_height = if self.login.is_some() {
 			platform::LOGIN_HEADER_HEIGHT
 		} else if self.state.user.is_some() {
@@ -6491,7 +6537,7 @@ impl eframe::App for Desktop {
 						ui.painter().rect_filled(rect, 8, p.accent);
 						ui::icons::paint(
 							ui.painter(),
-							ui::icons::Icon::Serein,
+							ui::icons::Icon::Discut,
 							rect.shrink(7.0),
 							p.accent_text,
 						);
@@ -7041,7 +7087,9 @@ impl eframe::App for Desktop {
 		self.messaging.updates_save_failed = self.app_settings.state.failed;
 		self.save_reading_preferences(&ctx);
 		self.sync_own_presence(&ctx);
-		self.sync_game_activity(&ctx);
+		if OPTIONAL_INTEGRATIONS {
+			self.sync_game_activity(&ctx);
+		}
 		self.startup.sync(
 			&ctx,
 			&self.runtime,
@@ -7086,9 +7134,14 @@ impl eframe::App for Desktop {
 					if self.messaging.channel_preferences_save_pending {
 						""
 					} else {
-						"Could not save channel preferences."
+						CHANNEL_PREFERENCES_SAVE_ERROR
 					};
 			}
+		}
+		match ready_session_end(&mut self.deferred_session_end, &self.messaging) {
+			Ok(Some(intent)) => self.request_session_end(&ctx, intent),
+			Ok(None) => {}
+			Err(()) => self.messaging.toasts.push(ui::design::Level::Error, "Account unchanged: conversation choices could not be saved. Retry saving in Chat settings before switching."),
 		}
 		if let Some(variant) = self.messaging.theme_variant_changed.take() {
 			self.variant_changed = true;
@@ -7211,6 +7264,75 @@ impl eframe::App for Desktop {
 #[cfg(test)]
 mod tests {
 	use super::*;
+
+	#[test]
+	fn account_change_waits_for_latest_conversation_selection_and_keeps_failed_choices() {
+		let mut view = ui::MessagingUi::default();
+		let mut pending = Some(SessionEnd::Switch(model::Id(2)));
+		view.channel_preferences
+			.set_channel_included(model::Id(22), false);
+		// Snapshot A is already queued when a second checkbox changes snapshot B.
+		view.channel_preferences_save_pending = true;
+		view.channel_preferences
+			.set_channel_included(model::Id(29), false);
+		view.channel_preferences_changed = true;
+		assert!(matches!(ready_session_end(&mut pending, &view), Ok(None)));
+		assert!(pending == Some(SessionEnd::Switch(model::Id(2))));
+		// A completes, but B must be queued before the account can change.
+		view.channel_preferences_save_pending = false;
+		assert!(matches!(ready_session_end(&mut pending, &view), Ok(None)));
+		view.channel_preferences_changed = false;
+		view.channel_preferences_save_pending = true;
+		assert!(matches!(ready_session_end(&mut pending, &view), Ok(None)));
+		view.channel_preferences_save_pending = false;
+		assert!(matches!(
+			ready_session_end(&mut pending, &view),
+			Ok(Some(SessionEnd::Switch(model::Id(2))))
+		));
+		assert!(pending.is_none());
+		assert_eq!(
+			view.channel_preferences.excluded_channels,
+			vec![model::Id(22), model::Id(29)]
+		);
+
+		// Disk or bounded queue failures cancel the switch and retain the in-memory choices.
+		pending = Some(SessionEnd::Add);
+		view.channel_preferences_status = CHANNEL_PREFERENCES_SAVE_ERROR;
+		assert!(ready_session_end(&mut pending, &view).is_err());
+		assert!(pending.is_none());
+		assert_eq!(view.channel_preferences.excluded_channels.len(), 2);
+		pending = Some(SessionEnd::Logout);
+		assert!(matches!(
+			ready_session_end(&mut pending, &view),
+			Ok(Some(SessionEnd::Logout))
+		));
+	}
+
+	#[test]
+	fn disabled_integrations_do_not_block_api_client_initialization_or_reconnection() {
+		let runtime = tokio::runtime::Builder::new_current_thread()
+			.enable_all()
+			.build()
+			.unwrap();
+		let (route, _) = tokio::sync::watch::channel(initial_api_proxy());
+		for _ in 0..2 {
+			let secret = Arc::new(
+				client_core::auth::SessionSecret::from_owner_input(
+					"SYNTHETIC_OFFLINE_PROXY_TOKEN".into(),
+				)
+				.unwrap(),
+			);
+			let api = discord_api::DiscordApi::with_proxy(secret, route.subscribe()).unwrap();
+			runtime.block_on(async {
+				tokio::time::timeout(Duration::from_millis(200), api.rest_client())
+					.await
+					.expect("Direct route must not wait for a disabled extension loader")
+					.expect("Offline HTTP client construction succeeds");
+			});
+			api.stop();
+		}
+	}
+
 	#[cfg(feature = "demo")]
 	#[test]
 	fn demo_group_members_preserve_recipients_and_deduplicate_current_account() {

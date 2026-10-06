@@ -1,3 +1,11 @@
+# Discut fork context
+
+This checkout is Discut, a local experimental fork of Serein. The inherited guidance
+below applies to implementation and validation. Upstream release/repository destinations
+in inherited documents are references, not Discut publishing destinations. Do not push
+or publish to `upstream`; use a user-designated Discut remote for any future publication.
+See `docs/discut-mvp.md` for scope and validation gates.
+
 # Serein — idea to pull request
 
 ## Product boundaries

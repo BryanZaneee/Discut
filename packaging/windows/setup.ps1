@@ -1,7 +1,7 @@
 <#
 .SYNOPSIS
-Installs or uninstalls Serein for the current Windows user without elevation.
-Preserves write permissions for seamless in-app autoupdates.
+Installs or uninstalls Discut for the current Windows user without elevation.
+Discut uses manual updates.
 #>
 param(
     [switch]$Uninstall,
@@ -9,20 +9,24 @@ param(
 )
 
 $ErrorActionPreference = 'Stop'
-$appName = 'Serein'
-$publisher = 'Serein contributors'
+$appName = 'Discut'
+$publisher = 'Discut contributors; based on Serein'
 $website = 'https://github.com/ViceVerse-cz/Serein'
 $installDir = Join-Path $env:LOCALAPPDATA "Programs\$appName"
 $uninstallKey = "HKCU:\Software\Microsoft\Windows\CurrentVersion\Uninstall\$appName"
 $shortcut = Join-Path ([Environment]::GetFolderPath('Programs')) "$appName.lnk"
 
-# Check if Serein is currently running
-$running = Get-Process serein -ErrorAction SilentlyContinue
+# Check if Discut is currently running
+# The inherited executable filename is shared with upstream; never stop its process.
+$installedExecutable = [IO.Path]::GetFullPath((Join-Path $installDir 'serein.exe'))
+$running = Get-Process serein -ErrorAction SilentlyContinue | Where-Object {
+    $_.Path -and ([IO.Path]::GetFullPath($_.Path) -ieq $installedExecutable)
+}
 if ($running) {
     if ($Quiet) {
         $running | Stop-Process -Force
     } else {
-        throw "Serein is currently running. Please close Serein before running setup."
+        throw "Discut is currently running. Please close Discut before running setup."
     }
 }
 
@@ -41,7 +45,7 @@ if ($Uninstall) {
         Remove-Item -LiteralPath $installDir -Recurse -Force
     }
     if (!$Quiet) {
-        Write-Host "Serein was successfully uninstalled."
+        Write-Host "Discut was successfully uninstalled."
     }
     return
 }
@@ -98,5 +102,5 @@ Set-ItemProperty -LiteralPath $uninstallKey -Name 'NoModify' -Value 1 -Type DWor
 Set-ItemProperty -LiteralPath $uninstallKey -Name 'NoRepair' -Value 1 -Type DWord
 
 if (!$Quiet) {
-    Write-Host "Serein $version installed successfully to $installDir"
+    Write-Host "Discut $version installed successfully to $installDir"
 }

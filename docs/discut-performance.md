@@ -70,7 +70,7 @@ only and was not used as a call-performance benchmark.
 
 This preview predates the final conversation-selection changes.
 
-## Final macOS package
+## Initial macOS MVP package (source commit `3f5d9b5`)
 
 The standard production build uses `--release --locked --no-default-features`, with
 voice included. `cargo xtask package` completed, and `codesign --verify --strict`
@@ -109,3 +109,87 @@ visibility were uncontrolled. This remains an unequal-workload observation.
 60 valid samples for each metric and no reported read failures. Tiny idle CPU values
 are not a meaningful efficiency or battery-life claim. Signed-in text and two-way
 call resource use remain unmeasured, and live interoperability remains unverified.
+
+## Current running sessions — October 6, 2026, follow-up
+
+At the owner's request, both already-running clients were sampled as-is for 60
+one-second intervals after a five-second warmup. No Discut builds or UI interaction
+ran during sampling. Account/call state and equal window visibility were not independently
+confirmed. This is a current-session comparison, not a controlled feature-parity benchmark.
+
+| Metric | Discord | Discut |
+|---|---:|---:|
+| Processes | 7 | 1 |
+| Mean physical footprint | 620.23 MiB | 143.22 MiB |
+| Peak during these 60 seconds | 621.45 MiB | 143.22 MiB |
+| Mean summed RSS | 617.27 MiB | 136.15 MiB |
+| Mean CPU, 100% = one core | 0.02346% | 0.00093% |
+
+Discut's physical footprint was approximately 77% lower in these observed states.
+Both were effectively idle; CPU ratios at this scale are not useful performance claims.
+Discut's footprint stayed constant throughout the sample, which is not evidence of a
+leak in this interval, but also does not exclude growth during longer active workloads.
+[Raw JSON](discut-evidence/discut-current-session.json) and
+[CSV](discut-evidence/discut-current-session.csv) retain the full measurements.
+
+### Where further savings are plausible
+
+A separate three-second macOS `sample` showed Discut's main thread waiting in the
+AppKit event loop. `vmmap -summary` reported about 44.8 MiB of live allocations in the
+default malloc zone, with 14.5 MiB of dirty/swapped allocator slack. Graphics categories
+included 26.8 MiB of IOSurface mappings and 44.2 MiB of graphics-owned mappings. These
+categories are OS accounting observations, not a guarantee of reclaimable memory or
+an exact attribution to a particular cache. The process lifetime peak was 340.3 MiB;
+the triggering workload was not recorded. Large reserved virtual-address ranges are
+not actual RAM consumption. Raw system profiles remain local in ignored `target/metrics/`.
+
+Priorities, preserving messaging, groups and media calls:
+
+1. **Measure and trim offscreen decoded media first.** The UI has separate ceilings
+   for static artwork (64 MiB), emoji (16 MiB), artwork animation (128 MiB), inline
+   media stills (96 MiB), inline animation (128 MiB), and the viewer (128 MiB). These
+   are limits, not current allocation measurements, and their accounting can overlap.
+   A shared retained-media budget and eviction of old offscreen animation frames can
+   constrain growth after browsing many channels. Keep posters/disk cache and visible
+   media warm to avoid replacing RAM savings with repeated downloads or scrolling jank.
+2. **Profile graphics retention across resize, hide and restore.** The observed graphics
+   categories are substantial. Check drawable/font-atlas/texture retention using a fixed
+   viewport and repeatable media workload before changing renderer settings. Do not
+   recreate the GPU device on ordinary channel switches or sacrifice rendering quality
+   merely to reduce a counter.
+3. **Measure active text and calls separately.** Record typing/scrolling frame time and
+   two-way audio latency/dropouts alongside memory and CPU. The current idle sample
+   cannot justify cutting jitter buffers, message reconciliation, or reconnect state.
+4. **Leave sleeping workers alone for now.** The main loop is already event-driven and
+   the runtime has two workers. Game/extension/update integrations are already disabled.
+   Deleting dormant code mainly affects package size; it is not a demonstrated runtime
+   memory saving. A second macOS-only frontend is not justified by this profile yet.
+
+No additional runtime-memory saving is claimed from the Spaces change below.
+
+### macOS desktop behavior
+
+The owner reported that Discut remained visible at the same position across desktops.
+The running app was registered as a foreground application with bundle ID
+`app.discut.desktop`; no Discut/Serein-specific all-desktop assignment was found in
+the inspected Spaces preferences. The title-bar flag maps to transparency, not a
+borderless window. The exact origin of the reported sticky behavior was not reproduced.
+
+The targeted correction explicitly configures the main window at creation to use
+`Managed`, clears `CanJoinAllSpaces`, `MoveToActiveSpace`, `Stationary` and `Transient`,
+and enables moving. Fullscreen and cycling flags are preserved. Apple's
+[collection-behavior documentation](https://developer.apple.com/documentation/appkit/nswindow/collectionbehavior-swift.struct)
+defines these Spaces/Mission Control behaviors. The correction is applied once at
+startup, without polling or extra background work. Desktop switching still requires
+an interactive check after restarting into the new package; a bitmask regression test
+does not substitute for that check.
+
+`scripts/discut-build.sh xtask check` passed after the correction: formatting,
+strict workspace Clippy, 1,168 reported passing test results (including subprocess
+output), zero failures, 25 ignored cases, production compilation and policy checks.
+The log is local at `target/discut-spaces-check.log`.
+
+The corrected production package built successfully and passed strict code-signature
+verification (`target/discut-spaces-package.log`). The running user session was left
+open; quit and reopen `dist/Discut.app` to load the correction. No interactive Spaces
+pass or post-change performance improvement is claimed.

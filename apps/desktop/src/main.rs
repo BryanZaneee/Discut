@@ -2111,6 +2111,8 @@ impl Desktop {
 			.winit_window()
 			.ok_or("Native window unavailable")?
 			.clone();
+		#[cfg(target_os = "macos")]
+		platform::window::configure_spaces(&window)?;
 		messaging.hide_window_decorations = cfg!(target_os = "linux") && !window.is_decorated();
 		app_settings.current.hide_window_decorations = messaging.hide_window_decorations;
 		#[cfg(target_os = "windows")]

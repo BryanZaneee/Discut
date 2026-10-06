@@ -104,10 +104,10 @@ report for actual results. Nothing in this checklist alone is a completion claim
 
 The complete `scripts/discut-build.sh xtask check` passed on 2026-10-06: formatting,
 strict workspace Clippy, workspace tests/doc-tests, the production no-default-features
-check and persistence/authentication policy checks. Cargo reported 1,167 passing test
+check and persistence/authentication policy checks. Cargo reported 1,168 passing test
 results (including subprocess-isolation output), zero failures and 25 ignored cases.
 Ignored/live cases are not counted as validated functionality. The full log is in ignored
-`target/discut-check-selection.log`.
+`target/discut-spaces-check.log`.
 
 The authentication handoff's synthetic JavaScript checks and the resource sampler's
 self-test also passed. Local transport tests exercise encrypted Opus voice, group membership,

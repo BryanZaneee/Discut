@@ -2220,3 +2220,20 @@ whose original compression request is not implemented. Synthetic localhost tests
 `--features demo -- --demo --demo-chat --demo-attachment=file --demo-external-upload`
 verify local behavior without any real hosted upload or Discord session. Live service
 acceptance, link embedding and other-platform native interaction remain unverified.
+
+## GIF favorites admission — October 6, 2026
+
+The frecency decoder accepts the schema's absent optional version block (version
+zero), default map values, and long URL metadata within the existing 4 KiB wire
+entry budget. A long, undisplayable favorite no longer rejects the whole catalog;
+it survives edits verbatim. Truncated, duplicate and over-budget catalogs still
+fail closed, and writes still require version and read-back confirmation.
+Unsupported-format and unconfirmed-save errors now retain their specific messages.
+Issue #559 supplied no response payload, so its live failure remains unverified.
+
+Message stars also cover uploaded GIF attachments, image galleries, video-only
+GIF embeds and external GIFs with an admitted Discord media proxy. Shared HTTPS
+links may come from any host; this does not authorize fetching arbitrary origins.
+Previews still use the existing provider/Discord media admission and bounded
+pipeline. The original share URL, including attachment signatures, is retained.
+The offline debug check is `cargo run --locked -p serein --features demo --example gif_favorites`.

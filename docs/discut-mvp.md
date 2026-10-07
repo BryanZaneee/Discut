@@ -40,6 +40,15 @@ privacy boundary. Exclusions and existing shortcuts share a bounded 256-entry bu
 - macOS is the local validation platform. Windows/Linux remain source targets until
   their native builds and runtime checks pass.
 
+## Observed live history — October 7, 2026
+
+After the owner completed sign-in, the production Mac app displayed the existing
+Baller’s Gate group and its message history, avatars, member list and GIFs. The owner
+selected this conversation for public screenshots; the [reviewed captures](screenshots/README.md)
+record that limited observation. No messages, reactions or calls were initiated.
+This does not complete the acceptance checklist: catalog completeness, restart recovery,
+message delivery, group mutations and live calls remain unverified.
+
 ## Live acceptance checklist
 
 Use a private owner-controlled test space and an explicitly willing second participant.

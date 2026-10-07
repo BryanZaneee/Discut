@@ -193,3 +193,29 @@ The corrected production package built successfully and passed strict code-signa
 verification (`target/discut-spaces-package.log`). The running user session was left
 open; quit and reopen `dist/Discut.app` to load the correction. No interactive Spaces
 pass or post-change performance improvement is claimed.
+
+## Compressed Mac packages — October 7, 2026
+
+Downloaded complete installers from Discord's [official download service](https://discord.com/download)
+into ignored local `target/metrics/` storage. Measured file length and SHA-256 without
+mounting, installing or executing either installer. The current download endpoint
+resolved to 0.0.415; 0.0.413 was also downloaded to match the runtime comparison version.
+
+| Artifact | Bytes | MiB | Discut download-size reduction |
+| --- | ---: | ---: | ---: |
+| Official Discord 0.0.413 DMG | 215,265,820 | 205.29 | 78.7% |
+| Official Discord 0.0.415 DMG (current download) | 215,037,189 | 205.08 | 78.6% |
+| Local Discut ZIP, source `3f5d9b5` | 45,923,386 | 43.80 | — |
+
+The README uses 0.0.413 consistently with the installed/runtime observations. The
+DMG/ZIP comparison measures transfer bytes across different compression and packaging
+formats, not equal-compression app contents. The Discut artifact is locally ad-hoc
+signed, not a supported release. These sizes exclude subsequent downloads and caches.
+[Machine-readable provenance and checksums](discut-evidence/mac-package-sizes.json).
+
+README percentage reductions use `(Discord − Discut) / Discord × 100` from raw
+measurements: physical footprint **76.9%**, summed RSS **77.9%**, process count **85.7%**,
+installed allocated bundle size **85.8%**, compressed package **78.7%**. The arithmetic
+idle CPU reduction is **96.0%**, but the near-zero values and unmatched idle states do
+not support an active-workload or battery claim. These are product comparisons, not
+savings attributable solely to changes made in this fork.

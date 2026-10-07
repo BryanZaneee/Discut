@@ -49,26 +49,35 @@ See the [acceptance checklist](docs/discut-mvp.md) for implemented versus verifi
 
 ## Less overhead, measured
 
-In one Mac observation, Discut used **143 MiB** of memory alongside Discord at
-**620 MiB**. The Discut app bundle occupied **68 MiB** on disk, compared with
-Discord's **481 MiB**.
+**76.9% lower observed RAM footprint · 85.8% smaller installed app · 78.7% smaller Mac package**
 
-| Metric | Official Discord | Discut |
-| --- | ---: | ---: |
-| Average physical memory footprint | 620.23 MiB | **143.22 MiB** |
-| Average CPU¹ | 0.02346% | 0.00093% |
-| Processes | 7 | **1** |
-| Installed app bundle | 480.79 MiB | **68.29 MiB** |
-| Compressed Mac package | Not measured | 43.80 MiB |
+| Metric | Official Discord | Discut | Reduction |
+| --- | ---: | ---: | ---: |
+| Average physical memory footprint | 620.23 MiB | **143.22 MiB** | **76.9%** |
+| Average resident memory (summed RSS) | 617.27 MiB | **136.15 MiB** | **77.9%** |
+| Average idle CPU¹ | 0.02346% | 0.00093% | 96.0%¹ |
+| Processes | 7 | **1** | **85.7%** |
+| Installed app bundle | 480.79 MiB | **68.29 MiB** | **85.8%** |
+| Compressed Mac package² | 205.29 MiB DMG | **43.80 MiB ZIP** | **78.7%** |
 
-**About 77% lower observed memory footprint and an 86% smaller app bundle.**
+Reductions use `(Discord − Discut) / Discord × 100`, calculated from unrounded
+measurements. Smaller means fewer resources used, not an equivalent increase in speed.
 
-Measured October 6, 2026 on an Apple M3 Pro with 18 GiB RAM and macOS 27.0.1.
+Runtime observed October 6, 2026 on an Apple M3 Pro with 18 GiB RAM and macOS 27.0.1.
 Memory and CPU cover 60 seconds and each app's process family; disk sizes were measured
 separately. Both apps were effectively idle, with account, channel, call state and
-visibility not independently matched. This is an observation, not an equivalent-workload
-benchmark or a claim about live call performance. ¹100% CPU means one fully occupied core;
-these tiny idle readings do not establish battery savings.
+visibility not independently matched. **These are unmatched observations, not a
+feature-parity benchmark or a claim about live call performance.** RSS can double-count
+shared pages; it is a separate measure from physical footprint.
+
+¹100% CPU means one fully occupied core. The idle CPU reduction is arithmetic only:
+these tiny readings do not establish active-workload efficiency or battery savings.
+
+²Discord's official **0.0.413** installer, matching the version in the runtime comparison,
+was downloaded and measured on October 7. DMG versus ZIP compares download size across
+different packaging formats. Discut's ZIP is a local build, not a published release.
+The current official Discord **0.0.415** download was also checked: **205.08 MiB**.
+[Package sizes, source URLs and checksums](docs/discut-evidence/mac-package-sizes.json).
 
 [Read the method and raw results](docs/discut-performance.md) · [Run the sampler](scripts/discut-benchmark/README.md)
 

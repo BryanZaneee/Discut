@@ -12,7 +12,9 @@ scripts/discut-screenshots.sh
 ```
 
 The script opens and stops only its own fixture processes. It overwrites the three
-Discut PNGs; inspect the results before committing them. Never substitute live account
-screenshots. A display's scale factor affects pixel dimensions. The existing Mac Retina
+Discut PNGs; inspect the results before committing them. Keep these reproducible fixtures
+separate from any live screenshots. Live images require the account owner to designate
+the conversation for public display; review the captured frame before publication and
+label its provenance. A display's scale factor affects pixel dimensions. The existing Mac Retina
 captures retain native resolution (2240×1520) for readable UI text and are below 1 MiB
 each, an intentional exception to the preferred 300 KB repository-image target.

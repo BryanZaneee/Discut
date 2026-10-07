@@ -2,6 +2,8 @@
 
 ## Unreleased
 
+- Refresh the README presentation with explicit resource reductions and measured official Mac installer sizes.
+
 - Establish Discut as an experimental native Rust fork of Serein, preserving MIT/Apache-2.0 attribution.
 - Isolate app identity and local data; disable optional integration workers and upstream updating.
 - Add group creation and membership controls, covered by offline transport/state tests.

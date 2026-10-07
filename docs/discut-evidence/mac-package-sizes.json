@@ -1,0 +1,35 @@
+{
+  "measured_utc": "2026-10-07T16:11:25.275376+00:00",
+  "method": "Download complete official DMG; filesystem file length and SHA-256. Installer not mounted, installed or executed.",
+  "official_download_page": "https://discord.com/download",
+  "current_download_endpoint": "https://discord.com/api/download?platform=osx",
+  "artifacts": [
+    {
+      "product": "Discord",
+      "version": "0.0.413",
+      "format": "DMG",
+      "url": "https://stable.dl2.discordapp.net/apps/osx/0.0.413/Discord.dmg",
+      "file_size_bytes": 215265820,
+      "sha256": "4bd4cd81c78095f0bf866437b92c78c06ebf2671e8b2f97635fd5556efa6f25b"
+    },
+    {
+      "product": "Discord",
+      "version": "0.0.415",
+      "format": "DMG",
+      "url": "https://stable.dl2.discordapp.net/apps/osx/0.0.415/Discord.dmg",
+      "file_size_bytes": 215037189,
+      "sha256": "2f4d60b1e5ec32b47902eed4a6b88f222485a2235e98d88a0f3243be4f3a805e"
+    }
+  ],
+  "comparison": {
+    "discord_version": "0.0.413",
+    "discut_zip_bytes": 45923386,
+    "discut_source_commit": "3f5d9b5",
+    "reduction_percent": 78.66666152573595,
+    "limitations": [
+      "DMG and ZIP use different packaging/compression. This compares download bytes, not identical compression or installed contents.",
+      "Discut ZIP is a local ad-hoc-signed package, not a supported public release.",
+      "Runtime benchmark and installed bundle sizes were measured separately on October 6."
+    ]
+  }
+}

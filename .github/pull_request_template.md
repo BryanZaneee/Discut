@@ -1,31 +1,25 @@
-## Summary
+## What changed and why
 
-<!-- Explain the concrete problem and resulting behavior. -->
+<!-- One problem per PR. Link the issue and explain the resulting behavior. -->
 
 ## Verification
 
-<!-- Commands actually run, outcomes, reproduction steps and untested platforms/live behavior. -->
+<!-- Commands actually run, outcomes and untested platforms/live behavior. -->
 
-## Before / after
+## Screenshots and performance
 
-<!-- For visible changes, replace cells with embedded, commit-pinned synthetic native screenshots.
-For nonvisual changes: Not applicable — no visible UI change. Local paths are not PR images. -->
+<!-- UI: reviewed synthetic before/after screenshots. Runtime: comparable workloads,
+revisions, build flags, environment, warmup, sample count and metric. Report uncertainty.
+Docs-only: not applicable. Offline tests do not establish Discord interoperability. -->
 
-| Before | After |
-| --- | --- |
-| | |
+## Contributor checks
 
-## Performance
+- [ ] Kept the change focused; discussed any substantial feature first.
+- [ ] Extras are minimal, optional, off by default and findable; core fixes need no switch.
+- [ ] Updated Unreleased and the roadmap where applicable.
+- [ ] Reviewed added dependencies, resource costs and network behavior where applicable.
+- [ ] No credentials, private conversations or unreviewed diagnostics in this PR.
 
-<!-- Runtime changes: compare the same release workload/environment and state revision, features,
-warmup, sample count and metric. Report limits separately from measurements.
-Instructions/docs only: Not applicable — no runtime/build dependency change. -->
+## Remaining limitations
 
-| Metric / method | Baseline | After | Delta |
-| --- | --- | --- | --- |
-| | | | |
-
-## Risks / blockers
-
-<!-- Remove if none. Disclose failing/pending CI, unavailable evidence, migrations and live gates.
-Never claim synthetic evidence proves Discord interoperability. -->
+<!-- Pending/failing checks, unavailable evidence, migrations or live acceptance gates. -->

@@ -3,10 +3,8 @@
 ## Live account captures
 
 `discut-live-media.jpg` and `discut-live-chat.jpg` were captured directly from the
-running macOS Discut window on October 7, 2026, after the owner completed sign-in.
-The owner explicitly selected Baller’s Gate for public README screenshots with its
-real messages and media. Frames were visually reviewed before publication. They show
-existing group history, avatars, the member list and a still frame of a GIF; the call
+running macOS Discut window on October 7, 2026. Frames were visually reviewed before
+publication. They show existing group history, avatars, the member list and a still frame of a GIF; the call
 entry is historical, not a call placed during capture. No messages were sent or calls
 started for these screenshots. No image content was generated or composited.
 

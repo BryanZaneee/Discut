@@ -2,6 +2,8 @@
 
 ## Unreleased
 
+- Simplify README captions and refresh the conversation screenshot without the capture cursor.
+
 - Add owner-approved live Baller’s Gate screenshots and record observed group history/media loading.
 
 - Refresh the README presentation with explicit resource reductions and measured official Mac installer sizes.

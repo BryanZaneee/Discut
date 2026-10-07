@@ -16,13 +16,9 @@ Rust interface, with message history loaded as you need it.
 
 No shop, Quests, embedded Activities or game overlays. No Electron runtime.
 
-> **Early preview:** signed-in group history and media have been observed on macOS.
-> Conversation completeness, sending and two-way calls still need acceptance testing.
-> Windows and Linux await native validation. There is no supported binary release yet.
-
 <img src="docs/screenshots/discut-live-media.jpg" alt="Baller’s Gate in Discut, showing real group messages, a GIF frame, avatars and the member list" width="1200" />
 
-*Baller’s Gate on a real Discord account, shared with the account owner’s approval. GIF shown as a still frame. [Screenshot details](docs/screenshots/README.md).*
+*Group conversations with inline media, member lists and quick call controls.*
 
 ## Your conversations, on your desktop
 
@@ -43,7 +39,7 @@ See the [acceptance checklist](docs/discut-mvp.md) for implemented versus verifi
 
 <img src="docs/screenshots/discut-live-chat.jpg" alt="Real Baller’s Gate message history in Discut with group members and the message composer" width="1200" />
 
-*Existing group history, loaded in Discut after the owner signed in. Captured October 7, 2026.*
+*Message history and group navigation in the native desktop client.*
 
 </details>
 

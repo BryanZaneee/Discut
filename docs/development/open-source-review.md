@@ -34,3 +34,19 @@ CI still contains inherited cross-platform checks and is not presumed green. Loc
 Rust checks passed before this documentation pass; this pass validates docs/templates
 and repository wiring. Any initial hosted CI failure should become a concrete follow-up,
 not be hidden by removing the check.
+
+## Confirmed hosted state
+
+Source is public at [BryanZaneee/Discut](https://github.com/BryanZaneee/Discut), with
+original Git ancestry preserved. Eight issues are linked from the roadmap and grouped
+into three goal milestones. Issues are enabled and the wiki is disabled. Squash merging
+and deletion of merged branches are enabled; merge commits/rebase merges are disabled.
+GitHub secret scanning, push protection and private vulnerability reporting are enabled.
+No binary release or signing secret was created.
+
+Initial publication checks passed: local doc links, issue-form YAML, shell syntax, skill
+frontmatter, focused credential-pattern scan of fork changes, and native screenshot
+reproduction/visual review. The pattern scan is not a full security audit. The prior
+1,168-result Rust check applies to the unchanged runtime source; no new full Rust
+suite was needed for these documentation/template changes. Hosted CI is not yet
+verified and no status check has been made mandatory.

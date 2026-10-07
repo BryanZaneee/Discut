@@ -16,13 +16,13 @@ Rust interface, with message history loaded as you need it.
 
 No shop, Quests, embedded Activities or game overlays. No Electron runtime.
 
-> **Early preview:** the Mac app builds locally. Live sign-in, conversation completeness
-> and two-way calls still need recorded acceptance testing. Windows and Linux are source
-> targets awaiting native validation. There is no supported binary release yet.
+> **Early preview:** signed-in group history and media have been observed on macOS.
+> Conversation completeness, sending and two-way calls still need acceptance testing.
+> Windows and Linux await native validation. There is no supported binary release yet.
 
-<img src="docs/screenshots/discut-chat.png" alt="Discut's native conversation view, channel navigation and message composer" width="1200" />
+<img src="docs/screenshots/discut-live-media.jpg" alt="Baller’s Gate in Discut, showing real group messages, a GIF frame, avatars and the member list" width="1200" />
 
-*Current image: an offline fixture, not a live Discord account. [Screenshot details](docs/screenshots/README.md).*
+*Baller’s Gate on a real Discord account, shared with the account owner’s approval. GIF shown as a still frame. [Screenshot details](docs/screenshots/README.md).*
 
 ## Your conversations, on your desktop
 
@@ -37,6 +37,15 @@ No shop, Quests, embedded Activities or game overlays. No Electron runtime.
 Conversation choices organize your sidebar. They do not leave servers, delete chats
 or mute notifications; a notification or direct link can still open a hidden chat.
 See the [acceptance checklist](docs/discut-mvp.md) for implemented versus verified behavior.
+
+<details>
+<summary>See the conversation view</summary>
+
+<img src="docs/screenshots/discut-live-chat.jpg" alt="Real Baller’s Gate message history in Discut with group members and the message composer" width="1200" />
+
+*Existing group history, loaded in Discut after the owner signed in. Captured October 7, 2026.*
+
+</details>
 
 <details>
 <summary>Preview the call layout</summary>
